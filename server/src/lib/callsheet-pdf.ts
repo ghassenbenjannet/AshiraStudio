@@ -50,7 +50,7 @@ export function genererCallSheetPdf(donnees: CallSheetData): PDFKit.PDFDocument 
     .forEach((p) => doc.text(`${p.ordre + 1}. ${p.description}${p.dureeMin ? ` (${p.dureeMin} min)` : ""}`));
 
   titreSection("Matériel");
-  donnees.materiel.forEach((m) => doc.text(`${m.coche ? "☑" : "☐"} ${m.libelle}`));
+  donnees.materiel.forEach((m) => doc.text(`${m.coche ? "[x]" : "[ ]"} ${m.libelle}`));
 
   doc.end();
   return doc;

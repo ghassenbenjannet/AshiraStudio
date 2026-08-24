@@ -19,6 +19,12 @@ import { agentsRoutes } from "./routes/agents.js";
 import { brainRoutes } from "./routes/brain.js";
 import { mesureRoutes } from "./routes/mesure.js";
 import { growRoutes } from "./routes/grow.js";
+import { commentairesRoutes } from "./routes/commentaires.js";
+import { notificationsRoutes } from "./routes/notifications.js";
+import { auditRoutes } from "./routes/audit.js";
+import { exportsRoutes } from "./routes/exports.js";
+import { sauvegardesRoutes } from "./routes/sauvegardes.js";
+import { observabiliteRoutes } from "./routes/observabilite.js";
 import { resoudreSession, exigerAuth } from "./middleware/auth.js";
 import { journaliserRequetes } from "./middleware/logging.js";
 import { limiteurDebit } from "./middleware/rate-limit.js";
@@ -87,6 +93,18 @@ export function creerApp() {
   app.use("/api/expressions/*", exigerAuth);
   app.use("/api/lecons/*", exigerAuth);
   app.route("/api", growRoutes);
+  app.use("/api/commentaires/*", exigerAuth);
+  app.route("/api/commentaires", commentairesRoutes);
+  app.use("/api/notifications/*", exigerAuth);
+  app.route("/api/notifications", notificationsRoutes);
+  app.use("/api/audit/*", exigerAuth);
+  app.route("/api/audit", auditRoutes);
+  app.use("/api/exports/*", exigerAuth);
+  app.route("/api/exports", exportsRoutes);
+  app.use("/api/sauvegardes/*", exigerAuth);
+  app.route("/api/sauvegardes", sauvegardesRoutes);
+  app.use("/api/observabilite/*", exigerAuth);
+  app.route("/api/observabilite", observabiliteRoutes);
 
   app.notFound((c) => erreurApi(c, 404, "introuvable", "Ressource introuvable"));
   app.onError((err, c) => {

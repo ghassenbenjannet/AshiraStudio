@@ -4,6 +4,8 @@ import { existsSync } from "node:fs";
 import { creerApp } from "./app.js";
 import { env } from "./lib/env.js";
 import { logger } from "./lib/logger.js";
+import { demarrerPlanificateurRappels } from "./lib/scheduler.js";
+import { demarrerSauvegardeAutomatique } from "./lib/sauvegardes.js";
 
 const app = creerApp();
 
@@ -21,4 +23,6 @@ if (existsSync(frontDist)) {
 
 serve({ fetch: app.fetch, port: env.port }, (info) => {
   logger.info(`Achirah HQ — serveur démarré sur http://localhost:${info.port}`);
+  demarrerPlanificateurRappels();
+  demarrerSauvegardeAutomatique();
 });

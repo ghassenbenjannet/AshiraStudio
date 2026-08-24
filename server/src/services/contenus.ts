@@ -4,6 +4,7 @@ import { contenus, contenuVersions, assets } from "../db/schema.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { noterContenu } from "./ia/generation.js";
 import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { creerNotification, detenteursApprobation } from "../lib/notifications.js";
 
 export class ErreurMetier extends Error {
   code: string;
@@ -51,6 +52,11 @@ export async function soumettreContenu(id: string, utilisateurId: string) {
   const [modifie] = (await db.update(contenus).set({ statut: "en_revue" }).where(eq(contenus.id, id)).returning()) as any[];
   await enregistrerAudit({ utilisateurId, action: "contenu.soumettre", entiteType: "contenu", entiteId: id, avant: { statut: contenu.statut }, apres: { statut: "en_revue" } });
 
+  for (const destinataireId of await detenteursApprobation()) {
+    if (destinataireId === utilisateurId) continue;
+    await creerNotification({ utilisateurId: destinataireId, type: "approbation_demandee", entiteType: "contenu", entiteId: id });
+  }
+
   // Gate auto affiché en revue (scénario recette 8) — jamais bloquant : panne IA = soumission
   // manuelle inchangée (scénario 6, RG-PAR1d), le score reste simplement absent.
   try {
@@ -72,6 +78,9 @@ export async function approuverContenu(id: string, utilisateurId: string) {
     .where(eq(contenus.id, id))
     .returning()) as any[];
   await enregistrerAudit({ utilisateurId, action: "contenu.approuver", entiteType: "contenu", entiteId: id, avant: { statut: contenu.statut }, apres: { statut: "approuve" } });
+  if (contenu.auteur_id !== utilisateurId) {
+    await creerNotification({ utilisateurId: contenu.auteur_id, type: "approbation_rendue", entiteType: "contenu", entiteId: id });
+  }
   return modifie;
 }
 

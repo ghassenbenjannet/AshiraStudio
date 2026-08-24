@@ -3,6 +3,7 @@ import { db } from "../../db/client.js";
 import { integrations, metriqueSnapshots } from "../../db/schema.js";
 import { chiffrer, dechiffrer } from "../../lib/crypto.js";
 import { enregistrerAudit } from "../../lib/audit.js";
+import { creerNotification, detenteursApprobation } from "../../lib/notifications.js";
 
 export class ErreurMetier extends Error {
   code: string;
@@ -99,6 +100,9 @@ export async function syncIntegration(id: string, utilisateurId: string) {
     const message = err instanceof Error ? err.message : "Erreur de synchronisation inconnue";
     const [modifie] = (await db.update(integrations).set({ statut: "erreur", derniere_erreur: message, dernier_sync: maintenant }).where(eq(integrations.id, id)).returning()) as any[];
     await enregistrerAudit({ utilisateurId, action: "integration.sync_echec", entiteType: "integration", entiteId: id, apres: { statut: "erreur", erreur: message } });
+    for (const destinataireId of await detenteursApprobation()) {
+      await creerNotification({ utilisateurId: destinataireId, type: "sync_erreur", entiteType: "integration", entiteId: id });
+    }
     return modifie;
   }
 }

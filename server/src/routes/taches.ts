@@ -15,7 +15,7 @@ import {
   tacheEnRetard,
 } from "@achirah/shared";
 import { db } from "../db/client.js";
-import { taches, shootings, looks, lookItems, poses, personnes, articleSkus, articleColoris, coloris, articles, campagnes } from "../db/schema.js";
+import { taches, shootings, looks, lookItems, poses, personnes, articleSkus, articleColoris, coloris, articles, campagnes, utilisateurs } from "../db/schema.js";
 import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
@@ -25,12 +25,22 @@ import { genererCallSheetPdf } from "../lib/callsheet-pdf.js";
 import { ErreurMetier } from "../services/catalogue.js";
 import { genererBriefShooting } from "../services/ia/generation.js";
 import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { creerNotification } from "../lib/notifications.js";
 import type { AppEnv } from "../types.js";
 
 export const tachesRoutes = new Hono<AppEnv>();
 
 function aujourdhuiIso(): string {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Africa/Tunis" });
+}
+
+/** §4.9 — notifie les personnes nouvellement assignées (celles qui possèdent un compte). */
+async function notifierNouveauxAssignes(tacheId: string, avantIds: string[], apresIds: string[]) {
+  const nouveaux = apresIds.filter((id) => !avantIds.includes(id));
+  for (const personneId of nouveaux) {
+    const [utilisateur] = await db.select({ id: utilisateurs.id }).from(utilisateurs).where(eq(utilisateurs.personne_id, personneId)).limit(1);
+    if (utilisateur) await creerNotification({ utilisateurId: utilisateur.id, type: "assignation", entiteType: "tache", entiteId: tacheId });
+  }
 }
 
 // ───────────────────────── Tâches ─────────────────────────
@@ -71,6 +81,7 @@ tachesRoutes.post("/", exigerCapacite("entites.editer"), zValidator("json", tach
   const utilisateur = c.get("utilisateur")!;
   const tache = await creerTacheAvecCascade(c.req.valid("json") as any);
   await enregistrerAudit({ utilisateurId: utilisateur.id, action: "tache.creer", entiteType: "tache", entiteId: tache.id, apres: tache });
+  await notifierNouveauxAssignes(tache.id, [], tache.assigne_ids);
   return c.json({ donnees: tache }, 201);
 });
 
@@ -87,6 +98,7 @@ tachesRoutes.patch("/:id", exigerCapacite("entites.editer"), zValidator("json", 
 
   const [modifie] = (await db.update(taches).set(corps).where(eq(taches.id, id)).returning()) as any[];
   await enregistrerAudit({ utilisateurId: utilisateur.id, action: "tache.modifier", entiteType: "tache", entiteId: id, avant, apres: modifie });
+  if (corps.assigne_ids) await notifierNouveauxAssignes(id, avant.assigne_ids, modifie.assigne_ids);
   return c.json({ donnees: modifie });
 });
 

@@ -16,8 +16,8 @@ export default defineConfig({
         short_name: "Achirah HQ",
         description: "Plateforme d'opérations Achirah — عشيرة",
         lang: "fr",
-        theme_color: "#15140f",
-        background_color: "#15140f",
+        theme_color: "#FBF8F3",
+        background_color: "#FBF8F3",
         display: "standalone",
         start_url: "/aujourdhui",
         icons: [

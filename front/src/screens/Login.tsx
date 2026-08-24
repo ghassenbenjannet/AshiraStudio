@@ -31,34 +31,35 @@ export function Login() {
   }
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center bg-bg px-4">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#191713] px-4 py-8">
       <Filigrane />
-      <form onSubmit={soumettre} className="relative z-10 w-full max-w-sm rounded-card border border-line bg-panel p-6">
-        <h1 className="mb-1 font-display text-2xl text-off">{t("app.nom")}</h1>
-        <p className="mb-6 text-sm text-dim">{t("auth.connexion")}</p>
+      <form onSubmit={soumettre} className="relative z-10 w-full max-w-[420px] rounded-[24px] border border-white/10 bg-panel p-7 shadow-2xl shadow-black/30 sm:p-8">
+        <div className="mb-5 grid h-12 w-12 place-items-center rounded-[14px] bg-sable font-display text-2xl font-semibold text-white">ع</div>
+        <h1 className="mb-1 font-display text-[28px] font-semibold tracking-[-0.02em] text-off">{t("app.nom")}</h1>
+        <p className="mb-7 text-sm text-dim">{t("auth.connexion")}</p>
 
         <label className="mb-3 block text-sm">
-          <span className="mb-1 block text-dim">{t("auth.email")}</span>
+          <span className="mb-1.5 block text-xs font-semibold text-[#5B5449]">{t("auth.email")}</span>
           <input
             type="email"
             required
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="min-h-tap w-full rounded-field border border-line bg-panel2 px-3 text-off outline-none focus:border-sable"
+            className="min-h-[48px] w-full rounded-field border border-line bg-panel2 px-3.5 text-sm text-off outline-none hover:border-[#D9CFC0] focus:border-sable focus:bg-panel"
             dir="auto"
           />
         </label>
 
         <label className="mb-4 block text-sm">
-          <span className="mb-1 block text-dim">{t("auth.mot_de_passe")}</span>
+          <span className="mb-1.5 block text-xs font-semibold text-[#5B5449]">{t("auth.mot_de_passe")}</span>
           <input
             type="password"
             required
             autoComplete="current-password"
             value={motDePasse}
             onChange={(e) => setMotDePasse(e.target.value)}
-            className="min-h-tap w-full rounded-field border border-line bg-panel2 px-3 text-off outline-none focus:border-sable"
+            className="min-h-[48px] w-full rounded-field border border-line bg-panel2 px-3.5 text-sm text-off outline-none hover:border-[#D9CFC0] focus:border-sable focus:bg-panel"
           />
         </label>
 
@@ -71,7 +72,7 @@ export function Login() {
         <button
           type="submit"
           disabled={enCours}
-          className="min-h-tap w-full rounded-field bg-sable px-3 font-medium text-bg disabled:opacity-60"
+          className="min-h-[48px] w-full rounded-field bg-sable px-3 text-sm font-semibold text-white shadow-sm hover:bg-[#C4491A] disabled:opacity-60"
         >
           {enCours ? t("auth.en_cours") : t("auth.se_connecter")}
         </button>

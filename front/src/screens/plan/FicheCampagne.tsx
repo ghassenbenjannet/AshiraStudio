@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { aCapacite, type Campagne } from "@achirah/shared";
 import { Tabs } from "../../components/ui/Tabs.js";
@@ -26,7 +26,16 @@ export function FicheCampagne() {
   const { campagneActiveId, definirCampagneActive } = useCampagneContexte();
   const peutEditer = !!utilisateur && aCapacite(utilisateur.role_systeme, "entites.editer");
   const [campagne, setCampagne] = useState<Campagne | null>(null);
-  const [onglet, setOnglet] = useState<OngletId>("strategie");
+  const [params, setParams] = useSearchParams();
+  const ongletsValides: OngletId[] = ["strategie", "budget", "taches", "equipe", "contenus", "assets", "agents", "resultats"];
+  const ongletParam = params.get("onglet") as OngletId | null;
+  const onglet: OngletId = ongletParam && ongletsValides.includes(ongletParam) ? ongletParam : "strategie";
+
+  function changerOnglet(suivant: OngletId) {
+    const nouveauxParams = new URLSearchParams(params);
+    nouveauxParams.set("onglet", suivant);
+    setParams(nouveauxParams, { replace: true });
+  }
 
   const charger = () => {
     if (!id) return;
@@ -52,6 +61,7 @@ export function FicheCampagne() {
       <button type="button" onClick={() => navigate("/plan/campagnes")} className="mb-3 min-h-tap text-sm text-dim hover:text-off">
         ← {t("commun.retour")}
       </button>
+      <div className="mb-2 flex items-center gap-2 text-xs text-dim"><span>Campagnes</span><span>›</span><span className="font-semibold text-off">{campagne.nom}</span></div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-2xl text-off">{campagne.nom}</h1>
         {campagneActiveId !== campagne.id && (
@@ -64,11 +74,11 @@ export function FicheCampagne() {
           </button>
         )}
       </div>
-      <Tabs valeur={onglet} onChange={setOnglet} onglets={onglets} />
+      <Tabs valeur={onglet} onChange={changerOnglet} onglets={onglets} />
 
       {onglet === "strategie" && <OngletStrategie campagne={campagne} peutEditer={peutEditer} onChange={charger} />}
       {onglet === "budget" && <OngletBudget campagneId={campagne.id} />}
-      {onglet === "taches" && <OngletTachesCampagne campagneId={campagne.id} />}
+      {onglet === "taches" && <OngletTachesCampagne campagneId={campagne.id} campagneNom={campagne.nom} />}
       {onglet === "equipe" && <OngletEquipe campagneId={campagne.id} />}
       {onglet === "contenus" && <OngletContenusCampagne campagneId={campagne.id} />}
       {onglet === "assets" && <OngletAssetsCampagne campagneId={campagne.id} />}

@@ -8,7 +8,6 @@ import { Aujourdhui } from "./screens/Aujourdhui.js";
 import { PlanContexte } from "./screens/plan/PlanContexte.js";
 import { CampagnesListe } from "./screens/plan/CampagnesListe.js";
 import { FicheCampagne } from "./screens/plan/FicheCampagne.js";
-import { TachesBoard } from "./screens/plan/TachesBoard.js";
 import { FicheTache } from "./screens/plan/FicheTache.js";
 import { Create } from "./screens/Create.js";
 import { FicheContenu } from "./screens/create/FicheContenu.js";
@@ -72,7 +71,6 @@ export function App() {
         <Route path="/plan" element={<PlanContexte />} />
         <Route path="/plan/campagnes" element={<CampagnesListe />} />
         <Route path="/plan/campagnes/:id" element={<FicheCampagne />} />
-        <Route path="/plan/taches" element={<TachesBoard />} />
         <Route path="/plan/taches/:id" element={<FicheTache />} />
         <Route path="/create" element={<Create />} />
         <Route path="/create/contenus/:id" element={<FicheContenu />} />

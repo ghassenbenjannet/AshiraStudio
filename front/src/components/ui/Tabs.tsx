@@ -8,7 +8,7 @@ export function Tabs<T extends string>({
   onglets: { id: T; label: string }[];
 }) {
   return (
-    <div className="mb-4 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
+    <div className="mb-5 flex gap-1.5 overflow-x-auto pb-1" role="tablist">
       {onglets.map((onglet) => (
         <button
           key={onglet.id}
@@ -16,8 +16,8 @@ export function Tabs<T extends string>({
           aria-selected={valeur === onglet.id}
           type="button"
           onClick={() => onChange(onglet.id)}
-          className={`min-h-tap shrink-0 whitespace-nowrap border-b-2 px-3 text-sm transition-colors ${
-            valeur === onglet.id ? "border-sable text-sable" : "border-transparent text-dim hover:text-off"
+          className={`min-h-tap shrink-0 whitespace-nowrap rounded-[10px] border px-3.5 text-sm font-medium transition-colors ${
+            valeur === onglet.id ? "border-[#F2C8B5] bg-[#FDEEE6] font-semibold text-sable" : "border-line bg-panel text-dim hover:border-sable hover:text-off"
           }`}
         >
           {onglet.label}

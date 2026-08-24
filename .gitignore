@@ -4,6 +4,7 @@ build/
 .env
 .env.*
 !.env.example
+!.env.docker.example
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

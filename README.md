@@ -31,6 +31,36 @@ Au premier lancement, ouvrir le front : l'écran d'initialisation crée le premi
 applique le seed complet (référentiels, campagne Chapitre I — AL AWWAL, 14 articles, tâches,
 lexique initial — Annexes A-F du CDC).
 
+## Démarrer avec Docker
+
+Docker Compose construit le front et le serveur dans une image unique. La base SQLite, les fichiers
+envoyés et les sauvegardes sont conservés dans des volumes Docker. Les migrations sont appliquées
+automatiquement avant chaque démarrage du serveur.
+
+```bash
+cp .env.docker.example .env
+# Renseigner ENCRYPTION_KEY dans .env (32 octets / 64 caractères hexadécimaux)
+docker compose up --build -d
+```
+
+L'application est ensuite disponible sur <http://localhost:3000>. Pour suivre son démarrage :
+
+```bash
+docker compose logs -f app
+```
+
+Après la création du premier compte, les connexions Shopify/Meta/TikTok/GA4 et la clé Anthropic se
+configurent dans **Paramètres → Intégrations & IA** avec un compte administrateur. Ces secrets sont
+chiffrés en base ; seule la clé maîtresse `ENCRYPTION_KEY` reste dans le fichier `.env` du serveur.
+
+Pour arrêter l'application sans effacer ses données :
+
+```bash
+docker compose down
+```
+
+`docker compose down -v` supprime aussi les volumes et donc les données persistantes.
+
 ## État d'avancement
 
 Construction en cours dans l'ordre de dépendance de la Partie X du CDC :

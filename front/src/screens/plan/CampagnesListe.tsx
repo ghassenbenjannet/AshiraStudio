@@ -8,6 +8,7 @@ import { useCampagneContexte } from "../../lib/campagne-contexte.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
 import { NouvelleCampagneDialog } from "./NouvelleCampagneDialog.js";
 import { clientExports } from "../../lib/resources/systeme.js";
+import { Icone } from "../../components/ui/Icone.js";
 
 const PASTILLE: Record<string, string> = {
   preparation: "bg-dim",
@@ -52,11 +53,12 @@ export function CampagnesListe() {
           ))}
         </ChampSelect>
         <div className="flex gap-2">
-          <a href={clientExports.campagnesUrl("csv")} className="flex min-h-tap items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable">
+          <a href={clientExports.campagnesUrl("csv")} className="flex min-h-tap items-center gap-2 rounded-field border border-line bg-panel px-3 text-sm font-semibold text-off outline-none hover:border-sable hover:text-sable focus-visible:ring-2 focus-visible:ring-sable/35">
+            <Icone nom="exporter" taille={17} />
             {t("commun.exporter_csv")}
           </a>
           {peutEditer && (
-            <BoutonPrimaire type="button" onClick={() => setDialogueOuvert(true)}>
+            <BoutonPrimaire type="button" icone="ajouter" onClick={() => setDialogueOuvert(true)}>
               {t("campagnes.nouvelle")}
             </BoutonPrimaire>
           )}
@@ -87,6 +89,7 @@ export function CampagnesListe() {
                 <span className="flex items-center gap-2 text-xs text-dim">
                   <span className={`h-2 w-2 rounded-full ${PASTILLE[c.statut]}`} />
                   {t(`campagnes.statuts.${c.statut}`)}
+                  <Icone nom="suivant" taille={16} />
                 </span>
               </button>
             </li>

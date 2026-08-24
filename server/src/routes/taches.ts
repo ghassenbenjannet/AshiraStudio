@@ -79,7 +79,11 @@ tachesRoutes.get("/:id", async (c) => {
 
 tachesRoutes.post("/", exigerCapacite("entites.editer"), zValidator("json", tacheInsertSchema), async (c) => {
   const utilisateur = c.get("utilisateur")!;
-  const tache = await creerTacheAvecCascade(c.req.valid("json") as any);
+  const corps = c.req.valid("json");
+  const [campagne] = await db.select({ id: campagnes.id, statut: campagnes.statut }).from(campagnes).where(eq(campagnes.id, corps.campagne_id)).limit(1);
+  if (!campagne) return erreurApi(c, 422, "campagne_introuvable", "Une tâche doit appartenir à une campagne existante");
+  if (campagne.statut === "fermee" || campagne.statut === "abandonnee") return erreurApi(c, 422, "campagne_inactive", "Impossible d’ajouter une tâche à une campagne fermée ou abandonnée");
+  const tache = await creerTacheAvecCascade(corps as any);
   await enregistrerAudit({ utilisateurId: utilisateur.id, action: "tache.creer", entiteType: "tache", entiteId: tache.id, apres: tache });
   await notifierNouveauxAssignes(tache.id, [], tache.assigne_ids);
   return c.json({ donnees: tache }, 201);
@@ -92,6 +96,10 @@ tachesRoutes.patch("/:id", exigerCapacite("entites.editer"), zValidator("json", 
   if (!avant) return erreurApi(c, 404, "introuvable", "Tâche introuvable");
 
   const corps: Record<string, unknown> = { ...c.req.valid("json") };
+  if (typeof corps.campagne_id === "string") {
+    const [campagne] = await db.select({ id: campagnes.id }).from(campagnes).where(eq(campagnes.id, corps.campagne_id)).limit(1);
+    if (!campagne) return erreurApi(c, 422, "campagne_introuvable", "Une tâche doit appartenir à une campagne existante");
+  }
   // done_at auto (vidé à la réouverture) — §4.4.
   if (corps.statut === "fait" && avant.statut !== "fait") corps.done_at = new Date().toISOString();
   if (corps.statut && corps.statut !== "fait") corps.done_at = null;

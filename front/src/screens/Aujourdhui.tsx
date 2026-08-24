@@ -16,7 +16,7 @@ function joursRestants(dateIso: string): number {
   return Math.round((new Date(dateIso).getTime() - new Date().setHours(0, 0, 0, 0)) / 86400000);
 }
 
-function ListeTaches({ taches, vide }: { taches: Tache[]; vide: string }) {
+function ListeTaches({ taches, vide, campagneParId }: { taches: Tache[]; vide: string; campagneParId: Map<string, string> }) {
   const { t } = useTranslation();
   if (taches.length === 0) return <p className="text-sm text-dim">{vide}</p>;
   return (
@@ -24,8 +24,8 @@ function ListeTaches({ taches, vide }: { taches: Tache[]; vide: string }) {
       {taches.map((tache) => (
         <li key={tache.id}>
           <Link to={`/plan/taches/${tache.id}`} className="flex min-h-tap items-center justify-between gap-2 rounded-field px-2 py-1 text-sm hover:bg-panel2">
-            <span className="text-off">{tache.titre}</span>
-            <span className="text-xs text-dim">{t(`taches.types.${tache.type}`)}</span>
+            <span className="min-w-0"><span className="block truncate font-medium text-off">{tache.titre}</span><span className="block truncate text-xs text-dim">{campagneParId.get(tache.campagne_id) ?? "Campagne"} · {t(`taches.types.${tache.type}`)}</span></span>
+            <span className="shrink-0 text-xs text-dim">→</span>
           </Link>
         </li>
       ))}
@@ -85,37 +85,55 @@ export function Aujourdhui() {
     }
   }
 
+  const campagneParId = new Map(campagnes.map((campagne) => [campagne.id, campagne.nom]));
+
   return (
     <div>
-      <h1 className="mb-1 font-display text-2xl text-off">{t("nav.espaces.home")}</h1>
-
-      {campagneActive && (
-        <div className="mb-4 rounded-card border border-line bg-panel p-4">
-          <Link to={`/plan/campagnes/${campagneActive.id}`} className="font-display text-lg text-off hover:text-sable">
-            {campagneActive.nom}
-          </Link>
-          <p className="text-sm text-dim">J{joursRestants(campagneActive.date_fin) >= 0 ? "-" : "+"}{Math.abs(joursRestants(campagneActive.date_fin))} · {campagneActive.date_fin}</p>
+      <section className="relative mb-5 overflow-hidden rounded-[20px] bg-sable p-5 text-white sm:p-6">
+        <div aria-hidden="true" className="absolute -right-6 -top-14 font-display text-[180px] leading-none text-white opacity-[0.07]">ع</div>
+        <div className="relative z-10 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-white/70">Aujourd’hui chez Achirah</p>
+            <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-white sm:text-3xl">
+              Bonjour {utilisateur?.nom.split(" ")[0] ?? "l’équipe"}
+            </h1>
+            {campagneActive && (
+              <Link to={`/plan/campagnes/${campagneActive.id}`} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white">
+                <span>{campagneActive.nom}</span>
+                <span className="rounded-full bg-white/15 px-2 py-1 text-xs">J{joursRestants(campagneActive.date_fin) >= 0 ? "-" : "+"}{Math.abs(joursRestants(campagneActive.date_fin))}</span>
+                <span aria-hidden="true">→</span>
+              </Link>
+            )}
+            {!campagneActive && mode === "toutes" && (
+              <p className="mt-3 text-sm font-medium text-white/80">{t("nav.contexte.toutes")}</p>
+            )}
+          </div>
+          {peutEditer && (
+            <button type="button" onClick={() => setDialogueOuvert(true)} className="min-h-tap rounded-[11px] bg-white px-4 text-sm font-semibold text-sable shadow-sm hover:bg-[#FFF7EF]">
+              + {t("aujourdhui.nouvelle_tache")}
+            </button>
+          )}
         </div>
-      )}
+      </section>
 
       <div className="mb-4 grid gap-3 md:grid-cols-2">
-        <section className="rounded-card border border-line bg-panel p-4">
-          <h2 className="mb-2 text-sm font-medium text-danger-fg">{t("aujourdhui.en_retard")}</h2>
-          {enRetard ? <ListeTaches taches={enRetard} vide={t("aujourdhui.aucune_tache")} /> : <p className="text-sm text-dim">{t("commun.chargement")}</p>}
+        <section className="rounded-card border border-line bg-panel p-4 sm:p-5">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-danger-fg"><span className="h-2 w-2 rounded-full bg-danger-fg" />{t("aujourdhui.en_retard")}</h2>
+          {enRetard ? <ListeTaches taches={enRetard} vide={t("aujourdhui.aucune_tache")} campagneParId={campagneParId} /> : <p className="text-sm text-dim">{t("commun.chargement")}</p>}
         </section>
-        <section className="rounded-card border border-line bg-panel p-4">
-          <h2 className="mb-2 text-sm font-medium text-sable">{t("aujourdhui.aujourdhui")}</h2>
-          {aujourdhui ? <ListeTaches taches={aujourdhui} vide={t("aujourdhui.aucune_tache")} /> : <p className="text-sm text-dim">{t("commun.chargement")}</p>}
+        <section className="rounded-card border border-line bg-panel p-4 sm:p-5">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-olive"><span className="h-2 w-2 rounded-full bg-olive" />{t("aujourdhui.aujourdhui")}</h2>
+          {aujourdhui ? <ListeTaches taches={aujourdhui} vide={t("aujourdhui.aucune_tache")} campagneParId={campagneParId} /> : <p className="text-sm text-dim">{t("commun.chargement")}</p>}
         </section>
       </div>
 
-      <section className="mb-4 rounded-card border border-line bg-panel p-4">
+      <section className="mb-4 rounded-card border border-line bg-panel p-4 sm:p-5">
         <h2 className="mb-2 text-sm font-medium text-dim">{t("aujourdhui.prochain_shooting")}</h2>
-        {prochainsShootings ? <ListeTaches taches={prochainsShootings} vide={t("aujourdhui.aucun_shooting")} /> : <p className="text-sm text-dim">{t("commun.chargement")}</p>}
+        {prochainsShootings ? <ListeTaches taches={prochainsShootings} vide={t("aujourdhui.aucun_shooting")} campagneParId={campagneParId} /> : <p className="text-sm text-dim">{t("commun.chargement")}</p>}
       </section>
 
       {dette.length > 0 && (
-        <section className="mb-4 rounded-card border border-sable/40 bg-panel2 p-4">
+        <section className="mb-4 rounded-card border border-[#F2C8B5] bg-[#FDEEE6] p-4">
           <h2 className="mb-1 text-sm font-medium text-sable">{t("aujourdhui.dette_mesure")}</h2>
           <p className="text-sm text-off">
             {dette.length} {t("campagnes.dette_mesure")}

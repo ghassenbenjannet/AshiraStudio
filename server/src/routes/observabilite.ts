@@ -4,7 +4,7 @@ import { gte } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { integrations, audits } from "../db/schema.js";
 import { exigerCapacite } from "../middleware/rbac.js";
-import { tokensConsommesAujourdhui } from "../lib/anthropic.js";
+import { lireConfigurationIa, tokensConsommesAujourdhui } from "../lib/anthropic.js";
 import { env } from "../lib/env.js";
 import { derniereSauvegarde } from "../lib/sauvegardes.js";
 import type { AppEnv } from "../types.js";
@@ -24,6 +24,7 @@ observabiliteRoutes.get("/statut", exigerCapacite("parametres.gerer"), async (c)
 
   const tousLesAudits = await db.select({ at: audits.at }).from(audits).where(gte(audits.at, debutAujourdhui));
   const integrationsToutes = await db.select().from(integrations);
+  const configurationIa = lireConfigurationIa();
 
   return c.json({
     donnees: {
@@ -31,10 +32,10 @@ observabiliteRoutes.get("/statut", exigerCapacite("parametres.gerer"), async (c)
       taille_db_octets: tailleDbOctets,
       derniere_sauvegarde: derniereSauvegarde(),
       tokens_ia_aujourdhui: await tokensConsommesAujourdhui(),
-      budget_tokens_jour: env.budgetTokensJourDefaut,
+      budget_tokens_jour: configurationIa.budgetTokensJour,
       audits_aujourdhui: tousLesAudits.length,
       integrations: integrationsToutes.map((i) => ({ plateforme: i.plateforme, statut: i.statut, dernier_sync: i.dernier_sync })),
-      ia_configuree: !!env.anthropicApiKey,
+      ia_configuree: !!configurationIa.apiKey,
     },
   });
 });

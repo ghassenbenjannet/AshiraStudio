@@ -526,3 +526,52 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   « Définir comme campagne active », lien vers le board complet depuis l'onglet Tâches du hub, les cinq
   écrans du groupe Patrimoine chargeant sans erreur, rail et barre de contexte cohérents en arabe/RTL
   desktop et mobile.
+
+## CR-02 Bloc A — fusion avec un push parallèle du propriétaire (refonte visuelle + Docker)
+
+- **Constat** : au moment de pousser le Bloc A, la branche portait déjà un commit direct du
+  propriétaire (auteur `ghassen`, hors de cette session) ajoutant Docker (`Dockerfile`, `compose.yaml`,
+  `.dockerignore`), un instantané de référence (`Achirah Maquette responsive complète - corrigée
+  Docker.zip` — l'arborescence complète d'une variante du front, PAS le fichier `achirah-hq-
+  prototype.html` cherché en Bloc B, qui reste introuvable), une refonte visuelle (composants `Bouton`/
+  `Icone` avec vraies icônes SVG, jetons Tailwind affinés, en-tête collant flouté, cartes arrondies),
+  une nouvelle fonctionnalité admin (clé Anthropic configurable et chiffrée en base via `/api/
+  configuration/ia`, table `configurations_systeme`, migration `0004`) et — fait notable — sa **propre**
+  tentative de « campagne comme monde » (page Plan simplifiée, board de tâches désormais intégré à
+  l'onglet Tâches du hub plutôt qu'un écran séparé, fil d'Ariane, suppression de tâche). Ce dernier
+  point confirme que la demande du propriétaire converge indépendamment vers le même besoin.
+- **Décision (demandée explicitement par le propriétaire)** : fusionner en conservant l'intention des
+  deux côtés plutôt qu'écraser l'un ou l'autre. Stratégie retenue : le **langage visuel et les
+  restructurations de composants** du push parallèle sont adoptés tels quels (`Bouton`, `Icone`,
+  `Dialog`, `Tabs`, `Champ`, l'en-tête `AppShell` collant avec titre contextuel par route, le board de
+  tâches désormais intégré — `TachesBoard` prend `campagneId`/`campagneNom` en props obligatoires au
+  lieu d'un filtre d'URL, ce qui est strictement meilleur que le lien externe prévu initialement) ; le
+  **contexte de campagne global** (`CampagneContexteProvider`, sélecteur persistant, atterrissage direct
+  sur le hub, échappatoire « toutes campagnes », pré-remplissage) reste la seule pièce apportée par ce
+  Bloc A, absente du push parallèle, et est greffé par-dessus la nouvelle identité visuelle plutôt que
+  remplacé par elle. Le regroupement statique du rail du push parallèle (« Piloter/Créer/Analyser/
+  Équipe/Administration », 5 groupes génériques) est abandonné au profit du regroupement CAMPAGNE/
+  PATRIMOINE explicitement demandé par le CR, réhabillé avec les mêmes icônes et le même style.
+- **Conséquence directe sur ce Bloc A** : la route autonome `/plan/taches` (accès au board multi-vues
+  toutes campagnes confondues) disparaît — `TachesBoard` n'est plus utilisable hors du contexte d'une
+  campagne précise. C'est cohérent avec l'esprit du CR (la campagne est le monde, pas une vue
+  transverse des tâches) et va plus loin que ce qui était prévu : la « fiche tâche » individuelle
+  (`/plan/taches/:id`) reste accessible telle quelle.
+- **Aucun changement de schéma introduit par ce Bloc**. La migration `0004_configurations_systeme`
+  vient du push parallèle du propriétaire lui-même (pas de cette exécution du CR) : elle n'enfreint pas
+  le garde-fou du CR, qui porte sur ce que cette exécution devait faire, pas sur le travail du
+  propriétaire lui-même.
+- **Changement d'infrastructure noté (hors CR, hérité du push parallèle)** : `shared/package.json`
+  pointe désormais vers `shared/dist` (compilé) au lieu de `shared/src` directement — nécessite
+  `npm run build:shared` avant `typecheck`/`dev` après un clone frais ou un `npm ci`. Documenté ici
+  pour éviter une fausse alerte « module introuvable » lors d'une prochaine session.
+- **Vérifié par Playwright après fusion, sur DB fraîche (FR + AR/RTL, desktop + mobile)** : groupes de
+  rail CAMPAGNE/PATRIMOINE avec la nouvelle identité visuelle, atterrissage direct sur le hub, board de
+  tâches intégré (Liste/Kanban/Calendrier) dans l'onglet Tâches, fil d'Ariane et suppression de tâche
+  (nouveauté du push parallèle) fonctionnels, dialogue de tâche pré-rempli **et désactivé** quand un
+  contexte est actif (amélioration du push parallèle, cohérente avec RG du CR), bouton « Définir comme
+  campagne active », écrans admin ajoutés (Intégrations & IA, Charte UI) sans erreur, catalogue/
+  contacts/mesure/grow toujours accessibles sans erreur, export PDF du call sheet toujours 200
+  (`CallSheet.tsx`/`LooksComposer.tsx`/`ShotList.tsx` du Bloc B non touchés par la fusion — aucun
+  risque de régression sur les looks), rendu arabe/RTL cohérent sur le rail, la barre de contexte et le
+  call sheet.

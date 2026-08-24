@@ -12,10 +12,8 @@ export const env = {
   databasePath: process.env.DATABASE_PATH ?? "./data/achirah.sqlite",
   uploadsDir: process.env.UPLOADS_DIR ?? "./uploads",
   backupsDir: process.env.BACKUPS_DIR ?? "./backups",
-  /** Clé Anthropic — jamais côté client, uniquement lue ici (§6.1). */
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   /** Clé de chiffrement AES-256 des credentials d'intégrations, env serveur uniquement (§8.3). */
   encryptionKey: required("ENCRYPTION_KEY", isProd ? undefined : "dev-only-32-byte-key-not-secure!!"),
-  cookieSecure: isProd,
+  cookieSecure: process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === "true" : isProd,
   budgetTokensJourDefaut: Number(process.env.BUDGET_TOKENS_JOUR ?? 2_000_000),
 };

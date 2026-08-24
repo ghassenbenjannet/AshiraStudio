@@ -88,7 +88,31 @@ export function creerRoutesReferentiel(options: {
     return c.json({ donnees: modifie });
   });
 
-  // DELETE = archivage (jamais de suppression physique — RG-G1 §5). Réactivable via PATCH { archived_at: null }.
+  app.post("/:id/reactiver", exigerCapacite("approbation.gerer"), async (c) => {
+    const utilisateur = c.get("utilisateur")!;
+    const id = c.req.param("id");
+    if (!table.archived_at) {
+      return erreurApi(c, 422, "non_archivable", "Cette liste ne supporte pas l'archivage");
+    }
+    const [avant] = await db.select().from(table).where(eq(table.id, id)).limit(1);
+    if (!avant) return erreurApi(c, 404, "introuvable", "Référentiel introuvable");
+    const [reactive] = (await db
+      .update(table)
+      .set({ archived_at: null })
+      .where(eq(table.id, id))
+      .returning()) as any[];
+    await enregistrerAudit({
+      utilisateurId: utilisateur.id,
+      action: `${entiteType}.reactiver`,
+      entiteType,
+      entiteId: id,
+      avant,
+      apres: reactive,
+    });
+    return c.json({ donnees: reactive });
+  });
+
+  // DELETE = archivage (jamais de suppression physique — RG-G1 §5). Réactivation via action dédiée.
   app.delete("/:id", exigerCapacite("approbation.gerer"), async (c) => {
     const utilisateur = c.get("utilisateur")!;
     const id = c.req.param("id");

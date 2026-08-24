@@ -51,22 +51,25 @@ export function UtilisateursAdmin({ peutGerer }: { peutGerer: boolean }) {
   if (!peutGerer) return <p className="text-sm text-dim">{t("commun.erreur_generique")}</p>;
 
   return (
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-lg text-off">{t("utilisateurs.titre")}</h2>
-        <BoutonPrimaire type="button" onClick={() => setDialogueOuvert(true)}>
+    <section className="overflow-hidden rounded-card border border-line bg-panel">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4 sm:p-5">
+        <div><h2 className="font-display text-xl font-semibold text-off">Collaborateurs & rôles</h2><p className="mt-1 text-sm text-dim">Invitations, accès et permissions de l’équipe.</p></div>
+        <BoutonPrimaire type="button" icone="ajouter" onClick={() => setDialogueOuvert(true)}>
           {t("utilisateurs.ajouter")}
         </BoutonPrimaire>
       </div>
 
       {!lignes && <p className="text-sm text-dim">{t("commun.chargement")}</p>}
       {lignes && (
-        <ul className="divide-y divide-line rounded-card border border-line">
+        <ul className="divide-y divide-line">
           {lignes.map((u) => (
-            <li key={u.id} className="flex items-center justify-between gap-3 px-4 py-3">
-              <div>
-                <p className="text-sm text-off">{u.nom}</p>
+            <li key={u.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-panel2 text-xs font-bold text-dim">{u.nom.split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase()}</span>
+                <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-off">{u.nom}</p>
                 <p className="text-xs text-dim">{u.email}</p>
+                </div>
               </div>
               <ChampSelect value={u.role_systeme} onChange={(e) => void changerRole(u, e.target.value as RoleSysteme)} className="!w-40">
                 {ROLES_SYSTEME.map((r) => (
@@ -115,10 +118,10 @@ export function UtilisateursAdmin({ peutGerer }: { peutGerer: boolean }) {
           {erreur && <p className="mb-3 text-sm text-danger-fg">{erreur}</p>}
 
           <div className="mt-4 flex justify-end gap-2">
-            <BoutonSecondaire type="button" onClick={() => setDialogueOuvert(false)}>
+            <BoutonSecondaire type="button" icone="fermer" onClick={() => setDialogueOuvert(false)}>
               {t("commun.annuler")}
             </BoutonSecondaire>
-            <BoutonPrimaire type="submit" disabled={enregistrement}>
+            <BoutonPrimaire type="submit" icone="enregistrer" charge={enregistrement}>
               {t("commun.enregistrer")}
             </BoutonPrimaire>
           </div>

@@ -458,6 +458,13 @@ export const integrations = sqliteTable("integrations", {
   derniere_erreur: text("derniere_erreur"),
 }, (t) => ({ plateformeIdx: uniqueIndex("integrations_plateforme_idx").on(t.plateforme) }));
 
+/** Paramètres sensibles saisis par un administrateur et chiffrés avec la clé maîtresse serveur. */
+export const configurationsSysteme = sqliteTable("configurations_systeme", {
+  cle: text("cle").primaryKey(),
+  valeur_chiffree: text("valeur_chiffree").notNull(),
+  updated_at: text("updated_at").notNull().$defaultFn(isoNow).$onUpdateFn(isoNow),
+});
+
 // ───────────────────────── 4.9 Collaboration, notifications, audit, conversations ─────────────────────────
 
 export const commentaires = sqliteTable("commentaires", {

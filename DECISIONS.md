@@ -683,3 +683,61 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   trois blocs — seules deux évolutions de schéma sont entrées dans ce dépôt pendant cette période, et
   toutes deux viennent du push parallèle du propriétaire fusionné avant le Bloc A (`0004_configurations_systeme`,
   déjà documenté plus haut), pas de l'exécution de ce CR.
+
+## CDC v4 (architecture SaaS) — backlog et Étape 0
+
+- **Backlog uniquement, sur demande explicite de l'utilisateur** : le CDC v4 (« Plan de solidification
+  en 7 couches ») décrit une transformation multi-mois vers une plateforme SaaS multi-locataire. Sur
+  demande de l'utilisateur, il a été décomposé en tâches suivies (#65 à #110) reproduisant sa structure
+  (Étape 0, C1 à C7, dépendances externes) — sans aucun code écrit à cette étape. Deux catégories de
+  tâches restent explicitement bloquées et ne peuvent pas être exécutées par ce dépôt seul : #82 (prix
+  et limites de plan — décision de discovery client, pas une décision technique) et #106-#110
+  (infrastructure Postgres/Redis/stockage objet, domaine/SMTP, prestataire de paiement, conseil
+  juridique, revues Meta/TikTok/GA4 — accès et comptes externes).
+- **Étape 0 exécutée (#65-#67)** — les 3 correctifs sans dépendance externe :
+  - **RG-A10** : la règle elle-même n'existe nulle part dans ce dépôt (ni dans le code, ni dans
+    `DECISIONS.md`) — le document « l'audit » qui la définit n'est pas disponible ici. Interprétation
+    retenue, sur la base du seul signal concordant trouvé (numérotation `RG-A*` = règles article,
+    `transitionnerArticle` §4.2, le texte du CDC lui-même qualifiant la généralisation future — C5.4,
+    chemin critique — de « l'alerte production devient un cas particulier ») : il s'agit de l'alerte de
+    marge à la transition `production` (`server/src/services/catalogue.ts`), jusqu'ici un avertissement
+    transitoire (perdu à la fermeture de l'écran) — exactement le manque déjà consigné plus haut dans ce
+    fichier (« `alerte_production` non automatisée, faute de signal fiable »). Le signal (COGS + prix +
+    cible de gamme) est réel, jamais fabriqué (RG-PROV) : il est donc maintenant aussi persisté comme
+    notification réelle (`alerte_production`, vers les détenteurs de `approbation.gerer`) en plus de
+    l'avertissement transitoire existant, inchangé. Vérifié par transition réelle d'un article
+    (COGS/prix forcés sous la cible de gamme) : `POST /articles/:id/transition` → 200, notifications
+    `alerte_production` 0→1. **Si cette interprétation ne correspond pas à la définition réelle de
+    RG-A10, le corriger est un changement d'une ligne** (la condition qui déclenche la notification).
+    En prime : le seuil dupliqué en dur (60/45) dans `OngletCouts.tsx` remplacé par la fonction
+    partagée `pastilleMarge()` déjà écrite mais jusqu'ici jamais appelée.
+  - **Rappel kit ambassadeur** : piloté auparavant par `pieces.length === 0` sur les ambassadeurs
+    `actif` — un champ que rien n'écrit jamais après la création, donc un rappel qui ne pouvait plus
+    jamais s'éteindre une fois déclenché une fois (et un filtre `actif` qui exclut justement les
+    ambassadeurs `confirme`, l'étape où le kit reste à envoyer). Remplacé par un filtre direct sur
+    `statut = "confirme"` (`server/src/lib/scheduler.ts`), qui réutilise le statut `kit_envoye` déjà
+    présent dans `STATUT_AMBASSADEUR` et déjà éditable dans Cercle.tsx — le rappel s'éteint dès que le
+    statut avance. Vérifié en base : un ambassadeur `confirme` inséré directement, redémarrage du
+    serveur (un tour de planificateur au boot) → notification `rappel_kit_ambassadeur` créée pour le
+    compte admin.
+  - **Taille de pièce de look** : remplacée la convention `note: "Taille: XL"` (texte libre, jamais
+    structuré, entièrement reconstituée par une regex côté serveur) par une vraie colonne
+    `look_items.taille` (migration `0005`, nullable — cohérent avec `article_skus.taille` lui-même en
+    texte libre, pas de normalisation par grille ajoutée ici, hors du périmètre de ce correctif ciblé).
+    Mis à jour partout où l'ancienne convention était lue ou écrite : `LooksComposer.tsx` (saisie,
+    affichage, duplication de look), `calculerPiecesEffectives` (résolution du SKU à apporter — lit
+    maintenant `item.taille` directement), et l'outil agent `ajouter_look` (qui ne portait aucun champ
+    taille du tout jusqu'ici). Vérifié bout en bout en Playwright : ajout d'un article de look avec
+    taille « 42 » → affiché comme `(42)` dans le look, persisté dans `look_items.taille`, aucune erreur
+    console.
+  - **Incident d'environnement pendant la vérification (sans conséquence sur le dépôt)** :
+    `drizzle-kit generate` a émis un `CREATE TABLE configurations_systeme` en double dans la migration
+    `0005` générée — `meta/0004_snapshot.json` manquait (probablement perdu pendant la résolution du
+    merge CR-02 Bloc A avec le push parallèle), faisant sauter `0004_configurations_systeme` dans la
+    chaîne de snapshots. Reconstruit (`0004_snapshot.json` dérivé de `0005_snapshot.json` moins la
+    colonne `taille`, IDs de chaîne recalculés) plutôt que de contourner en éditant le SQL généré sans
+    corriger la cause — `db:generate` confirme ensuite « No schema changes » avant application de la
+    vraie migration.
+  - Non exécutées : #68 (clé IA réelle) et #69 (intégration réelle Meta/TikTok/GA4) exigent des
+    identifiants que ce dépôt n'a pas — restent en tâche suivie, pas de simulation.
+- **`npm run typecheck` propre sur les trois workspaces** après les trois correctifs.

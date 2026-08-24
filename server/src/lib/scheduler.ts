@@ -93,11 +93,16 @@ async function rappelRetourPieces() {
   }
 }
 
-/** Ambassadeur actif dont le kit de pièces n'a encore jamais été envoyé. */
+/**
+ * Ambassadeur confirmé dont le kit de pièces n'a pas encore été envoyé — CDC v4, Étape 0 : piloté
+ * par le statut réel `kit_envoye` (déjà dans `STATUT_AMBASSADEUR` et éditable dans Cercle.tsx),
+ * plutôt que par `pieces.length === 0`, un champ que rien n'écrit jamais après la création et qui
+ * ne pouvait donc plus jamais s'éteindre.
+ */
 async function rappelKitAmbassadeur() {
-  const tousLesAmbassadeurs = await db.select().from(ambassadeurs).where(eq(ambassadeurs.statut, "actif"));
+  const tousLesAmbassadeurs = await db.select().from(ambassadeurs).where(eq(ambassadeurs.statut, "confirme"));
   const detenteurs = await detenteursApprobation();
-  for (const ambassadeur of tousLesAmbassadeurs.filter((a) => a.pieces.length === 0)) {
+  for (const ambassadeur of tousLesAmbassadeurs) {
     for (const utilisateurId of detenteurs) await notifierUneFois(utilisateurId, "rappel_kit_ambassadeur", "personne", ambassadeur.personne_id);
   }
 }

@@ -24,7 +24,7 @@ function ItemVisuel({
     return (
       <span className="text-sm font-medium text-sable">
         {item.article_coloris_id ? (articleColorisLabelParId.get(item.article_coloris_id) ?? "…") : "—"}
-        {item.note && <span className="ms-1 font-normal text-dim">({item.note.replace(/^taille\s*:\s*/i, "")})</span>}
+        {item.taille && <span className="ms-1 font-normal text-dim">({item.taille})</span>}
       </span>
     );
   }
@@ -149,7 +149,7 @@ function LookCard({
           source: "catalogue",
           article_coloris_id: colorisChoisiId,
           ordre: items?.length ?? 0,
-          note: taille ? `Taille: ${taille}` : undefined,
+          taille: taille || undefined,
         });
       } else if (onglet === "photo" && photoChoisieId) {
         const asset = photosDisponibles?.find((a) => a.id === photoChoisieId);
@@ -387,6 +387,7 @@ export function LooksComposer({
           photo_asset_id: item.photo_asset_id ?? undefined,
           texte: item.texte ?? undefined,
           note: item.note ?? undefined,
+          taille: item.taille ?? undefined,
           ordre: item.ordre,
         });
       }

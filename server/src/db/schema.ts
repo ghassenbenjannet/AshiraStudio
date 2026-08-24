@@ -282,6 +282,7 @@ export const lookItems = sqliteTable("look_items", {
   photo_asset_id: text("photo_asset_id").references((): any => assets.id),
   texte: text("texte"),
   note: text("note"),
+  taille: text("taille"),
   ordre: integer("ordre").notNull().default(0),
 });
 

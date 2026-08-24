@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Article, ArticleCout } from "@achirah/shared";
+import { pastilleMarge, MARGE_SEUIL_ORANGE_DEFAUT, MARGE_SEUIL_VERT_DEFAUT, type Article, type ArticleCout } from "@achirah/shared";
 import { Champ, ChampNombre, BoutonPrimaire } from "../../components/ui/Champ.js";
 import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
 import { clientArticles } from "../../lib/resources/catalogue.js";
 
 const CHAMPS: (keyof Omit<ArticleCout, "article_id">)[] = ["tissu_dt", "faconnage_dt", "fournitures_dt", "packaging_dt", "transport_unitaire_dt", "autre_dt"];
+const COULEUR_PASTILLE_MARGE = { vert: "bg-olive", orange: "bg-sable", rouge: "bg-danger-fg" } as const;
 
 /** E08 — Onglet Coûts (COGS), admin uniquement. Marge toujours calculée, jamais saisie. */
 export function OngletCouts({ article }: { article: Article }) {
@@ -42,7 +43,7 @@ export function OngletCouts({ article }: { article: Article }) {
     }
   }
 
-  const pastille = margePct === null ? "bg-dim" : margePct >= 60 ? "bg-olive" : margePct >= 45 ? "bg-sable" : "bg-danger-fg";
+  const pastille = margePct === null ? "bg-dim" : COULEUR_PASTILLE_MARGE[pastilleMarge(margePct, MARGE_SEUIL_VERT_DEFAUT, MARGE_SEUIL_ORANGE_DEFAUT)];
 
   return (
     <div>

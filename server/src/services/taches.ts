@@ -33,9 +33,9 @@ export async function supprimerTacheAvecCascade(tacheId: string) {
  * RG-LK1 : la liste des pièces à apporter s'agrège automatiquement (dédupliquée) depuis les
  * looks, fusionnée avec les ajouts manuels déjà stockés — calculée à la lecture, jamais
  * désynchronisée (une seule liste de vérité).
- * Limitation assumée (voir DECISIONS.md) : le look_item référence un coloris, pas une taille —
- * la taille "à apporter" par défaut est le premier SKU du coloris tant qu'aucune taille n'est
- * précisée en note du look_item (`Taille: XL`).
+ * Le look_item référence un coloris, pas directement un SKU : la taille "à apporter" par défaut
+ * est le premier SKU du coloris tant qu'aucune taille n'est précisée sur le champ réel
+ * `look_items.taille` (CDC v4, Étape 0 — auparavant bricolée en préfixe `Taille: XL` dans `note`).
  */
 export async function calculerPiecesEffectives(shootingId: string, piecesManuelles: { article_sku_id: string; note?: string }[]) {
   const lignesLooks = await db.select({ id: looks.id }).from(looks).where(eq(looks.shooting_id, shootingId));
@@ -48,7 +48,7 @@ export async function calculerPiecesEffectives(shootingId: string, piecesManuell
     const skus = await db.select().from(articleSkus).where(inArray(articleSkus.article_coloris_id, colorisIds));
     for (const colorisId of colorisIds) {
       const item = items.find((i) => i.article_coloris_id === colorisId);
-      const tailleDemandee = item?.note?.match(/taille\s*:\s*(\S+)/i)?.[1];
+      const tailleDemandee = item?.taille;
       const skusDuColoris = skus.filter((s) => s.article_coloris_id === colorisId);
       const sku = (tailleDemandee && skusDuColoris.find((s) => s.taille.toLowerCase() === tailleDemandee.toLowerCase())) ?? skusDuColoris[0];
       if (sku) autoDerivees.push({ article_sku_id: sku.id, origine: "look" });

@@ -411,7 +411,12 @@ export const OUTILS_CONFIRMATION: DefinitionOutilConfirmation[] = [
           type: "array",
           items: {
             type: "object",
-            properties: { slot: { type: "string", enum: ["haut", "bas", "chaussures", "accessoire"] }, article_coloris_id: { type: "string" }, texte: { type: "string" } },
+            properties: {
+              slot: { type: "string", enum: ["haut", "bas", "chaussures", "accessoire"] },
+              article_coloris_id: { type: "string" },
+              taille: { type: "string" },
+              texte: { type: "string" },
+            },
             required: ["slot"],
           },
         },
@@ -435,7 +440,15 @@ export const OUTILS_CONFIRMATION: DefinitionOutilConfirmation[] = [
       for (const [i, it] of entree.items.entries()) {
         const [item] = (await db
           .insert(lookItems)
-          .values({ look_id: look.id, slot: it.slot, source: it.article_coloris_id ? "catalogue" : "texte", article_coloris_id: it.article_coloris_id ?? null, texte: it.texte ?? null, ordre: i })
+          .values({
+            look_id: look.id,
+            slot: it.slot,
+            source: it.article_coloris_id ? "catalogue" : "texte",
+            article_coloris_id: it.article_coloris_id ?? null,
+            taille: it.taille ?? null,
+            texte: it.texte ?? null,
+            ordre: i,
+          })
           .returning()) as any[];
         items.push(item);
       }

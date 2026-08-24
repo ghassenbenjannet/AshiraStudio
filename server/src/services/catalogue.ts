@@ -3,6 +3,7 @@ import { db } from "../db/client.js";
 import { articles, articleColoris, articleSkus, articleCouts, historiqueStatuts, gammes, lookItems } from "../db/schema.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { calculerCogs, calculerMargePct, compterSkusAvecMesures, SKUS_AVEC_MESURES_REQUIS, STATUT_CYCLE_ARTICLE, type StatutCycleArticle, type ProchaineEtape } from "@achirah/shared";
+import { creerNotification, detenteursApprobation } from "../lib/notifications.js";
 
 export class ErreurMetier extends Error {
   code: string;
@@ -69,6 +70,14 @@ export async function transitionnerArticle(
       avertissements.push(
         `Marge (${marge.toFixed(1)}%) sous la cible de la gamme ${gamme.nom} (${gamme.marge_cible_pct}%).`,
       );
+      // CDC v4, Étape 0 (RG-A10) : l'avertissement ci-dessus est transitoire (perdu à la fermeture de
+      // l'écran) — le signal est pourtant réel (COGS + prix + cible de gamme, jamais fabriqué,
+      // RG-PROV). On le persiste aussi comme notification réelle, comblant le point relevé dans
+      // DECISIONS.md (« alerte_production non automatisée, faute de signal fiable ») : ce signal-ci
+      // l'est.
+      for (const destinataireId of await detenteursApprobation()) {
+        await creerNotification({ utilisateurId: destinataireId, type: "alerte_production", entiteType: "article", entiteId: articleId });
+      }
     }
   }
 

@@ -125,6 +125,9 @@ export const lookItemSchema = z.object({
   photo_asset_id: z.string().uuid().nullable().optional(),
   texte: z.string().max(300).nullable().optional(),
   note: z.string().max(200).nullable().optional(),
+  // CDC v4, Étape 0 : taille de la pièce référencée, en champ réel — remplace le préfixe
+  // `Taille: XX` autrefois jamais bricolé dans `note`.
+  taille: z.string().max(20).nullable().optional(),
   ordre: z.number().int().nonnegative(),
 });
 export type LookItem = z.infer<typeof lookItemSchema>;

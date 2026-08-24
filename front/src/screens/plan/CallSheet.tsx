@@ -9,6 +9,7 @@ import { clientPersonnes } from "../../lib/resources/contacts.js";
 import { clientArticleSkus } from "../../lib/resources/catalogue.js";
 import { LooksComposer } from "./LooksComposer.js";
 import { ShotList } from "./ShotList.js";
+import { CommentairesPanel } from "../../components/collaboration/CommentairesPanel.js";
 
 const CLE_MANQUE_TRAD: Record<string, string> = { pieces: "pieces", photographe: "photographe", poses: "poses", date: "date", lieu: "lieu" };
 
@@ -203,6 +204,10 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
           className="min-h-tap w-full rounded-field border border-line bg-panel2 px-3 py-2 text-off"
         />
       </Champ>
+
+      <div className="mt-4 rounded-card border border-line bg-panel p-4">
+        <CommentairesPanel entiteType="shooting" entiteId={tacheId} />
+      </div>
     </div>
   );
 }

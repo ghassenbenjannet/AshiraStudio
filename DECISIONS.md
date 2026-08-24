@@ -321,3 +321,75 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   recherche de tendances → 503 IA indisponible affiché proprement, veille concurrents, lexique avec
   statuts validée/interdite, leçons) ; RG-LC1 complet sur une fermeture de campagne réelle ; bascule
   FR/AR avec `dir="rtl"` correct et tous les nouveaux libellés `grow.*`/`mesure.*` traduits.
+
+## Phase ⑦ Transverses — commentaires, notifications, audit, exports, sauvegardes, observabilité, PWA
+
+- **Commentaires (RG-CO1)** : jamais supprimés en base, seulement marqués `retire` — le front affiche
+  alors « Message retiré » à la place du contenu. `retirer` est réservé à l'auteur du commentaire ou
+  à un titulaire de `approbation.gerer` (vérifié par curl : un contributeur non-auteur reçoit 403) ;
+  `resoudre` exige `entites.editer` (au-delà de simple lecteur) ; `creer` reste ouvert à
+  `commentaire.creer`, détenue par tous les rôles y compris lecteur.
+- **@mentions résolues côté serveur, sans champ dédié dans le schéma d'insertion** : le schéma
+  `commentaireInsertSchema` ne porte que `contenu` — les mentions sont extraites en comparant le
+  texte à `@` + le `nom` exact de chaque utilisateur actif (`extraireMentions`), pas par un système
+  d'autocomplétion côté client. Une mention de soi-même ne déclenche jamais de notification.
+- **Notifications 3 canaux (`in_app`/`email`/`push`)** : le canal `in_app` est toujours réellement
+  livré (ligne insérée dans `notifications`, source de la cloche). `email`/`push` sont honnêtement
+  dégradés — le choix de l'utilisateur est journalisé (`logger.info`) mais rien n'est réellement
+  envoyé tant qu'aucun fournisseur SMTP/Web Push n'est configuré côté serveur (même logique que la
+  Phase ⑤ pour la clé Anthropic absente) ; le front l'explique dans un texte d'aide sous la matrice
+  de réglages plutôt que de le cacher.
+- **Planificateur in-process (`demarrerPlanificateurRappels`)** : un seul processus déployé (§8.1) →
+  pas de worker séparé ni de queue externe. Un tour immédiat au démarrage puis `setInterval` horaire
+  couvre `retard`, `echeance_j1`, `rappel_publication`, `rappel_veille` (aucun relevé concurrent
+  depuis 7 jours), `rappel_retour_pieces` (pièces de shooting non rentrées après tournage), et
+  `rappel_kit_ambassadeur` (ambassadeur actif dont `pieces` est encore vide — seul signal disponible
+  dans le schéma actuel, aucun champ dédié "kit envoyé"). Idempotent : avant toute création, vérifie
+  qu'aucune notification du même type n'existe déjà pour cette entité/utilisateur (`dejaNotifie`),
+  vérifié en redémarrant le serveur deux fois de suite sans doublon.
+- **`alerte_production` non automatisée** : aucun signal fiable dans le schéma actuel (pas de champ
+  de suivi de production ni de seuil de stock sur `article_skus`) pour déclencher cette alerte sans
+  fabriquer une règle arbitraire (RG-PROV) — le type reste dans l'énumération et le réglage
+  utilisateur, prêt à être déclenché manuellement ou par un futur événement métier réel.
+- **Notifications événementielles** : `assignation` (tâche créée/modifiée avec de nouveaux
+  `assigne_ids` — résolus en `utilisateur_id` via `utilisateurs.personne_id`, silencieusement ignoré
+  si la personne assignée n'a pas de compte système), `approbation_demandee`/`approbation_rendue`
+  (hooks dans `soumettreContenu`/`approuverContenu`), `sync_erreur` (hook dans `syncIntegration`
+  côté Phase ⑥, vers tous les détenteurs de `approbation.gerer`).
+- **Journal d'audit** consultable/filtrable réservé à `parametres.gerer` — réutilise la table `audits`
+  déjà alimentée par `enregistrerAudit` depuis la Phase ①, aucune duplication.
+- **Exports CSV/JSON** pour contacts/catalogue/campagnes/audit, RG-R2 respecté (montants redigés
+  selon le rôle, vérifié par curl : `tarif_jour_dt` présent pour admin, vide pour contributeur).
+  Export PDF du rapport de fermeture de campagne (rapport 3 champs + KPI + consolidation), réutilise
+  `consolidationCampagne` de la Phase ⑥ et le pattern `pdfkit`/stream-vers-buffer du call sheet.
+- **Bug trouvé et corrigé (glyphes PDF hors encodage WinAnsi)** : les glyphes Unicode `→`/`☑`/`☐`
+  s'affichent en mojibake avec la police Helvetica standard de pdfkit (encodage WinAnsi/CP1252, pas
+  de embedding de police Unicode) — confirmé par test isolé. Corrigé dans le nouveau rapport PDF
+  (`→` → `-`) et rétroactivement dans le call sheet de la Phase ③ (`☑`/`☐` → `[x]`/`[ ]`), seul
+  fichier PDF pré-existant du projet.
+- **Sauvegardes réelles** : `Database.backup()` de better-sqlite3 (snapshot cohérent même sous WAL,
+  contrairement à une copie brute du fichier qui pourrait capturer un état incomplet en écriture
+  concurrente) + copie récursive de `uploads/`, dans un dossier horodaté sous `BACKUPS_DIR`.
+  Rétention des 14 dernières. Déclenchement manuel (route `POST /sauvegardes`, réservée
+  `parametres.gerer`) et planificateur quotidien in-process ; pas de téléchargement zip exposé
+  (aucune dépendance d'archivage ajoutée) — la liste affiche date/taille, la sauvegarde reste
+  accessible sur le disque du serveur pour un opérateur avec accès filesystem.
+- **Observabilité** : chiffres réels uniquement (RG-PROV) — uptime process, taille du fichier DB,
+  dernière sauvegarde, tokens IA consommés aujourd'hui (réutilise `tokensConsommesAujourdhui` de la
+  Phase ⑤), statut des intégrations MEASURE, nombre d'entrées d'audit du jour, indicateur booléen
+  `ia_configuree`. Aucune métrique fabriquée en l'absence de données (ex. `taille_db_octets: null`
+  si le fichier est introuvable plutôt qu'un zéro trompeur).
+- **PWA** : `vite-plugin-pwa` (déjà en dépendance depuis la Phase ①) configuré avec manifeste réel
+  (nom, couleurs de marque, `start_url: /aujourdhui`) et icônes PNG générées par un encodeur PNG
+  minimal écrit à la main (pas de dépendance canvas/sharp) — image réelle décodable (cercle sable
+  sur fond `bg`), pas un fichier placeholder mal étiqueté. Les requêtes `/api/*` restent
+  `NetworkOnly` dans le service worker : seul l'app shell (JS/CSS/fonts/icônes) est précaché, jamais
+  une réponse API — cohérent avec RG-PROV, aucune donnée métier obsolète ne doit jamais être
+  présentée comme actuelle depuis un cache.
+- **Vérifié de bout en bout (curl + Playwright FR/AR) sur DB fraîche** : mention → notification réelle
+  pour un second utilisateur (jamais pour l'auteur), réglages de canaux persistés, RBAC retirer/
+  résoudre, scheduler idempotent sur deux redémarrages consécutifs (tâche en retard assignée →
+  exactement 2 notifications, pas de doublon), export CSV avec redaction RG-R2 vérifiée par rôle,
+  sauvegarde manuelle réelle + liste, statut d'observabilité, panneau de commentaires sur
+  tâche/contenu/campagne/shooting, cloche avec badge non-lues et marquage lu, PWA buildée avec
+  succès (manifest.webmanifest + sw.js générés, 9 entrées précachées).

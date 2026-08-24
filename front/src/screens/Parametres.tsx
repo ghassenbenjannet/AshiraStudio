@@ -21,6 +21,10 @@ import {
   clientModelesRituel,
 } from "../lib/resources/referentiels.js";
 import { UtilisateursAdmin } from "./parametres/UtilisateursAdmin.js";
+import { ReglagesNotifications } from "./parametres/ReglagesNotifications.js";
+import { JournalAudit } from "./parametres/JournalAudit.js";
+import { SauvegardesAdmin } from "./parametres/SauvegardesAdmin.js";
+import { Observabilite } from "./parametres/Observabilite.js";
 
 const champsGamme: ChampConfig[] = [
   { cle: "nom", label: "Nom", type: "texte", requis: true },
@@ -79,21 +83,28 @@ const champsModeleRituel: ChampConfig[] = [{ cle: "nom", label: "Nom", type: "te
 export function Parametres() {
   const { t } = useTranslation();
   const { utilisateur } = useAuth();
-  const [onglet, setOnglet] = useState<"referentiels" | "utilisateurs">("referentiels");
+  const [onglet, setOnglet] = useState<"referentiels" | "utilisateurs" | "notifications" | "audit" | "sauvegardes" | "observabilite">("referentiels");
   const peutGererReferentiels = !!utilisateur && aCapacite(utilisateur.role_systeme, "approbation.gerer");
   const peutGererUtilisateurs = !!utilisateur && aCapacite(utilisateur.role_systeme, "parametres.gerer");
+  const peutGererSysteme = !!utilisateur && aCapacite(utilisateur.role_systeme, "parametres.gerer");
+
+  const onglets = [
+    { id: "referentiels" as const, label: t("referentiels.onglet_referentiels") },
+    { id: "utilisateurs" as const, label: t("referentiels.onglet_utilisateurs") },
+    { id: "notifications" as const, label: t("notifications.titre") },
+    ...(peutGererSysteme
+      ? [
+          { id: "audit" as const, label: t("audit.titre") },
+          { id: "sauvegardes" as const, label: t("sauvegardes.titre") },
+          { id: "observabilite" as const, label: t("observabilite.titre") },
+        ]
+      : []),
+  ];
 
   return (
     <div>
       <h1 className="mb-4 font-display text-2xl text-off">{t("nav.espaces.parametres")}</h1>
-      <Tabs
-        valeur={onglet}
-        onChange={setOnglet}
-        onglets={[
-          { id: "referentiels", label: t("referentiels.onglet_referentiels") },
-          { id: "utilisateurs", label: t("referentiels.onglet_utilisateurs") },
-        ]}
-      />
+      <Tabs valeur={onglet} onChange={setOnglet} onglets={onglets} />
 
       {onglet === "referentiels" && (
         <div>
@@ -115,6 +126,10 @@ export function Parametres() {
       )}
 
       {onglet === "utilisateurs" && <UtilisateursAdmin peutGerer={peutGererUtilisateurs} />}
+      {onglet === "notifications" && <ReglagesNotifications />}
+      {onglet === "audit" && peutGererSysteme && <JournalAudit />}
+      {onglet === "sauvegardes" && peutGererSysteme && <SauvegardesAdmin />}
+      {onglet === "observabilite" && peutGererSysteme && <Observabilite />}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { useAuth } from "../lib/auth-context.js";
 import { clientArticles } from "../lib/resources/catalogue.js";
 import { clientGammes } from "../lib/resources/referentiels.js";
 import { NouvelArticleDialog } from "./catalogue/NouvelArticleDialog.js";
+import { clientExports } from "../lib/resources/systeme.js";
 
 const PASTILLE: Record<string, string> = {
   idee: "bg-dim",
@@ -59,16 +60,21 @@ export function Catalogue() {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-2xl text-off">{t("catalogue.titre")}</h1>
-        {peutEditer && (
-          <div className="flex gap-2">
-            <Link to="/catalogue/import" className="flex min-h-tap items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable">
-              {t("catalogue.importer")}
-            </Link>
-            <BoutonPrimaire type="button" onClick={() => setDialogueOuvert(true)}>
-              {t("catalogue.nouvel_article")}
-            </BoutonPrimaire>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <a href={clientExports.catalogueUrl("csv")} className="flex min-h-tap items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable">
+            {t("commun.exporter_csv")}
+          </a>
+          {peutEditer && (
+            <>
+              <Link to="/catalogue/import" className="flex min-h-tap items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable">
+                {t("catalogue.importer")}
+              </Link>
+              <BoutonPrimaire type="button" onClick={() => setDialogueOuvert(true)}>
+                {t("catalogue.nouvel_article")}
+              </BoutonPrimaire>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">

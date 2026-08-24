@@ -53,7 +53,9 @@
     "non": "Non",
     "confirmer": "Confirmer",
     "aucun_resultat": "Aucun résultat",
-    "supprimer": "Supprimer"
+    "supprimer": "Supprimer",
+    "exporter_csv": "Exporter CSV",
+    "exporter_json": "Exporter JSON"
   },
   "langue": {
     "fr": "Français",
@@ -345,7 +347,8 @@
         "instructions": "Instructions",
         "outils": "Outils actifs"
       }
-    }
+    },
+    "exporter_rapport_pdf": "Exporter le rapport (PDF)"
   },
   "taches": {
     "titre": "Tâches",
@@ -804,5 +807,71 @@
         "property_id": "ID de propriété"
       }
     }
+  },
+  "notifications": {
+    "titre": "Notifications",
+    "tout_marquer_lu": "Tout marquer comme lu",
+    "aucune": "Aucune notification.",
+    "champs": {
+      "type": "Type"
+    },
+    "canaux": {
+      "in_app": "Dans l'app",
+      "email": "E-mail",
+      "push": "Push"
+    },
+    "canaux_note": "Le canal e-mail/push est enregistré mais non livré tant qu'aucun fournisseur n'est configuré côté serveur.",
+    "types": {
+      "mention": "Mention dans un commentaire",
+      "assignation": "Nouvelle assignation",
+      "approbation_demandee": "Approbation demandée",
+      "approbation_rendue": "Approbation rendue",
+      "echeance_j1": "Échéance demain",
+      "retard": "Tâche en retard",
+      "rappel_publication": "Rappel de publication",
+      "rappel_veille": "Rappel de veille concurrentielle",
+      "rappel_retour_pieces": "Rappel de retour de pièces",
+      "rappel_kit_ambassadeur": "Rappel d'envoi de kit ambassadeur",
+      "sync_erreur": "Échec de synchronisation",
+      "alerte_production": "Alerte production"
+    }
+  },
+  "commentaires": {
+    "titre": "Commentaires",
+    "aucun": "Aucun commentaire pour l'instant.",
+    "retire": "Message retiré",
+    "resoudre": "Résoudre",
+    "rouvrir": "Rouvrir",
+    "retirer": "Retirer",
+    "placeholder": "Écrire un commentaire… (@Nom pour mentionner)",
+    "envoyer": "Envoyer"
+  },
+  "audit": {
+    "titre": "Journal d'audit",
+    "toutes_entites": "Toutes les entités",
+    "total": "{{n}} entrée(s)",
+    "champs": {
+      "at": "Date",
+      "action": "Action",
+      "entite": "Entité",
+      "via_agent": "Via agent"
+    }
+  },
+  "sauvegardes": {
+    "titre": "Sauvegardes",
+    "description": "Sauvegarde réelle de la base de données et des fichiers, déclenchée manuellement ou une fois par jour automatiquement.",
+    "declencher": "Déclencher une sauvegarde",
+    "creee": "Sauvegarde créée"
+  },
+  "observabilite": {
+    "titre": "Observabilité",
+    "uptime": "Disponibilité du serveur",
+    "taille_db": "Taille de la base de données",
+    "derniere_sauvegarde": "Dernière sauvegarde",
+    "aucune": "Aucune",
+    "tokens_ia": "Tokens IA consommés aujourd'hui",
+    "ia_configuree": "IA configurée",
+    "audits_aujourdhui": "Entrées d'audit aujourd'hui",
+    "integrations": "Intégrations"
   }
 }

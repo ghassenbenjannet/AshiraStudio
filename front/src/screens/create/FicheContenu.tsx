@@ -9,6 +9,7 @@ import { ApiError } from "../../lib/api.js";
 import { clientContenus } from "../../lib/resources/contenus.js";
 import { clientAssets } from "../../lib/resources/assets.js";
 import { clientPlateformesContenu, clientRegistres } from "../../lib/resources/referentiels.js";
+import { CommentairesPanel } from "../../components/collaboration/CommentairesPanel.js";
 
 export function FicheContenu() {
   const { id } = useParams<{ id: string }>();
@@ -309,6 +310,10 @@ export function FicheContenu() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="rounded-card border border-line bg-panel p-4">
+        <CommentairesPanel entiteType="contenu" entiteId={contenu.id} />
       </section>
     </div>
   );

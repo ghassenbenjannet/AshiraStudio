@@ -53,7 +53,9 @@
     "non": "لا",
     "confirmer": "تأكيد",
     "aucun_resultat": "لا توجد نتائج",
-    "supprimer": "حذف"
+    "supprimer": "حذف",
+    "exporter_csv": "تصدير CSV",
+    "exporter_json": "تصدير JSON"
   },
   "langue": {
     "fr": "Français",
@@ -345,7 +347,8 @@
         "instructions": "التعليمات",
         "outils": "الأدوات المفعّلة"
       }
-    }
+    },
+    "exporter_rapport_pdf": "تصدير التقرير (PDF)"
   },
   "taches": {
     "titre": "المهام",
@@ -804,5 +807,71 @@
         "property_id": "معرّف الخاصية"
       }
     }
+  },
+  "notifications": {
+    "titre": "الإشعارات",
+    "tout_marquer_lu": "تعليم الكل كمقروء",
+    "aucune": "لا توجد إشعارات.",
+    "champs": {
+      "type": "النوع"
+    },
+    "canaux": {
+      "in_app": "داخل التطبيق",
+      "email": "البريد الإلكتروني",
+      "push": "إشعار فوري"
+    },
+    "canaux_note": "يُسجَّل اختيار قناة البريد الإلكتروني/الإشعار الفوري لكنه لا يُرسَل طالما لم يُضبط أي مزوّد على الخادم.",
+    "types": {
+      "mention": "إشارة في تعليق",
+      "assignation": "تعيين جديد",
+      "approbation_demandee": "طلب مصادقة",
+      "approbation_rendue": "تمت المصادقة",
+      "echeance_j1": "الموعد النهائي غدًا",
+      "retard": "مهمة متأخرة",
+      "rappel_publication": "تذكير بالنشر",
+      "rappel_veille": "تذكير بمراقبة المنافسين",
+      "rappel_retour_pieces": "تذكير بإرجاع القطع",
+      "rappel_kit_ambassadeur": "تذكير بإرسال حقيبة السفير",
+      "sync_erreur": "فشل المزامنة",
+      "alerte_production": "تنبيه إنتاج"
+    }
+  },
+  "commentaires": {
+    "titre": "التعليقات",
+    "aucun": "لا توجد تعليقات بعد.",
+    "retire": "تم حذف الرسالة",
+    "resoudre": "حل",
+    "rouvrir": "إعادة فتح",
+    "retirer": "حذف",
+    "placeholder": "اكتب تعليقًا… (@الاسم للإشارة)",
+    "envoyer": "إرسال"
+  },
+  "audit": {
+    "titre": "سجل التدقيق",
+    "toutes_entites": "كل الكيانات",
+    "total": "{{n}} إدخال",
+    "champs": {
+      "at": "التاريخ",
+      "action": "الإجراء",
+      "entite": "الكيان",
+      "via_agent": "عبر وكيل"
+    }
+  },
+  "sauvegardes": {
+    "titre": "النسخ الاحتياطية",
+    "description": "نسخ احتياطي حقيقي لقاعدة البيانات والملفات، يُشغَّل يدويًا أو تلقائيًا مرة كل يوم.",
+    "declencher": "تشغيل نسخة احتياطية",
+    "creee": "تم إنشاء النسخة الاحتياطية"
+  },
+  "observabilite": {
+    "titre": "المراقبة التشغيلية",
+    "uptime": "مدة تشغيل الخادم",
+    "taille_db": "حجم قاعدة البيانات",
+    "derniere_sauvegarde": "آخر نسخة احتياطية",
+    "aucune": "لا شيء",
+    "tokens_ia": "رموز الذكاء الاصطناعي المستهلكة اليوم",
+    "ia_configuree": "الذكاء الاصطناعي مُهيّأ",
+    "audits_aujourdhui": "إدخالات التدقيق اليوم",
+    "integrations": "التكاملات"
   }
 }

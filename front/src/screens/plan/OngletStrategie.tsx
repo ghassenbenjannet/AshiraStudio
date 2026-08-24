@@ -8,6 +8,8 @@ import { ApiError } from "../../lib/api.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
 import { clientLecons } from "../../lib/resources/grow.js";
 import { ReferencesCampagne } from "./ReferencesCampagne.js";
+import { CommentairesPanel } from "../../components/collaboration/CommentairesPanel.js";
+import { clientExports } from "../../lib/resources/systeme.js";
 
 export function OngletStrategie({ campagne, peutEditer, onChange }: { campagne: Campagne; peutEditer: boolean; onChange: () => void }) {
   const { t } = useTranslation();
@@ -111,6 +113,14 @@ export function OngletStrategie({ campagne, peutEditer, onChange }: { campagne: 
             {t("campagnes.generer_rituel")}
           </BoutonSecondaire>
         )}
+        <a
+          href={clientExports.rapportCampagnePdfUrl(campagne.id)}
+          target="_blank"
+          rel="noreferrer"
+          className="flex min-h-tap items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable"
+        >
+          {t("campagnes.exporter_rapport_pdf")}
+        </a>
       </div>
 
       <div className="mb-4 grid gap-x-4 text-sm md:grid-cols-3">
@@ -167,6 +177,10 @@ export function OngletStrategie({ campagne, peutEditer, onChange }: { campagne: 
       </Champ>
 
       <ReferencesCampagne campagneId={campagne.id} peutEditer={peutEditer} />
+
+      <div className="mt-6 rounded-card border border-line bg-panel p-4">
+        <CommentairesPanel entiteType="campagne" entiteId={campagne.id} />
+      </div>
 
       <Dialog ouvert={dialogueFermetureOuvert} onFermer={() => setDialogueFermetureOuvert(false)} titre={t("campagnes.rapport.titre")}>
         <form

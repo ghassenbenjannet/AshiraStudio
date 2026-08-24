@@ -9,6 +9,7 @@ import { useToast } from "../lib/toast-context.js";
 import { ApiError } from "../lib/api.js";
 import { clientCategoriesContact, clientPersonnes } from "../lib/resources/contacts.js";
 import { CategoriesContactDialog } from "./people/CategoriesContactDialog.js";
+import { clientExports } from "../lib/resources/systeme.js";
 
 /** E10 — Contacts. */
 export function People() {
@@ -78,6 +79,9 @@ export function People() {
           <Link to="/people/cercle" className="min-h-tap flex items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable">
             {t("cercle.titre")}
           </Link>
+          <a href={clientExports.contactsUrl("csv")} className="min-h-tap flex items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable">
+            {t("commun.exporter_csv")}
+          </a>
           {peutEditer && (
             <>
               <BoutonSecondaire type="button" onClick={() => setDialogueCategoriesOuvert(true)}>

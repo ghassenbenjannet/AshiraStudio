@@ -8,6 +8,7 @@ import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
 import { clientTaches } from "../../lib/resources/taches.js";
 import { CallSheet } from "./CallSheet.js";
+import { CommentairesPanel } from "../../components/collaboration/CommentairesPanel.js";
 
 /** E05 — Fiche tâche (les shootings ouvrent en plus le call sheet — E06). */
 export function FicheTache() {
@@ -122,6 +123,10 @@ export function FicheTache() {
       </form>
 
       {tache.type === "shooting" && <CallSheet tacheId={tache.id} peutEditer={peutEditer} />}
+
+      <div className="mt-6">
+        <CommentairesPanel entiteType="tache" entiteId={tache.id} />
+      </div>
     </div>
   );
 }

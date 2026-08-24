@@ -6,6 +6,7 @@ import { ChampSelect, BoutonPrimaire } from "../../components/ui/Champ.js";
 import { useAuth } from "../../lib/auth-context.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
 import { NouvelleCampagneDialog } from "./NouvelleCampagneDialog.js";
+import { clientExports } from "../../lib/resources/systeme.js";
 
 const PASTILLE: Record<string, string> = {
   preparation: "bg-dim",
@@ -47,11 +48,16 @@ export function CampagnesListe() {
             </option>
           ))}
         </ChampSelect>
-        {peutEditer && (
-          <BoutonPrimaire type="button" onClick={() => setDialogueOuvert(true)}>
-            {t("campagnes.nouvelle")}
-          </BoutonPrimaire>
-        )}
+        <div className="flex gap-2">
+          <a href={clientExports.campagnesUrl("csv")} className="flex min-h-tap items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable">
+            {t("commun.exporter_csv")}
+          </a>
+          {peutEditer && (
+            <BoutonPrimaire type="button" onClick={() => setDialogueOuvert(true)}>
+              {t("campagnes.nouvelle")}
+            </BoutonPrimaire>
+          )}
+        </div>
       </div>
 
       {dette.length > 0 && (

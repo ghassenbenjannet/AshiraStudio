@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+    image: achirah-hq:local
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      COOKIE_SECURE: "${COOKIE_SECURE:-false}"
+      DATABASE_PATH: /app/data/achirah.sqlite
+      UPLOADS_DIR: /app/uploads
+      BACKUPS_DIR: /app/backups
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY:?Définissez ENCRYPTION_KEY dans le fichier .env}"
+      BUDGET_TOKENS_JOUR: "${BUDGET_TOKENS_JOUR:-2000000}"
+    volumes:
+      - achirah_data:/app/data
+      - achirah_uploads:/app/uploads
+      - achirah_backups:/app/backups
+
+volumes:
+  achirah_data:
+  achirah_uploads:
+  achirah_backups:

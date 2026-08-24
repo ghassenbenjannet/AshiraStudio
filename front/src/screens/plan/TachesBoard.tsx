@@ -13,6 +13,14 @@ import { clientPersonnes } from "../../lib/resources/contacts.js";
 import { api } from "../../lib/api.js";
 import { NouvelleTacheDialog } from "./NouvelleTacheDialog.js";
 import { CalendrierEditorial } from "./CalendrierEditorial.js";
+import { Bouton } from "../../components/ui/Bouton.js";
+import { Icone, type NomIcone } from "../../components/ui/Icone.js";
+
+const ICONE_VUE: Record<"liste" | "kanban" | "calendrier", NomIcone> = {
+  liste: "liste",
+  kanban: "kanban",
+  calendrier: "calendrier",
+};
 
 function aujourdhuiIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -68,7 +76,7 @@ function ColonneKanban({ statut, taches, personnesParId, onOuvrirTache }: { stat
 }
 
 /** E04/E18 — Board de tâches : Liste / Kanban / Calendrier, filtres partagés persistés dans l'URL (§4.6). */
-export function TachesBoard() {
+export function TachesBoard({ campagneId, campagneNom }: { campagneId: string; campagneNom: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { utilisateur } = useAuth();
@@ -82,7 +90,7 @@ export function TachesBoard() {
 
   const vue = (params.get("vue") as "liste" | "kanban" | "calendrier") ?? utilisateur?.vue_board_preferee ?? "liste";
   const filtreType = params.get("type") ?? "";
-  const filtreCampagne = params.get("campagne_id") ?? "";
+  const filtreCampagne = campagneId;
   const filtrePersonne = params.get("assigne_id") ?? "";
 
   const charger = () =>
@@ -133,22 +141,27 @@ export function TachesBoard() {
 
   return (
     <div>
+      <div className="mb-4 flex items-center gap-3 rounded-card border border-line bg-panel p-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#FDEEE6] text-sable"><Icone nom="campagne" taille={19} /></span>
+        <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-dim">Campagne parente</p><p className="truncate text-sm font-semibold text-off">{campagneNom}</p></div>
+      </div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-1 rounded-field border border-line p-0.5">
           {(["liste", "kanban", "calendrier"] as const).map((v) => (
-            <button
+            <Bouton
               key={v}
-              type="button"
               onClick={() => changerVue(v)}
-              className={`min-h-tap rounded-field px-3 text-sm ${vue === v ? "bg-panel2 text-sable" : "text-dim"}`}
+              taille="sm"
+              variante={vue === v ? "secondaire" : "tertiaire"}
+              icone={ICONE_VUE[v]}
             >
               {t(`taches.vues.${v}`)}
-            </button>
+            </Bouton>
           ))}
         </div>
-        <button type="button" onClick={() => setDialogueOuvert(true)} className="min-h-tap rounded-field bg-sable px-4 font-medium text-bg">
+        <Bouton icone="ajouter" onClick={() => setDialogueOuvert(true)}>
           {t("taches.nouvelle")}
-        </button>
+        </Bouton>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -157,14 +170,6 @@ export function TachesBoard() {
           {TYPE_TACHE.map((ty) => (
             <option key={ty} value={ty}>
               {t(`taches.types.${ty}`)}
-            </option>
-          ))}
-        </ChampSelect>
-        <ChampSelect value={filtreCampagne} onChange={(e) => changerFiltre("campagne_id", e.target.value)} className="!w-48">
-          <option value="">{t("taches.filtres.campagne")}</option>
-          {campagnes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nom}
             </option>
           ))}
         </ChampSelect>
@@ -233,7 +238,7 @@ export function TachesBoard() {
         />
       )}
 
-      <NouvelleTacheDialog ouvert={dialogueOuvert} onFermer={() => setDialogueOuvert(false)} campagnes={campagnes} onCree={charger} />
+      <NouvelleTacheDialog ouvert={dialogueOuvert} onFermer={() => setDialogueOuvert(false)} campagnes={campagnes} campagneParDefaut={campagneId} onCree={charger} />
     </div>
   );
 }

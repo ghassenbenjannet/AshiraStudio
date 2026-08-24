@@ -26,7 +26,7 @@ export function creerClientReferentiel<T extends { id: string }, TInsert = Parti
     modifier: (id: string, corps: Partial<TInsert>) =>
       api<Donnees<T>>(`${base}/${id}`, { method: "PATCH", body: corps }).then((r) => r.donnees),
     archiver: (id: string) => api<Donnees<T>>(`${base}/${id}`, { method: "DELETE" }).then((r) => r.donnees),
-    reactiver: (id: string) => api<Donnees<T>>(`${base}/${id}`, { method: "PATCH", body: { archived_at: null } }).then((r) => r.donnees),
+    reactiver: (id: string) => api<Donnees<T>>(`${base}/${id}/reactiver`, { method: "POST" }).then((r) => r.donnees),
   };
 }
 

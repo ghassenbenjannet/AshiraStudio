@@ -28,9 +28,10 @@ export function Init() {
   }
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center bg-bg px-4">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-[#191713] px-4 py-8">
       <Filigrane />
-      <form onSubmit={soumettre} className="relative z-10 w-full max-w-sm rounded-card border border-line bg-panel p-6">
+      <form onSubmit={soumettre} className="relative z-10 w-full max-w-[440px] rounded-[24px] border border-white/10 bg-panel p-7 shadow-2xl shadow-black/30 sm:p-8">
+        <div className="mb-5 grid h-12 w-12 place-items-center rounded-[14px] bg-sable font-display text-2xl font-semibold text-white">ع</div>
         <h1 className="mb-1 font-display text-2xl text-off">{t("init.titre")}</h1>
         <p className="mb-6 text-sm text-dim">{t("init.sous_titre")}</p>
 
@@ -82,7 +83,7 @@ export function Init() {
         <button
           type="submit"
           disabled={enCours}
-          className="min-h-tap w-full rounded-field bg-sable px-3 font-medium text-bg disabled:opacity-60"
+          className="min-h-[48px] w-full rounded-field bg-sable px-3 text-sm font-semibold text-white hover:bg-[#C4491A] disabled:opacity-60"
         >
           {enCours ? t("init.en_cours") : t("init.creer_compte")}
         </button>

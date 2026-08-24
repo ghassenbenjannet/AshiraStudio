@@ -8,6 +8,7 @@
   }
   body {
     @apply bg-bg text-off font-sans antialiased;
+    min-width: 320px;
   }
   html[dir="rtl"] body {
     @apply font-arabic;
@@ -17,10 +18,34 @@
   h3 {
     @apply font-display;
   }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply transition-colors duration-150;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-sable/30 ring-offset-2 ring-offset-bg;
+  }
   /* Jamais de fond blanc, pas d'ombres fortes — hiérarchie par bordures et contrastes de panneaux (§7.1). */
   ::selection {
     background: theme("colors.sable");
-    color: theme("colors.bg");
+    color: white;
+  }
+}
+
+@layer components {
+  .app-content > div > h1:first-child {
+    @apply text-[28px] leading-tight tracking-[-0.02em];
+  }
+
+  .surface-card {
+    @apply rounded-card border border-line bg-panel;
   }
 }
 

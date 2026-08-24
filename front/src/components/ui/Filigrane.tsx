@@ -5,7 +5,7 @@ export function Filigrane() {
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 flex select-none items-center justify-center overflow-hidden"
     >
-      <span className="font-display text-[28vw] leading-none text-off opacity-[0.03]" dir="rtl">
+      <span className="font-display text-[28vw] leading-none text-white opacity-[0.035]" dir="rtl">
         عشيرة
       </span>
     </div>

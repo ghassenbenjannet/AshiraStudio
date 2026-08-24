@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.docker.example
+node_modules
+**/node_modules
+**/dist
+**/coverage
+server/data
+server/uploads
+server/backups
+*.sqlite
+*.sqlite-*
+*.log
+DECISIONS.md

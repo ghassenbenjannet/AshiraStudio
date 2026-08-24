@@ -1,7 +1,8 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { Bouton, type BoutonProps } from "./Bouton";
 
 const baseClasses =
-  "min-h-tap w-full rounded-field border border-line bg-panel2 px-3 text-off outline-none focus:border-sable disabled:opacity-60";
+  "min-h-tap w-full rounded-field border border-line bg-panel2 px-3 text-sm text-off outline-none placeholder:text-dim/60 hover:border-[#D9CFC0] focus:border-sable focus:bg-panel disabled:opacity-60";
 
 export function Champ({
   label,
@@ -14,7 +15,7 @@ export function Champ({
 }) {
   return (
     <label className="mb-3 block text-sm">
-      <span className="mb-1 block text-dim">{label}</span>
+      <span className="mb-1.5 block text-xs font-semibold text-[#5B5449]">{label}</span>
       {children}
       {erreur && <span className="mt-1 block text-xs text-danger-fg">{erreur}</span>}
     </label>
@@ -37,20 +38,10 @@ export function ChampSelect(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={baseClasses} />;
 }
 
-export function BoutonPrimaire(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...props}
-      className={`min-h-tap rounded-field bg-sable px-4 font-medium text-bg disabled:opacity-60 ${props.className ?? ""}`}
-    />
-  );
+export function BoutonPrimaire(props: Omit<BoutonProps, "variante">) {
+  return <Bouton {...props} variante="primaire" />;
 }
 
-export function BoutonSecondaire(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...props}
-      className={`min-h-tap rounded-field border border-line px-4 text-off hover:border-sable disabled:opacity-60 ${props.className ?? ""}`}
-    />
-  );
+export function BoutonSecondaire(props: Omit<BoutonProps, "variante">) {
+  return <Bouton {...props} variante="secondaire" />;
 }

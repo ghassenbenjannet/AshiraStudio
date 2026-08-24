@@ -4,6 +4,7 @@ import { Dialog } from "../ui/Dialog.js";
 import { ChampTexte, ChampNombre, Champ, BoutonPrimaire, BoutonSecondaire } from "../ui/Champ.js";
 import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
+import { Bouton } from "../ui/Bouton.js";
 
 export interface ChampConfig {
   cle: string;
@@ -140,7 +141,7 @@ export function TableReferentiel<T extends LigneBase>({
           {description && <p className="text-sm text-dim">{description}</p>}
         </div>
         {peutEditer && (
-          <BoutonPrimaire type="button" onClick={ouvrirCreation}>
+          <BoutonPrimaire type="button" icone="ajouter" onClick={ouvrirCreation}>
             {t("referentiels.ajouter")}
           </BoutonPrimaire>
         )}
@@ -159,23 +160,24 @@ export function TableReferentiel<T extends LigneBase>({
       {lignes && lignes.length > 0 && (
         <ul className="divide-y divide-line rounded-card border border-line">
           {lignes.map((ligne) => (
-            <li key={ligne.id} className={`flex items-center justify-between gap-3 px-4 py-3 ${ligne.archived_at ? "opacity-50" : ""}`}>
-              <button
-                type="button"
-                onClick={() => peutEditer && ouvrirEdition(ligne)}
-                className="min-h-tap flex-1 text-start text-sm text-off disabled:cursor-default"
-                disabled={!peutEditer}
-              >
+            <li key={ligne.id} className={`flex flex-wrap items-center justify-between gap-3 bg-panel px-4 py-3 ${ligne.archived_at ? "opacity-60" : ""}`}>
+              <span className="min-w-48 flex-1 text-sm text-off">
                 {colonneAffichage(ligne)}
-              </button>
+              </span>
               {peutEditer && (
-                <button
-                  type="button"
-                  onClick={() => archiverOuReactiver(ligne)}
-                  className="min-h-tap rounded-field border border-line px-3 text-xs text-dim hover:text-off"
-                >
-                  {ligne.archived_at ? t("referentiels.reactiver") : t("referentiels.archiver_action")}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Bouton taille="sm" variante="secondaire" icone="modifier" onClick={() => ouvrirEdition(ligne)}>
+                    Modifier
+                  </Bouton>
+                  <Bouton
+                    taille="sm"
+                    variante={ligne.archived_at ? "succes" : "tertiaire"}
+                    icone={ligne.archived_at ? "restaurer" : "archiver"}
+                    onClick={() => void archiverOuReactiver(ligne)}
+                  >
+                    {ligne.archived_at ? t("referentiels.reactiver") : t("referentiels.archiver_action")}
+                  </Bouton>
+                </div>
               )}
             </li>
           ))}
@@ -237,10 +239,10 @@ export function TableReferentiel<T extends LigneBase>({
           {erreurFormulaire && <p className="mb-3 text-sm text-danger-fg">{erreurFormulaire}</p>}
 
           <div className="mt-4 flex justify-end gap-2">
-            <BoutonSecondaire type="button" onClick={() => setDialogueOuvert(false)}>
+            <BoutonSecondaire type="button" icone="fermer" onClick={() => setDialogueOuvert(false)}>
               {t("commun.annuler")}
             </BoutonSecondaire>
-            <BoutonPrimaire type="submit" disabled={enregistrement}>
+            <BoutonPrimaire type="submit" icone="enregistrer" charge={enregistrement}>
               {t("commun.enregistrer")}
             </BoutonPrimaire>
           </div>

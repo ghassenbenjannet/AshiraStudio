@@ -25,6 +25,7 @@ import { auditRoutes } from "./routes/audit.js";
 import { exportsRoutes } from "./routes/exports.js";
 import { sauvegardesRoutes } from "./routes/sauvegardes.js";
 import { observabiliteRoutes } from "./routes/observabilite.js";
+import { configurationRoutes } from "./routes/configuration.js";
 import { resoudreSession, exigerAuth } from "./middleware/auth.js";
 import { journaliserRequetes } from "./middleware/logging.js";
 import { limiteurDebit } from "./middleware/rate-limit.js";
@@ -105,6 +106,8 @@ export function creerApp() {
   app.route("/api/sauvegardes", sauvegardesRoutes);
   app.use("/api/observabilite/*", exigerAuth);
   app.route("/api/observabilite", observabiliteRoutes);
+  app.use("/api/configuration/*", exigerAuth);
+  app.route("/api/configuration", configurationRoutes);
 
   app.notFound((c) => erreurApi(c, 404, "introuvable", "Ressource introuvable"));
   app.onError((err, c) => {

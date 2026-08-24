@@ -1,11 +1,18 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { env } from "./env.js";
-import { db } from "../db/client.js";
+import { db, sqlite } from "../db/client.js";
 import { messages } from "../db/schema.js";
 import { gte } from "drizzle-orm";
+import { dechiffrer } from "./crypto.js";
 
-/** Modèle unique de l'app (§6.1) — jamais choisi par l'utilisateur. */
-export const MODELE_IA = "claude-sonnet-4-6";
+export interface ConfigurationIaInterne {
+  apiKey: string;
+  modele: string;
+  budgetTokensJour: number;
+}
+
+const MODELE_IA_DEFAUT = "claude-sonnet-4-6";
+export let MODELE_IA = MODELE_IA_DEFAUT;
 
 export class ErreurIaIndisponible extends Error {
   constructor(raison: string) {
@@ -14,6 +21,24 @@ export class ErreurIaIndisponible extends Error {
 }
 
 let client: Anthropic | null = null;
+let cleClient = "";
+
+export function lireConfigurationIa(): ConfigurationIaInterne {
+  let stockee: Partial<ConfigurationIaInterne> = {};
+  try {
+    const ligne = sqlite.prepare("SELECT valeur_chiffree FROM configurations_systeme WHERE cle = ?").get("ia") as { valeur_chiffree: string } | undefined;
+    if (ligne) stockee = JSON.parse(dechiffrer(ligne.valeur_chiffree)) as Partial<ConfigurationIaInterne>;
+  } catch {
+    // Une base pas encore migrée ou une valeur illisible rend simplement l'IA indisponible.
+  }
+  const configuration = {
+    apiKey: stockee.apiKey ?? "",
+    modele: stockee.modele ?? MODELE_IA_DEFAUT,
+    budgetTokensJour: stockee.budgetTokensJour ?? env.budgetTokensJourDefaut,
+  };
+  MODELE_IA = configuration.modele;
+  return configuration;
+}
 
 /**
  * Client Anthropic paresseux — jamais instancié si la clé est absente. Scénario recette 6
@@ -21,10 +46,14 @@ let client: Anthropic | null = null;
  * (écritures manuelles incluses) continue à fonctionner à 100 % (RG-PAR1d).
  */
 export function clientAnthropic(): Anthropic {
-  if (!env.anthropicApiKey) {
-    throw new ErreurIaIndisponible("IA indisponible : ANTHROPIC_API_KEY non configurée côté serveur.");
+  const configuration = lireConfigurationIa();
+  if (!configuration.apiKey) {
+    throw new ErreurIaIndisponible("IA indisponible : configurez une clé API depuis Paramètres > Intégrations & IA.");
   }
-  if (!client) client = new Anthropic({ apiKey: env.anthropicApiKey });
+  if (!client || cleClient !== configuration.apiKey) {
+    client = new Anthropic({ apiKey: configuration.apiKey });
+    cleClient = configuration.apiKey;
+  }
   return client;
 }
 
@@ -41,7 +70,8 @@ export async function tokensConsommesAujourdhui(): Promise<number> {
 
 export async function verifierBudgetJournalier(): Promise<void> {
   const consomme = await tokensConsommesAujourdhui();
-  if (consomme >= env.budgetTokensJourDefaut) {
-    throw new ErreurIaIndisponible(`Budget de tokens quotidien atteint (${consomme}/${env.budgetTokensJourDefaut}) — réessayez demain.`);
+  const budget = lireConfigurationIa().budgetTokensJour;
+  if (consomme >= budget) {
+    throw new ErreurIaIndisponible(`Budget de tokens quotidien atteint (${consomme}/${budget}) — réessayez demain.`);
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TYPE_TACHE, type Campagne } from "@achirah/shared";
 import { Dialog } from "../../components/ui/Dialog.js";
@@ -25,6 +25,10 @@ export function NouvelleTacheDialog({
   const [form, setForm] = useState({ titre: "", type: "autre" as (typeof TYPE_TACHE)[number], date_echeance: "", campagne_id: campagneParDefaut ?? "", lieu: "" });
   const [erreur, setErreur] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (ouvert && campagneParDefaut) setForm((f) => ({ ...f, campagne_id: campagneParDefaut }));
+  }, [ouvert, campagneParDefaut]);
+
   async function creer() {
     setErreur(null);
     try {
@@ -46,6 +50,9 @@ export function NouvelleTacheDialog({
           void creer();
         }}
       >
+        <div className="mb-4 rounded-field border border-[#F2C8B5] bg-[#FDEEE6] p-3 text-xs leading-relaxed text-[#8F3311]">
+          Toute tâche appartient obligatoirement à une campagne. Elle sera visible dans le board, le calendrier et le suivi de cette campagne.
+        </div>
         <Champ label={t("taches.champs.titre")}>
           <ChampTexte required value={form.titre} onChange={(e) => setForm((f) => ({ ...f, titre: e.target.value }))} />
         </Champ>
@@ -62,11 +69,11 @@ export function NouvelleTacheDialog({
           <ChampTexte type="date" required value={form.date_echeance} onChange={(e) => setForm((f) => ({ ...f, date_echeance: e.target.value }))} />
         </Champ>
         <Champ label={t("campagnes.champs.nom")}>
-          <ChampSelect required value={form.campagne_id} onChange={(e) => setForm((f) => ({ ...f, campagne_id: e.target.value }))}>
+          <ChampSelect required disabled={!!campagneParDefaut} value={form.campagne_id} onChange={(e) => setForm((f) => ({ ...f, campagne_id: e.target.value }))}>
             <option value="" disabled>
               —
             </option>
-            {campagnes.map((c) => (
+            {campagnes.filter((c) => c.statut !== "fermee" && c.statut !== "abandonnee").map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nom}
               </option>

@@ -25,6 +25,9 @@ import { ReglagesNotifications } from "./parametres/ReglagesNotifications.js";
 import { JournalAudit } from "./parametres/JournalAudit.js";
 import { SauvegardesAdmin } from "./parametres/SauvegardesAdmin.js";
 import { Observabilite } from "./parametres/Observabilite.js";
+import { ConfigurationIa } from "./parametres/ConfigurationIa.js";
+import { Integrations } from "./measure/Integrations.js";
+import { CharteInterface } from "./parametres/CharteInterface.js";
 
 const champsGamme: ChampConfig[] = [
   { cle: "nom", label: "Nom", type: "texte", requis: true },
@@ -83,7 +86,7 @@ const champsModeleRituel: ChampConfig[] = [{ cle: "nom", label: "Nom", type: "te
 export function Parametres() {
   const { t } = useTranslation();
   const { utilisateur } = useAuth();
-  const [onglet, setOnglet] = useState<"referentiels" | "utilisateurs" | "notifications" | "audit" | "sauvegardes" | "observabilite">("referentiels");
+  const [onglet, setOnglet] = useState<"referentiels" | "utilisateurs" | "integrations" | "interface" | "notifications" | "audit" | "sauvegardes" | "observabilite">("utilisateurs");
   const peutGererReferentiels = !!utilisateur && aCapacite(utilisateur.role_systeme, "approbation.gerer");
   const peutGererUtilisateurs = !!utilisateur && aCapacite(utilisateur.role_systeme, "parametres.gerer");
   const peutGererSysteme = !!utilisateur && aCapacite(utilisateur.role_systeme, "parametres.gerer");
@@ -91,6 +94,8 @@ export function Parametres() {
   const onglets = [
     { id: "referentiels" as const, label: t("referentiels.onglet_referentiels") },
     { id: "utilisateurs" as const, label: t("referentiels.onglet_utilisateurs") },
+    ...(peutGererSysteme ? [{ id: "integrations" as const, label: "Intégrations & IA" }] : []),
+    { id: "interface" as const, label: "Charte UI" },
     { id: "notifications" as const, label: t("notifications.titre") },
     ...(peutGererSysteme
       ? [
@@ -126,6 +131,16 @@ export function Parametres() {
       )}
 
       {onglet === "utilisateurs" && <UtilisateursAdmin peutGerer={peutGererUtilisateurs} />}
+      {onglet === "integrations" && peutGererSysteme && (
+        <div className="flex flex-col gap-5">
+          <ConfigurationIa />
+          <section className="rounded-card border border-line bg-panel p-4 sm:p-5">
+            <div className="mb-4"><h2 className="font-display text-xl font-semibold text-off">Plateformes connectées</h2><p className="mt-1 text-sm text-dim">Ventes, publicité et mesure — identifiants chiffrés côté serveur.</p></div>
+            <Integrations />
+          </section>
+        </div>
+      )}
+      {onglet === "interface" && <CharteInterface />}
       {onglet === "notifications" && <ReglagesNotifications />}
       {onglet === "audit" && peutGererSysteme && <JournalAudit />}
       {onglet === "sauvegardes" && peutGererSysteme && <SauvegardesAdmin />}

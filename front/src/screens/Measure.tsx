@@ -6,7 +6,6 @@ import { clientCampagnes } from "../lib/resources/campagnes.js";
 import { clientPlateformesContenu, clientCanaux } from "../lib/resources/referentiels.js";
 import { NiveauMesure, type ChampKpi } from "./measure/NiveauMesure.js";
 import { ConsolidationCampagne } from "./measure/ConsolidationCampagne.js";
-import { Integrations } from "./measure/Integrations.js";
 
 const CHAMPS_SOCIAL: ChampKpi[] = [
   { cle: "followers", label: "Followers" },
@@ -37,7 +36,7 @@ const CHAMPS_SITE: ChampKpi[] = [
 /** MEASURE (E27) — Social/Paid/Site en mode manuel ou connecté, consolidation par campagne, Intégrations (E28). */
 export function Measure() {
   const { t } = useTranslation();
-  const [onglet, setOnglet] = useState<"social" | "paid" | "site" | "consolidation" | "integrations">("social");
+  const [onglet, setOnglet] = useState<"social" | "paid" | "site" | "consolidation">("social");
   const [campagnes, setCampagnes] = useState<Campagne[]>([]);
   const [plateformesSocial, setPlateformesSocial] = useState<{ valeur: string; label: string }[]>([]);
   const [canauxPaid, setCanauxPaid] = useState<{ valeur: string; label: string }[]>([]);
@@ -60,14 +59,12 @@ export function Measure() {
           { id: "paid", label: t("mesure.onglets.paid") },
           { id: "site", label: t("mesure.onglets.site") },
           { id: "consolidation", label: t("mesure.onglets.consolidation") },
-          { id: "integrations", label: t("mesure.onglets.integrations") },
         ]}
       />
       {onglet === "social" && <NiveauMesure plateformes={plateformesSocial} champs={CHAMPS_SOCIAL} campagnes={campagnes} />}
       {onglet === "paid" && <NiveauMesure plateformes={canauxPaid.length ? canauxPaid : [{ valeur: "meta_ads", label: "Meta Ads" }, { valeur: "tiktok_ads", label: "TikTok Ads" }]} champs={CHAMPS_PAID} campagnes={campagnes} />}
       {onglet === "site" && <NiveauMesure plateformes={[{ valeur: "shopify", label: "Shopify" }]} champs={CHAMPS_SITE} campagnes={campagnes} />}
       {onglet === "consolidation" && <ConsolidationCampagne campagnes={campagnes} />}
-      {onglet === "integrations" && <Integrations />}
     </div>
   );
 }

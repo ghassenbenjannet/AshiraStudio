@@ -331,6 +331,20 @@
       "reel": "Réel",
       "ajouter": "Ajouter une ligne",
       "depassement": "Dépassement du budget prévu"
+    },
+    "gerer_dans_creer": "Gérer dans Créer →",
+    "agents": {
+      "nouveau": "Nouvel agent",
+      "actif": "Actif",
+      "global": "global",
+      "tester": "Tester",
+      "test_note": "Bac à sable — aucun outil d'écriture, rien n'est enregistré.",
+      "champs": {
+        "nom": "Nom",
+        "couleur": "Couleur",
+        "instructions": "Instructions",
+        "outils": "Outils actifs"
+      }
     }
   },
   "taches": {
@@ -411,7 +425,13 @@
       "description_placeholder": "Ex. Plan large, marche dans la rue"
     },
     "pieces_a_apporter": "Pièces à apporter",
-    "notes": "Notes"
+    "notes": "Notes",
+    "generer_brief": "Générer le brief",
+    "brief_titre": "Brief de tournage",
+    "brief_modele": "Modèle",
+    "brief_pieces": "Pièces",
+    "brief_materiel": "Matériel",
+    "brief_attention": "Point d'attention"
   },
   "calendrier": {
     "titre": "Calendrier éditorial",
@@ -430,12 +450,14 @@
     "prochain_shooting": "Prochain shooting",
     "dette_mesure": "Dette de mesure",
     "brief_ia": "Brief IA",
-    "brief_ia_indisponible": "Le brief IA sera disponible en Phase ⑤.",
+    "brief_ia_indisponible": "IA indisponible — réessayez plus tard.",
     "raccourcis": "Raccourcis",
     "nouvelle_tache": "+ Tâche",
     "nouvelle_idee": "+ Idée",
     "aucune_tache": "Aucune tâche.",
-    "aucun_shooting": "Aucun shooting à venir."
+    "aucun_shooting": "Aucun shooting à venir.",
+    "demander": "Demander",
+    "demander_placeholder": "Posez une question sur vos données…"
   },
   "contenus": {
     "titre": "Contenus",
@@ -481,7 +503,21 @@
     "version_restauree": "Version restaurée",
     "assets_lies": "Assets liés",
     "ajouter_asset": "+ Ajouter un asset",
-    "droits_manquants": "Droits manquants (RG-AS1)"
+    "droits_manquants": "Droits manquants (RG-AS1)",
+    "gate": {
+      "titre": "Gate de marque",
+      "noter": "Noter",
+      "renoter": "Renoter",
+      "non_note": "Pas encore noté.",
+      "correction": "Correction proposée",
+      "dimensions": {
+        "registre": "Registre",
+        "interdits": "Interdits",
+        "specificite": "Spécificité",
+        "format": "Format",
+        "coherence": "Cohérence"
+      }
+    }
   },
   "idees": {
     "titre": "Idées",
@@ -499,12 +535,24 @@
     "nouvelle": "Nouvelle idée",
     "champs": {
       "contenu": "Idée (gras **texte**, sauts de ligne)",
-      "tache_liee": "Tâche liée"
+      "tache_liee": "Tâche liée",
+      "objectif": "Objectif",
+      "effort": "Effort de production",
+      "quantite": "Quantité"
     },
     "copier": "Copier",
     "copiee": "Idée copiée",
     "marquer_utilisee": "Marquer utilisée",
-    "ecarter": "Écarter"
+    "ecarter": "Écarter",
+    "generer": "Générer des idées",
+    "sauvegarder": "Sauvegarder",
+    "sauvegardee": "Sauvegardée",
+    "score_disclaimer": "Le score est une estimation qualitative du modèle, jamais une prédiction (RG-ID1).",
+    "efforts": {
+      "facile": "Facile (téléphone, 20 min)",
+      "moyen": "Moyen",
+      "lourd": "Lourd"
+    }
   },
   "assets": {
     "titre": "Assets",
@@ -561,5 +609,50 @@
     "transformer_note": "{{n}} item(s) sélectionné(s) — les notes deviennent la description, les images/assets deviennent des références.",
     "transformee": "Campagne créée",
     "asset_id": "Asset"
+  },
+  "studio": {
+    "titre": "Studio",
+    "nouvelle_conversation": "+ Nouvelle conversation",
+    "sans_titre": "Sans titre",
+    "aucune_conversation": "Sélectionnez ou démarrez une conversation.",
+    "agent_standard": "Standard",
+    "campagne_defaut": "Campagne (par défaut)",
+    "campagne_aucune": "Aucune campagne",
+    "placeholder": "Écrivez votre message…",
+    "envoyer": "Envoyer",
+    "confirmer": "Confirmer",
+    "sauvegarder_en_idee": "Sauvegarder en idée",
+    "idee_sauvegardee": "Idée sauvegardée",
+    "images_jointes": "{{n}} image(s) jointe(s)",
+    "ia_indisponible": "IA indisponible — réessayez plus tard.",
+    "chips": {
+      "idees": "Idées",
+      "brief_shooting": "Brief shooting",
+      "caption": "Caption",
+      "message_ambassadeur": "Message ambassadeur",
+      "fiche_produit": "Fiche produit",
+      "planning_semaine": "Planning semaine"
+    },
+    "outils": {
+      "get_taches": "Lire les tâches",
+      "get_prochains_shootings": "Lire les prochains shootings",
+      "get_campagnes": "Lire les campagnes",
+      "get_articles": "Lire le catalogue",
+      "get_personnes": "Lire le réseau",
+      "get_kpis": "Lire les KPI",
+      "get_contenus": "Lire les contenus",
+      "get_budget": "Lire le budget",
+      "get_ambassadeurs": "Lire les ambassadeurs",
+      "get_tendances": "Lire les tendances",
+      "get_lecons": "Lire les leçons",
+      "creer_tache": "Créer une tâche",
+      "creer_idee": "Créer une idée",
+      "creer_contenu_brouillon": "Créer un contenu (brouillon)",
+      "proposer_expression": "Proposer une expression",
+      "modifier_tache": "Modifier une tâche",
+      "ajouter_poses": "Ajouter des poses",
+      "ajouter_look": "Ajouter un look",
+      "creer_personne": "Créer une personne"
+    }
   }
 }

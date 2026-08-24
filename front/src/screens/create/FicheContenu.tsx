@@ -26,6 +26,8 @@ export function FicheContenu() {
   const [plateformes, setPlateformes] = useState<ListeSimple[]>([]);
   const [registres, setRegistres] = useState<Registre[]>([]);
   const [datePlanif, setDatePlanif] = useState("");
+  const [notationEnCours, setNotationEnCours] = useState(false);
+  const [erreurGate, setErreurGate] = useState<string | null>(null);
 
   const charger = () => {
     if (!id) return;
@@ -46,6 +48,20 @@ export function FicheContenu() {
 
   function champ<K extends keyof Contenu>(cle: K, valeur: Contenu[K]) {
     setContenu((c) => (c ? { ...c, [cle]: valeur } : c));
+  }
+
+  async function renoter() {
+    if (!contenu) return;
+    setNotationEnCours(true);
+    setErreurGate(null);
+    try {
+      const { score_marque, score_detail } = await clientContenus.noterGate(contenu.id);
+      setContenu((c) => (c ? { ...c, score_marque, score_detail } : c));
+    } catch (err) {
+      setErreurGate(err instanceof ApiError && err.status === 503 ? t("studio.ia_indisponible") : err instanceof ApiError ? err.message : t("commun.erreur_generique"));
+    } finally {
+      setNotationEnCours(false);
+    }
   }
 
   async function enregistrer() {
@@ -214,6 +230,36 @@ export function FicheContenu() {
           </div>
         )}
       </form>
+
+      <section className="mb-6 rounded-card border border-line bg-panel p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="font-display text-lg text-off">{t("contenus.gate.titre")}</h2>
+          {peutEditer && (
+            <BoutonSecondaire type="button" onClick={() => void renoter()} disabled={notationEnCours}>
+              {contenu.score_marque === null ? t("contenus.gate.noter") : t("contenus.gate.renoter")}
+            </BoutonSecondaire>
+          )}
+        </div>
+        {erreurGate && <p className="text-sm text-danger-fg">{erreurGate}</p>}
+        {contenu.score_marque === null && !erreurGate && <p className="text-sm text-dim">{t("contenus.gate.non_note")}</p>}
+        {contenu.score_marque !== null && (
+          <div>
+            <p className="mb-2 text-2xl font-display text-off">{contenu.score_marque}/10</p>
+            <div className="flex flex-col gap-2">
+              {(contenu.score_detail ?? []).map((d) => (
+                <div key={d.dimension} className="rounded-field border border-line px-3 py-2 text-sm">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="font-medium text-off">{t(`contenus.gate.dimensions.${d.dimension}`)}</span>
+                    <span className={d.score === 2 ? "text-olive" : d.score === 1 ? "text-sable" : "text-danger-fg"}>{d.score}/2</span>
+                  </div>
+                  <p className="text-dim">{d.raison}</p>
+                  {d.correction && <p className="mt-1 text-off">{t("contenus.gate.correction")} : {d.correction}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       <section className="mb-6 rounded-card border border-line bg-panel p-4">
         <h2 className="mb-2 font-display text-lg text-off">{t("contenus.assets_lies")}</h2>

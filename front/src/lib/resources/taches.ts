@@ -27,7 +27,14 @@ export const clientTaches = {
 
   obtenirShooting: (id: string) => api<{ donnees: ShootingEnrichi }>(`/taches/${id}/shooting`).then((r) => r.donnees),
   modifierShooting: (id: string, corps: Partial<Shooting>) => api<{ donnees: ShootingEnrichi }>(`/taches/${id}/shooting`, { method: "PATCH", body: corps }).then((r) => r.donnees),
+  genererBrief: (id: string) => api<{ donnees: BriefShooting }>(`/taches/${id}/brief`, { method: "POST" }).then((r) => r.donnees),
 };
+
+export interface BriefShooting {
+  plans: { ordre: number; pieces: string[]; modele?: string; mise_en_scene: string }[];
+  materiel_note: string;
+  points_attention?: string;
+}
 
 export const clientShootings = {
   callsheetUrl: (id: string) => `/api/shootings/${id}/callsheet.pdf`,

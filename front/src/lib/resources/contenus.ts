@@ -18,4 +18,5 @@ export const clientContenus = {
   dupliquer: (id: string, plateformes?: string[]) => api<{ donnees: Contenu }>(`/contenus/${id}/dupliquer`, { method: "POST", body: { plateformes } }).then((r) => r.donnees),
   versions: (id: string) => api<{ donnees: ContenuVersion[] }>(`/contenus/${id}/versions`).then((r) => r.donnees),
   restaurerVersion: (id: string, versionId: string) => api<{ donnees: Contenu }>(`/contenus/${id}/versions/${versionId}/restaurer`, { method: "POST" }).then((r) => r.donnees),
+  noterGate: (id: string) => api<{ donnees: { score_marque: number; score_detail: import("@achirah/shared").ScoreDetailDimension[] } }>(`/contenus/${id}/gate`, { method: "POST" }).then((r) => r.donnees),
 };

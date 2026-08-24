@@ -208,3 +208,29 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
 - **Bug trouvé et corrigé** : `agentCampagneInsertSchema` exigeait `cree_par` (champ fixé par le
   serveur) — même angle mort que `contenu.auteur_id` en Phase ④, corrigé en l'omettant du schéma
   d'insertion partagé.
+- **Studio (E12) logé dans l'onglet « Créer »**, pas un écran séparé — confirmé par
+  `nav-config.ts` : l'onglet mobile « studio » pointe déjà vers `/create` depuis le Phase ①. Ajouté
+  comme premier onglet (avant Contenus/Idées/Assets/Boards), cohérent avec son rôle d'entrée
+  principale.
+- **Cartes de confirmation affichées en JSON brut** dans le fil Studio (`apres_previsualise`
+  sérialisé) plutôt qu'un rendu métier par outil — un rendu dédié par type d'action (avant/après
+  lisible pour `modifier_tache`, `ajouter_look`, etc.) est un vrai gain UX mais demanderait un
+  composant par outil ; le JSON reste honnête et complet (aucune perte d'information) en attendant.
+- **Onglets Contenus/Assets de la fiche campagne** (jusqu'ici `EcranAConstruire`, promis pour la
+  Phase ④) : complétés ici en vues filtrées en lecture (liens vers Créer pour la gestion complète)
+  — un oubli de la Phase ④ à corriger avant de le laisser traîner plus longtemps, pas un ajout hors
+  périmètre de la Phase ⑤.
+- **Sélection d'outils par agent** : la case à cocher `outils_actives` part cochée sur les 19 outils
+  (équivalent fonctionnel de la liste vide = « tous », lue côté serveur) — évite d'exposer la
+  convention serveur "vide = illimité" dans l'UI, qui prêterait à confusion (tout décoché
+  ressemblerait à « aucun outil » plutôt qu'à « tous »).
+- **Bug trouvé et corrigé (Playwright)** : le cockpit affichait encore le texte figé de la Phase ③
+  « Le brief IA sera disponible en Phase ⑤ » au lieu du nouveau message honnête — la clé de
+  traduction existait déjà mais son contenu n'avait pas été mis à jour en branchant le vrai appel.
+  Corrigé (`aujourdhui.brief_ia_indisponible` → « IA indisponible — réessayez plus tard. »).
+- **Front vérifié de bout en bout (11 captures Playwright)** : Studio (chat, erreur IA propre),
+  générateur d'idées (formulaire → erreur propre), fiche contenu (scorecard gate « Pas encore
+  noté »), call sheet (bouton Générer le brief + erreur propre), onglet Agents (gabarit pré-rempli,
+  19 outils, création, test bac à sable), cockpit (brief + barre Demander). Un flakiness Playwright
+  isolé (navigation cockpit) confirmé environnemental par re-test immédiat réussi et par un appel
+  curl direct aux mêmes endpoints (réponse instantanée) — pas un bug applicatif.

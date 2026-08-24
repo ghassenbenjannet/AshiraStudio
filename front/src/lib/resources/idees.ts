@@ -1,4 +1,4 @@
-import type { Idee } from "@achirah/shared";
+import type { Idee, GenererIdeesEntree, IdeeGeneree } from "@achirah/shared";
 import { api } from "../api.js";
 
 export const clientIdees = {
@@ -11,4 +11,5 @@ export const clientIdees = {
   creer: (corps: Partial<Idee>) => api<{ donnees: Idee }>("/idees", { method: "POST", body: corps }).then((r) => r.donnees),
   modifier: (id: string, corps: Partial<Idee>) => api<{ donnees: Idee }>(`/idees/${id}`, { method: "PATCH", body: corps }).then((r) => r.donnees),
   supprimer: (id: string) => api<void>(`/idees/${id}`, { method: "DELETE" }),
+  generer: (entree: GenererIdeesEntree) => api<{ donnees: IdeeGeneree[] }>("/idees/generer", { method: "POST", body: entree }).then((r) => r.donnees),
 };

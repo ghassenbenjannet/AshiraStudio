@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { tacheEnRetard, aCapacite, type Tache, type Campagne } from "@achirah/shared";
-import { BoutonPrimaire, BoutonSecondaire } from "../components/ui/Champ.js";
+import { BoutonPrimaire, BoutonSecondaire, ChampTexte } from "../components/ui/Champ.js";
+import { MarkdownLeger } from "../components/ui/MarkdownLeger.js";
 import { useAuth } from "../lib/auth-context.js";
+import { ApiError } from "../lib/api.js";
 import { clientTaches } from "../lib/resources/taches.js";
 import { clientCampagnes } from "../lib/resources/campagnes.js";
+import { clientBrain, type BriefQuotidien } from "../lib/resources/brain.js";
 import { NouvelleTacheDialog } from "./plan/NouvelleTacheDialog.js";
 
 function joursRestants(dateIso: string): number {
@@ -42,6 +45,12 @@ export function Aujourdhui() {
   const [campagnes, setCampagnes] = useState<Campagne[]>([]);
   const [dette, setDette] = useState<Campagne[]>([]);
   const [dialogueOuvert, setDialogueOuvert] = useState(false);
+  const [brief, setBrief] = useState<BriefQuotidien | null>(null);
+  const [erreurBrief, setErreurBrief] = useState<string | null>(null);
+  const [question, setQuestion] = useState("");
+  const [reponse, setReponse] = useState<string | null>(null);
+  const [questionEnCours, setQuestionEnCours] = useState(false);
+  const [erreurQuestion, setErreurQuestion] = useState<string | null>(null);
 
   useEffect(() => {
     clientTaches.lister({ quand: "retard" }).then(setEnRetard);
@@ -52,7 +61,26 @@ export function Aujourdhui() {
     });
     clientCampagnes.lister("active").then(setCampagnes);
     clientCampagnes.detteDeMesure().then(setDette);
-  }, []);
+    clientBrain
+      .brief()
+      .then(setBrief)
+      .catch((err) => setErreurBrief(err instanceof ApiError && err.status === 503 ? t("aujourdhui.brief_ia_indisponible") : t("commun.erreur_generique")));
+  }, [t]);
+
+  async function poserQuestion() {
+    if (!question.trim()) return;
+    setQuestionEnCours(true);
+    setErreurQuestion(null);
+    setReponse(null);
+    try {
+      const r = await clientBrain.question(question);
+      setReponse(r.contenu);
+    } catch (err) {
+      setErreurQuestion(err instanceof ApiError && err.status === 503 ? t("aujourdhui.brief_ia_indisponible") : t("commun.erreur_generique"));
+    } finally {
+      setQuestionEnCours(false);
+    }
+  }
 
   const chapitreActif = campagnes[0];
 
@@ -94,9 +122,51 @@ export function Aujourdhui() {
         </section>
       )}
 
-      <section className="mb-4 rounded-card border border-dashed border-line p-4 text-center">
-        <h2 className="mb-1 text-sm font-medium text-dim">{t("aujourdhui.brief_ia")}</h2>
-        <p className="text-sm text-dim">{t("aujourdhui.brief_ia_indisponible")}</p>
+      <section className="mb-4 rounded-card border border-line bg-panel p-4">
+        <h2 className="mb-2 text-sm font-medium text-dim">{t("aujourdhui.brief_ia")}</h2>
+        {erreurBrief && <p className="text-sm text-dim">{erreurBrief}</p>}
+        {!brief && !erreurBrief && <p className="text-sm text-dim">{t("commun.chargement")}</p>}
+        {brief && (
+          <div>
+            <ul className="mb-3 list-inside list-disc text-sm text-off">
+              {brief.constats.map((c, i) => (
+                <li key={i}>{c}</li>
+              ))}
+            </ul>
+            <div className="flex flex-col gap-1">
+              {brief.actions.map((a, i) => (
+                <p key={i} className="text-sm">
+                  <span className="font-medium text-sable">{a.titre}</span> — <span className="text-dim">{a.description}</span>
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mb-4 rounded-card border border-line bg-panel p-4">
+        <h2 className="mb-2 text-sm font-medium text-dim">{t("aujourdhui.demander")}</h2>
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <ChampTexte
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void poserQuestion();
+              }}
+              placeholder={t("aujourdhui.demander_placeholder")}
+            />
+          </div>
+          <BoutonSecondaire type="button" onClick={() => void poserQuestion()} disabled={questionEnCours || !question.trim()}>
+            {t("aujourdhui.demander")}
+          </BoutonSecondaire>
+        </div>
+        {erreurQuestion && <p className="mt-2 text-sm text-danger-fg">{erreurQuestion}</p>}
+        {reponse && (
+          <p className="mt-2 text-sm text-off">
+            <MarkdownLeger texte={reponse} />
+          </p>
+        )}
       </section>
 
       {peutEditer && (

@@ -331,6 +331,20 @@
       "reel": "الفعلي",
       "ajouter": "إضافة سطر",
       "depassement": "تجاوز الميزانية المخططة"
+    },
+    "gerer_dans_creer": "الإدارة من إنشاء ←",
+    "agents": {
+      "nouveau": "وكيل جديد",
+      "actif": "نشط",
+      "global": "عام",
+      "tester": "اختبار",
+      "test_note": "بيئة اختبار — بدون أدوات كتابة، لا شيء يُحفظ.",
+      "champs": {
+        "nom": "الاسم",
+        "couleur": "اللون",
+        "instructions": "التعليمات",
+        "outils": "الأدوات المفعّلة"
+      }
     }
   },
   "taches": {
@@ -411,7 +425,13 @@
       "description_placeholder": "مثال: لقطة عامة، مشي في الشارع"
     },
     "pieces_a_apporter": "القطع الواجب إحضارها",
-    "notes": "ملاحظات"
+    "notes": "ملاحظات",
+    "generer_brief": "توليد الملخص",
+    "brief_titre": "ملخص التصوير",
+    "brief_modele": "العارض",
+    "brief_pieces": "القطع",
+    "brief_materiel": "المعدات",
+    "brief_attention": "نقطة انتباه"
   },
   "calendrier": {
     "titre": "التقويم التحريري",
@@ -430,12 +450,14 @@
     "prochain_shooting": "التصوير القادم",
     "dette_mesure": "ديْن القياس",
     "brief_ia": "الملخص الذكي",
-    "brief_ia_indisponible": "الملخص الذكي سيكون متاحًا في المرحلة ⑤.",
+    "brief_ia_indisponible": "الذكاء الاصطناعي غير متاح — أعد المحاولة لاحقًا.",
     "raccourcis": "اختصارات",
     "nouvelle_tache": "+ مهمة",
     "nouvelle_idee": "+ فكرة",
     "aucune_tache": "لا توجد مهام.",
-    "aucun_shooting": "لا يوجد تصوير قادم."
+    "aucun_shooting": "لا يوجد تصوير قادم.",
+    "demander": "اسأل",
+    "demander_placeholder": "اطرح سؤالاً حول بياناتك…"
   },
   "contenus": {
     "titre": "المحتوى",
@@ -481,7 +503,21 @@
     "version_restauree": "تمت استعادة النسخة",
     "assets_lies": "الأصول المرتبطة",
     "ajouter_asset": "+ إضافة أصل",
-    "droits_manquants": "الحقوق ناقصة (RG-AS1)"
+    "droits_manquants": "الحقوق ناقصة (RG-AS1)",
+    "gate": {
+      "titre": "بوابة الهوية",
+      "noter": "تقييم",
+      "renoter": "إعادة التقييم",
+      "non_note": "لم يُقيَّم بعد.",
+      "correction": "تصحيح مقترح",
+      "dimensions": {
+        "registre": "السجل",
+        "interdits": "المحظورات",
+        "specificite": "الخصوصية",
+        "format": "الصيغة",
+        "coherence": "الاتساق"
+      }
+    }
   },
   "idees": {
     "titre": "الأفكار",
@@ -499,12 +535,24 @@
     "nouvelle": "فكرة جديدة",
     "champs": {
       "contenu": "الفكرة (**نص عريض**، أسطر جديدة)",
-      "tache_liee": "المهمة المرتبطة"
+      "tache_liee": "المهمة المرتبطة",
+      "objectif": "الهدف",
+      "effort": "مستوى الجهد",
+      "quantite": "الكمية"
     },
     "copier": "نسخ",
     "copiee": "تم نسخ الفكرة",
     "marquer_utilisee": "تعليم كمستخدمة",
-    "ecarter": "استبعاد"
+    "ecarter": "استبعاد",
+    "generer": "توليد أفكار",
+    "sauvegarder": "حفظ",
+    "sauvegardee": "محفوظة",
+    "score_disclaimer": "النتيجة تقدير نوعي من النموذج، وليست تنبؤًا أبدًا (RG-ID1).",
+    "efforts": {
+      "facile": "سهل (هاتف، 20 دقيقة)",
+      "moyen": "متوسط",
+      "lourd": "كبير"
+    }
   },
   "assets": {
     "titre": "الأصول",
@@ -561,5 +609,50 @@
     "transformer_note": "{{n}} عنصر محدد — تصبح الملاحظات الوصف، وتصبح الصور/الأصول مراجع.",
     "transformee": "تم إنشاء الحملة",
     "asset_id": "الأصل"
+  },
+  "studio": {
+    "titre": "الاستوديو",
+    "nouvelle_conversation": "+ محادثة جديدة",
+    "sans_titre": "بدون عنوان",
+    "aucune_conversation": "اختر محادثة أو ابدأ واحدة جديدة.",
+    "agent_standard": "قياسي",
+    "campagne_defaut": "الحملة (افتراضي)",
+    "campagne_aucune": "بدون حملة",
+    "placeholder": "اكتب رسالتك…",
+    "envoyer": "إرسال",
+    "confirmer": "تأكيد",
+    "sauvegarder_en_idee": "حفظ كفكرة",
+    "idee_sauvegardee": "تم حفظ الفكرة",
+    "images_jointes": "{{n}} صورة مرفقة",
+    "ia_indisponible": "الذكاء الاصطناعي غير متاح — أعد المحاولة لاحقًا.",
+    "chips": {
+      "idees": "أفكار",
+      "brief_shooting": "ملخص التصوير",
+      "caption": "نص المنشور",
+      "message_ambassadeur": "رسالة للسفير",
+      "fiche_produit": "بطاقة المنتج",
+      "planning_semaine": "خطة الأسبوع"
+    },
+    "outils": {
+      "get_taches": "قراءة المهام",
+      "get_prochains_shootings": "قراءة جلسات التصوير القادمة",
+      "get_campagnes": "قراءة الحملات",
+      "get_articles": "قراءة الكتالوج",
+      "get_personnes": "قراءة الشبكة",
+      "get_kpis": "قراءة المؤشرات",
+      "get_contenus": "قراءة المحتوى",
+      "get_budget": "قراءة الميزانية",
+      "get_ambassadeurs": "قراءة السفراء",
+      "get_tendances": "قراءة الاتجاهات",
+      "get_lecons": "قراءة الدروس",
+      "creer_tache": "إنشاء مهمة",
+      "creer_idee": "إنشاء فكرة",
+      "creer_contenu_brouillon": "إنشاء محتوى (مسودة)",
+      "proposer_expression": "اقتراح تعبير",
+      "modifier_tache": "تعديل مهمة",
+      "ajouter_poses": "إضافة لقطات",
+      "ajouter_look": "إضافة إطلالة",
+      "creer_personne": "إنشاء شخص"
+    }
   }
 }

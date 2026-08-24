@@ -10,10 +10,13 @@ import { OngletStrategie } from "./OngletStrategie.js";
 import { OngletBudget } from "./OngletBudget.js";
 import { OngletTachesCampagne } from "./OngletTachesCampagne.js";
 import { OngletEquipe } from "./OngletEquipe.js";
+import { OngletContenusCampagne } from "./OngletContenusCampagne.js";
+import { OngletAssetsCampagne } from "./OngletAssetsCampagne.js";
+import { OngletAgentsCampagne } from "./OngletAgentsCampagne.js";
 
 type OngletId = "strategie" | "budget" | "taches" | "equipe" | "contenus" | "assets" | "agents" | "resultats";
 
-/** E19 — Fiche campagne = hub à onglets (§4.3). Contenus/Assets/Agents/Résultats arrivent en Phases ④/⑤/⑥. */
+/** E19 — Fiche campagne = hub à onglets (§4.3). Résultats arrive en Phase ⑥. */
 export function FicheCampagne() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -54,9 +57,9 @@ export function FicheCampagne() {
       {onglet === "budget" && <OngletBudget campagneId={campagne.id} />}
       {onglet === "taches" && <OngletTachesCampagne campagneId={campagne.id} />}
       {onglet === "equipe" && <OngletEquipe campagneId={campagne.id} />}
-      {onglet === "contenus" && <EcranAConstruire titre={t("campagnes.onglets.contenus")} />}
-      {onglet === "assets" && <EcranAConstruire titre={t("campagnes.onglets.assets")} />}
-      {onglet === "agents" && <EcranAConstruire titre={t("campagnes.onglets.agents")} />}
+      {onglet === "contenus" && <OngletContenusCampagne campagneId={campagne.id} />}
+      {onglet === "assets" && <OngletAssetsCampagne campagneId={campagne.id} />}
+      {onglet === "agents" && <OngletAgentsCampagne campagneId={campagne.id} />}
       {onglet === "resultats" && <EcranAConstruire titre={t("campagnes.onglets.resultats")} />}
     </div>
   );

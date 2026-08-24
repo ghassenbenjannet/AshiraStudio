@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HEURE_LUMIERE, type Personne } from "@achirah/shared";
-import { Champ, ChampSelect, ChampNombre } from "../../components/ui/Champ.js";
+import { Champ, ChampSelect, ChampNombre, BoutonSecondaire } from "../../components/ui/Champ.js";
 import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
-import { clientTaches, clientShootings } from "../../lib/resources/taches.js";
+import { clientTaches, clientShootings, type BriefShooting } from "../../lib/resources/taches.js";
 import { clientPersonnes } from "../../lib/resources/contacts.js";
 import { clientArticleSkus } from "../../lib/resources/catalogue.js";
 import { LooksComposer } from "./LooksComposer.js";
@@ -19,6 +19,9 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
   const [photographes, setPhotographes] = useState<Personne[]>([]);
   const [modeles, setModeles] = useState<Personne[]>([]);
   const [skusParId, setSkusParId] = useState<Map<string, string>>(new Map());
+  const [brief, setBrief] = useState<BriefShooting | null>(null);
+  const [briefEnCours, setBriefEnCours] = useState(false);
+  const [erreurBrief, setErreurBrief] = useState<string | null>(null);
 
   const charger = () =>
     clientTaches.obtenirShooting(tacheId).then(async (s) => {
@@ -53,6 +56,19 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
     }
   }
 
+  async function genererBrief() {
+    setBriefEnCours(true);
+    setErreurBrief(null);
+    try {
+      const resultat = await clientTaches.genererBrief(tacheId);
+      setBrief(resultat);
+    } catch (err) {
+      setErreurBrief(err instanceof ApiError && err.status === 503 ? t("studio.ia_indisponible") : err instanceof ApiError ? err.message : t("commun.erreur_generique"));
+    } finally {
+      setBriefEnCours(false);
+    }
+  }
+
   async function basculerMateriel(index: number) {
     if (!shooting) return;
     const materiel = shooting.materiel.map((m, i) => (i === index ? { ...m, coche: !m.coche } : m));
@@ -71,11 +87,40 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
             {t("callsheet.pret_a_tourner")}
             {!shooting.pret_a_tourner.pret && ` (${shooting.pret_a_tourner.manques.map((m) => t(`callsheet.manques.${CLE_MANQUE_TRAD[m] ?? m}`)).join(", ")})`}
           </span>
+          <BoutonSecondaire type="button" onClick={() => void genererBrief()} disabled={briefEnCours}>
+            {t("callsheet.generer_brief")}
+          </BoutonSecondaire>
           <a href={clientShootings.callsheetUrl(tacheId)} target="_blank" rel="noreferrer" className="min-h-tap flex items-center rounded-field border border-line px-3 text-sm text-off hover:border-sable">
             {t("callsheet.generer_pdf")}
           </a>
         </div>
       </div>
+
+      {erreurBrief && <p className="mb-4 text-sm text-danger-fg">{erreurBrief}</p>}
+      {brief && (
+        <div className="mb-4 rounded-field border border-line bg-panel2 p-3">
+          <h3 className="mb-2 text-sm font-medium text-off">{t("callsheet.brief_titre")}</h3>
+          <ol className="mb-3 flex flex-col gap-2">
+            {brief.plans.map((p) => (
+              <li key={p.ordre} className="rounded-field border border-line bg-panel p-2 text-sm">
+                <p className="font-medium text-off">
+                  {p.ordre + 1}. {p.mise_en_scene}
+                </p>
+                {p.modele && <p className="text-dim">{t("callsheet.brief_modele")} : {p.modele}</p>}
+                {p.pieces.length > 0 && <p className="text-dim">{t("callsheet.brief_pieces")} : {p.pieces.join(", ")}</p>}
+              </li>
+            ))}
+          </ol>
+          <p className="text-sm text-off">
+            <span className="text-dim">{t("callsheet.brief_materiel")} :</span> {brief.materiel_note}
+          </p>
+          {brief.points_attention && (
+            <p className="mt-1 text-sm text-sable">
+              <span className="text-dim">{t("callsheet.brief_attention")} :</span> {brief.points_attention}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-x-4 md:grid-cols-2">
         <Champ label={t("callsheet.photographe")}>

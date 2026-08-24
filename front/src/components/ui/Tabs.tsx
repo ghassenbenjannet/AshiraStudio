@@ -1,3 +1,5 @@
+import { PastilleEtat, type EtatCompletude } from "./EtatCompletude.js";
+
 export function Tabs<T extends string>({
   valeur,
   onChange,
@@ -5,7 +7,7 @@ export function Tabs<T extends string>({
 }: {
   valeur: T;
   onChange: (v: T) => void;
-  onglets: { id: T; label: string }[];
+  onglets: { id: T; label: string; etat?: EtatCompletude }[];
 }) {
   return (
     <div className="mb-5 flex gap-1.5 overflow-x-auto pb-1" role="tablist">
@@ -20,6 +22,7 @@ export function Tabs<T extends string>({
             valeur === onglet.id ? "border-[#F2C8B5] bg-[#FDEEE6] font-semibold text-sable" : "border-line bg-panel text-dim hover:border-sable hover:text-off"
           }`}
         >
+          {onglet.etat && <PastilleEtat etat={onglet.etat} className="me-1.5" />}
           {onglet.label}
         </button>
       ))}

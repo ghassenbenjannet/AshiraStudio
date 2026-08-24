@@ -1,4 +1,4 @@
-import type { Campagne, CampagneArticle, AjoutIntelligent, BudgetLigne, Tache } from "@achirah/shared";
+import type { Campagne, CampagneArticle, AjoutIntelligent, BudgetLigne, Tache, ProchaineEtape } from "@achirah/shared";
 import { api } from "../api.js";
 
 interface ChiffreConsolide {
@@ -28,6 +28,7 @@ export const clientCampagnes = {
   genererRituel: (id: string) => api<{ donnees: Tache[] }>(`/campagnes/${id}/rituel`, { method: "POST" }).then((r) => r.donnees),
   consolidation: (id: string) => api<{ donnees: Consolidation }>(`/campagnes/${id}/consolidation`).then((r) => r.donnees),
   detteDeMesure: () => api<{ donnees: Campagne[] }>("/campagnes/dette-mesure").then((r) => r.donnees),
+  prochaineEtape: (id: string) => api<{ donnees: ProchaineEtape }>(`/campagnes/${id}/prochaine-etape`).then((r) => r.donnees),
 
   listerArticles: (id: string) => api<{ donnees: CampagneArticle[] }>(`/campagnes/${id}/articles`).then((r) => r.donnees),
   ajouterArticle: (id: string, entree: AjoutIntelligent) => api<{ donnees: CampagneArticle }>(`/campagnes/${id}/articles`, { method: "POST", body: entree }).then((r) => r.donnees),

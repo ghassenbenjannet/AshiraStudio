@@ -19,7 +19,7 @@ import { articles, articleColoris, articleSkus, articleCouts, historiqueStatuts,
 import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
-import { transitionnerArticle, verifierAutoEpuisement, verifierBaissePrix, ErreurMetier } from "../services/catalogue.js";
+import { transitionnerArticle, prochaineEtapeArticle, verifierAutoEpuisement, verifierBaissePrix, ErreurMetier } from "../services/catalogue.js";
 import { importerArticles } from "../services/import-articles.js";
 import { enregistrerFichier } from "../lib/storage.js";
 import type { AppEnv } from "../types.js";
@@ -91,6 +91,16 @@ articlesRoutes.get("/:id", async (c) => {
   const [article] = await db.select().from(articles).where(eq(articles.id, c.req.param("id"))).limit(1);
   if (!article) return erreurApi(c, 404, "introuvable", "Article introuvable");
   return c.json({ donnees: article });
+});
+
+/** CR-02 §C — bandeau « Prochaine étape » (lecture seule, aucune donnée nouvelle). */
+articlesRoutes.get("/:id/prochaine-etape", async (c) => {
+  try {
+    const donnees = await prochaineEtapeArticle(c.req.param("id"));
+    return c.json({ donnees });
+  } catch (err) {
+    return gererErreurMetier(c, err);
+  }
 });
 
 articlesRoutes.post("/", exigerCapacite("entites.editer"), zValidator("json", articleInsertSchema), async (c) => {

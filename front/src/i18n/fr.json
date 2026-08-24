@@ -206,6 +206,14 @@
       "epuise": "Épuisé",
       "archive": "Archivé"
     },
+    "prochaine_etape": {
+      "manque": {
+        "mesures_manquantes": "mesures saisies sur {{actuel}}/{{requis}} tailles"
+      },
+      "action": {
+        "saisir_mesures": "Saisir les mesures"
+      }
+    },
     "champs": {
       "reference": "Référence",
       "nom": "Nom",
@@ -318,7 +326,33 @@
     "rituel_genere": "Rituel généré",
     "kpi_cibles": "Cibles KPI",
     "kpi_verrouillees": "Cibles verrouillées depuis l'activation",
-    "resultats": "Résultats",
+    "resultats": {
+      "aucune_cible": "Aucune cible KPI définie pour cette campagne.",
+      "description": "Saisis les résultats obtenus face à chaque cible fixée à l'activation.",
+      "cible": "cible"
+    },
+    "prochaine_etape": {
+      "etat": {
+        "preparation": "En préparation",
+        "active_resume": "Active — {{jRestant}} j restants · {{jalonsFaits}}/{{jalonsTotal}} jalons faits · {{contenusEnRevue}} contenu(s) en revue",
+        "livree_depuis": "Livrée depuis {{jours}} j",
+        "livree_prete": "Livrée — prête à fermer"
+      },
+      "manque": {
+        "decrire_strategie": "décrire la stratégie",
+        "fixer_cibles": "fixer les cibles KPI",
+        "generer_rituel": "générer le rituel de tâches",
+        "jalons_retard": "{{n}} jalon(s) en retard",
+        "resultats_manquants": "{{n}} résultat(s) manquant(s)"
+      },
+      "action": {
+        "generer_rituel": "Générer le rituel",
+        "activer": "Activer la campagne",
+        "voir_retards": "Voir les tâches en retard",
+        "saisir_resultats": "Saisir les résultats",
+        "fermer": "Fermer la campagne"
+      }
+    },
     "rapport": {
       "titre": "Rapport de campagne",
       "marche": "Ce qui a marché",
@@ -411,6 +445,17 @@
       "poses": "poses",
       "date": "date",
       "lieu": "lieu"
+    },
+    "prochaine_etape": {
+      "etat": {
+        "pret": "Prêt à tourner",
+        "a_preparer": "À préparer",
+        "a_traiter": "Retours à traiter",
+        "termine": "Tournage terminé"
+      },
+      "manque": {
+        "retours_manquants": "{{count}} pièce(s) pas encore rentrée(s)"
+      }
     },
     "generer_pdf": "Export PDF",
     "photographe": "Photographe",
@@ -519,6 +564,12 @@
       "planifie": "Planifié",
       "publie": "Publié",
       "archive": "Archivé"
+    },
+    "prochaine_etape": {
+      "manque": {
+        "caption_ou_asset": "une légende ou un asset",
+        "droits_ugc": "{{count}} asset(s) UGC sans droits renseignés"
+      }
     },
     "types": {
       "post": "Post",

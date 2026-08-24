@@ -62,6 +62,15 @@ export type ArticleSku = z.infer<typeof articleSkuSchema>;
 export const articleSkuInsertSchema = articleSkuSchema.omit({ id: true, created_at: true, updated_at: true });
 export const articleSkuUpdateSchema = articleSkuInsertSchema.partial();
 
+/** Nombre de SKU (toutes tailles/colorís confondus) avec au moins une mesure renseignée — même
+ *  compteur que celui qui bloque la transition `fit_valide` (`transitionnerArticle`, RG du §4.2) et
+ *  que celui qui alimente le bandeau « Prochaine étape » d'un article `prototype` (CR-02 §C) : un
+ *  seul endroit de vérité, le seuil (3) reste défini une seule fois côté serveur. */
+export const SKUS_AVEC_MESURES_REQUIS = 3;
+export function compterSkusAvecMesures(skus: Pick<ArticleSku, "mesures">[]): number {
+  return skus.filter((s) => Object.keys(s.mesures).length > 0).length;
+}
+
 /** §4.2 — COGS. Marge toujours calculée, jamais saisie. Visible admin uniquement. */
 export const articleCoutSchema = z.object({
   article_id: z.string().uuid(),

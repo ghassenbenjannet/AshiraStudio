@@ -16,7 +16,7 @@ import { campagnes, campagneArticles, budgetLignes } from "../db/schema.js";
 import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
-import { activerCampagne, fermerCampagne, detteDeMesure, genererRituel, extraireMetadonneesUrl, consolidationCampagne } from "../services/campagnes.js";
+import { activerCampagne, fermerCampagne, detteDeMesure, genererRituel, extraireMetadonneesUrl, consolidationCampagne, prochaineEtapeCampagne } from "../services/campagnes.js";
 import { ErreurMetier } from "../services/catalogue.js";
 import type { AppEnv } from "../types.js";
 
@@ -119,6 +119,16 @@ campagnesRoutes.post("/:id/rituel", exigerCapacite("entites.editer"), async (c) 
 campagnesRoutes.get("/:id/consolidation", async (c) => {
   const donnees = await consolidationCampagne(c.req.param("id"));
   return c.json({ donnees });
+});
+
+/** CR-02 §C — bandeau « Prochaine étape » (lecture seule, aucune donnée nouvelle). */
+campagnesRoutes.get("/:id/prochaine-etape", async (c) => {
+  try {
+    const donnees = await prochaineEtapeCampagne(c.req.param("id"));
+    return c.json({ donnees });
+  } catch (err) {
+    return gererErreurMetier(c, err);
+  }
 });
 
 // ───────────────────────── Champ d'ajout intelligent (campagne_article) ─────────────────────────

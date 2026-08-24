@@ -206,6 +206,14 @@
       "epuise": "نفدت الكمية",
       "archive": "مؤرشف"
     },
+    "prochaine_etape": {
+      "manque": {
+        "mesures_manquantes": "القياسات مُدخلة لـ {{actuel}}/{{requis}} مقاسات"
+      },
+      "action": {
+        "saisir_mesures": "إدخال القياسات"
+      }
+    },
     "champs": {
       "reference": "المرجع",
       "nom": "الاسم",
@@ -318,7 +326,33 @@
     "rituel_genere": "تم توليد الطقوس",
     "kpi_cibles": "المؤشرات المستهدفة",
     "kpi_verrouillees": "المؤشرات مقفلة منذ التفعيل",
-    "resultats": "النتائج",
+    "resultats": {
+      "aucune_cible": "لا توجد مؤشرات مستهدفة محددة لهذه الحملة.",
+      "description": "أدخل النتائج المحققة مقابل كل هدف تم تحديده عند التفعيل.",
+      "cible": "الهدف"
+    },
+    "prochaine_etape": {
+      "etat": {
+        "preparation": "قيد التحضير",
+        "active_resume": "نشطة — {{jRestant}} يوم متبقٍ · {{jalonsFaits}}/{{jalonsTotal}} محطة مُنجزة · {{contenusEnRevue}} محتوى قيد المراجعة",
+        "livree_depuis": "مُنجَزة منذ {{jours}} يوم",
+        "livree_prete": "مُنجَزة — جاهزة للإغلاق"
+      },
+      "manque": {
+        "decrire_strategie": "وصف الاستراتيجية",
+        "fixer_cibles": "تحديد المؤشرات المستهدفة",
+        "generer_rituel": "توليد طقوس المهام",
+        "jalons_retard": "{{n}} محطة (محطات) متأخرة",
+        "resultats_manquants": "{{n}} نتيجة (نتائج) ناقصة"
+      },
+      "action": {
+        "generer_rituel": "توليد الطقوس",
+        "activer": "تفعيل الحملة",
+        "voir_retards": "عرض المهام المتأخرة",
+        "saisir_resultats": "إدخال النتائج",
+        "fermer": "إغلاق الحملة"
+      }
+    },
     "rapport": {
       "titre": "تقرير الحملة",
       "marche": "ما نجح",
@@ -411,6 +445,17 @@
       "poses": "اللقطات",
       "date": "التاريخ",
       "lieu": "المكان"
+    },
+    "prochaine_etape": {
+      "etat": {
+        "pret": "جاهز للتصوير",
+        "a_preparer": "قيد التحضير",
+        "a_traiter": "إرجاعات قيد المعالجة",
+        "termine": "التصوير مكتمل"
+      },
+      "manque": {
+        "retours_manquants": "{{count}} قطعة (قطع) لم تُرجَع بعد"
+      }
     },
     "generer_pdf": "تصدير PDF",
     "photographe": "المصور",
@@ -519,6 +564,12 @@
       "planifie": "مبرمج",
       "publie": "منشور",
       "archive": "مؤرشف"
+    },
+    "prochaine_etape": {
+      "manque": {
+        "caption_ou_asset": "تعليق أو أصل (asset)",
+        "droits_ugc": "{{count}} أصل (أصول) UGC بدون حقوق مُدخلة"
+      }
     },
     "types": {
       "post": "منشور",

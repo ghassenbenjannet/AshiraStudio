@@ -1,4 +1,4 @@
-import type { Article, ArticleColoris, ArticleSku, ArticleCout, StatutCycleArticle, ArticleImportResultatLigne } from "@achirah/shared";
+import type { Article, ArticleColoris, ArticleSku, ArticleCout, StatutCycleArticle, ArticleImportResultatLigne, ProchaineEtape } from "@achirah/shared";
 import { api } from "../api.js";
 
 export interface FiltresArticles {
@@ -19,6 +19,7 @@ export const clientArticles = {
   transitionner: (id: string, vers: StatutCycleArticle, options: { essaye_sur_5_morphologies?: boolean; confirmer_archivage_utilise?: boolean } = {}) =>
     api<{ donnees: Article; avertissements: string[] }>(`/articles/${id}/transition`, { method: "POST", body: { vers, ...options } }),
   historique: (id: string) => api<{ donnees: unknown[] }>(`/articles/${id}/historique`).then((r) => r.donnees),
+  prochaineEtape: (id: string) => api<{ donnees: ProchaineEtape }>(`/articles/${id}/prochaine-etape`).then((r) => r.donnees),
   obtenirCouts: (id: string) => api<{ donnees: ArticleCout | null; cogs: number | null; marge_pct: number | null }>(`/articles/${id}/couts`),
   enregistrerCouts: (id: string, corps: Omit<ArticleCout, "article_id">) => api<{ donnees: ArticleCout }>(`/articles/${id}/couts`, { method: "PUT", body: corps }).then((r) => r.donnees),
   listerColoris: (id: string) => api<{ donnees: ArticleColoris[] }>(`/articles/${id}/coloris`).then((r) => r.donnees),

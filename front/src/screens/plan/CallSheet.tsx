@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HEURE_LUMIERE, SORT_RETOUR_PIECE, STATUT_POST_PROD, type Personne } from "@achirah/shared";
 import { Champ, ChampSelect, ChampNombre, ChampTexte, BoutonSecondaire } from "../../components/ui/Champ.js";
+import { ProchaineEtape } from "../../components/ui/ProchaineEtape.js";
+import { SectionRepliable } from "../../components/ui/SectionRepliable.js";
+import type { EtatCompletude } from "../../components/ui/EtatCompletude.js";
 import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
 import { clientTaches, clientShootings, type BriefShooting } from "../../lib/resources/taches.js";
@@ -13,11 +16,19 @@ import { CommentairesPanel } from "../../components/collaboration/CommentairesPa
 
 const CLE_MANQUE_TRAD: Record<string, string> = { pieces: "pieces", photographe: "photographe", poses: "poses", date: "date", lieu: "lieu" };
 
-function SectionTitre({ children }: { children: React.ReactNode }) {
-  return <h3 className="mb-2 text-sm font-medium text-dim">{children}</h3>;
-}
+const AUJOURDHUI = () => new Date().toISOString().slice(0, 10);
 
-export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string; campagneId: string | null; peutEditer: boolean }) {
+export function CallSheet({
+  tacheId,
+  campagneId,
+  dateEcheance,
+  peutEditer,
+}: {
+  tacheId: string;
+  campagneId: string | null;
+  dateEcheance: string;
+  peutEditer: boolean;
+}) {
   const { t } = useTranslation();
   const { toaster } = useToast();
   const [shooting, setShooting] = useState<Awaited<ReturnType<typeof clientTaches.obtenirShooting>> | null>(null);
@@ -104,17 +115,59 @@ export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string
 
   if (!shooting) return <p className="text-sm text-dim">{t("commun.chargement")}</p>;
 
+  // CR-02 §C — bandeau « Prochaine étape » : réutilise les mêmes gates que l'ancien indicateur inline
+  // (`pret_a_tourner`, RG-S3) et le nouveau champ `retours_manquants` (calculé côté serveur). Aucune
+  // action : la page est un défilement unique déjà entièrement visible, pas d'onglet à rejoindre.
+  const estPasse = dateEcheance < AUJOURDHUI();
+  const bandeau = estPasse ? (
+    shooting.retours_manquants.length > 0 ? (
+      <ProchaineEtape etat={t("callsheet.prochaine_etape.etat.a_traiter")} manque={t("callsheet.prochaine_etape.manque.retours_manquants", { count: shooting.retours_manquants.length })} />
+    ) : (
+      <ProchaineEtape etat={t("callsheet.prochaine_etape.etat.termine")} />
+    )
+  ) : shooting.pret_a_tourner.pret ? (
+    <ProchaineEtape etat={t("callsheet.prochaine_etape.etat.pret")} />
+  ) : (
+    <ProchaineEtape
+      etat={t("callsheet.prochaine_etape.etat.a_preparer")}
+      manque={shooting.pret_a_tourner.manques.map((m) => t(`callsheet.manques.${CLE_MANQUE_TRAD[m] ?? m}`)).join(", ")}
+    />
+  );
+
+  // CR-02 §C.3 — pastilles de section + ouverture automatique sur la première incomplète. Seules les
+  // sections à défilement simple (pas Looks / Shot list, qui gèrent déjà leur propre en-tête et leurs
+  // actions) sont repliables ici — les envelopper aurait dupliqué leur titre pour un gain marginal.
+  // « équipe » et « pièces à apporter » réutilisent directement les codes de `pret_a_tourner.manques`
+  // (même gate que le bandeau, RG-S3) plutôt que de la recalculer.
+  const manques = new Set(shooting.pret_a_tourner.manques);
+  const etatEquipe: EtatCompletude = manques.has("photographe") ? "manquant" : shooting.photographe_id ? "complet" : "en_cours";
+  const etatPieces: EtatCompletude = manques.has("pieces") ? "manquant" : "complet";
+  const etatMateriel: EtatCompletude = shooting.materiel.length === 0 ? "vide" : shooting.materiel.every((m) => m.coche) ? "complet" : "en_cours";
+  const etatPreparation: EtatCompletude =
+    shooting.pieces_effectives.length === 0
+      ? "vide"
+      : shooting.pieces_effectives.every((p) => shooting.preparation_pieces.find((item) => item.id === p.article_sku_id)?.coche)
+        ? "complet"
+        : "en_cours";
+  const etatRetours: EtatCompletude = shooting.pieces_effectives.length === 0 ? "vide" : shooting.retours_manquants.length === 0 ? "complet" : "manquant";
+  const etatLivrables: EtatCompletude = shooting.statut_post_prod === "livre" ? "complet" : shooting.statut_post_prod === "a_trier" ? "vide" : "en_cours";
+
+  const sections: { id: string; etat: EtatCompletude; rendue: boolean }[] = [
+    { id: "equipe", etat: etatEquipe, rendue: true },
+    { id: "pieces", etat: etatPieces, rendue: true },
+    { id: "materiel", etat: etatMateriel, rendue: shooting.materiel.length > 0 },
+    { id: "preparation", etat: etatPreparation, rendue: shooting.pieces_effectives.length > 0 },
+    { id: "retours", etat: etatRetours, rendue: shooting.pieces_effectives.length > 0 },
+    { id: "livrables", etat: etatLivrables, rendue: true },
+  ];
+  const premierIncomplet = sections.find((s) => s.rendue && s.etat !== "complet" && s.etat !== "vide")?.id ?? sections.find((s) => s.rendue && s.etat !== "complet")?.id;
+
   return (
     <div className="rounded-card border border-line bg-panel p-4">
-      {/* En-tête + Prêt à tourner */}
+      {/* En-tête */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-lg text-off">{t("callsheet.titre")}</h2>
         <div className="flex items-center gap-3">
-          <span className={`flex items-center gap-1 text-sm ${shooting.pret_a_tourner.pret ? "text-olive" : "text-sable"}`}>
-            <span className={`h-2 w-2 rounded-full ${shooting.pret_a_tourner.pret ? "bg-olive" : "bg-sable"}`} />
-            {t("callsheet.pret_a_tourner")}
-            {!shooting.pret_a_tourner.pret && ` (${shooting.pret_a_tourner.manques.map((m) => t(`callsheet.manques.${CLE_MANQUE_TRAD[m] ?? m}`)).join(", ")})`}
-          </span>
           <BoutonSecondaire type="button" onClick={() => void genererBrief()} disabled={briefEnCours}>
             {t("callsheet.generer_brief")}
           </BoutonSecondaire>
@@ -123,6 +176,8 @@ export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string
           </a>
         </div>
       </div>
+
+      {bandeau}
 
       {erreurBrief && <p className="mb-4 text-sm text-danger-fg">{erreurBrief}</p>}
       {brief && (
@@ -151,54 +206,54 @@ export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string
       )}
 
       {/* Équipe */}
-      <SectionTitre>{t("callsheet.equipe")}</SectionTitre>
-      <div className="mb-4 grid gap-x-4 md:grid-cols-2">
-        <Champ label={t("callsheet.photographe")}>
-          <ChampSelect disabled={!peutEditer} value={shooting.photographe_id ?? ""} onChange={(e) => void majShooting({ photographe_id: e.target.value || null })}>
-            <option value="">—</option>
-            {photographes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nom}
-              </option>
-            ))}
-          </ChampSelect>
-        </Champ>
-        <Champ label={t("callsheet.heure_lumiere")}>
-          <ChampSelect disabled={!peutEditer} value={shooting.heure_lumiere ?? ""} onChange={(e) => void majShooting({ heure_lumiere: e.target.value || null })}>
-            <option value="">—</option>
-            {HEURE_LUMIERE.map((h) => (
-              <option key={h} value={h}>
-                {t(`callsheet.heures.${h}`)}
-              </option>
-            ))}
-          </ChampSelect>
-        </Champ>
-        <Champ label={t("callsheet.duree_min")}>
-          <ChampNombre disabled={!peutEditer} value={shooting.duree_min} onChange={(e) => void majShooting({ duree_min: Number(e.target.value) })} />
-        </Champ>
-        <Champ label={t("callsheet.modeles")}>
-          <select
-            disabled={!peutEditer}
-            multiple
-            value={shooting.modele_ids}
-            onChange={(e) => void majShooting({ modele_ids: Array.from(e.target.selectedOptions).map((o) => o.value) })}
-            className="min-h-tap w-full rounded-field border border-line bg-panel2 px-3 text-off"
-          >
-            {modeles.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nom}
-              </option>
-            ))}
-          </select>
-        </Champ>
-      </div>
+      <SectionRepliable titre={t("callsheet.equipe")} etat={etatEquipe} ouvertParDefaut={premierIncomplet === "equipe"}>
+        <div className="grid gap-x-4 md:grid-cols-2">
+          <Champ label={t("callsheet.photographe")}>
+            <ChampSelect disabled={!peutEditer} value={shooting.photographe_id ?? ""} onChange={(e) => void majShooting({ photographe_id: e.target.value || null })}>
+              <option value="">—</option>
+              {photographes.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nom}
+                </option>
+              ))}
+            </ChampSelect>
+          </Champ>
+          <Champ label={t("callsheet.heure_lumiere")}>
+            <ChampSelect disabled={!peutEditer} value={shooting.heure_lumiere ?? ""} onChange={(e) => void majShooting({ heure_lumiere: e.target.value || null })}>
+              <option value="">—</option>
+              {HEURE_LUMIERE.map((h) => (
+                <option key={h} value={h}>
+                  {t(`callsheet.heures.${h}`)}
+                </option>
+              ))}
+            </ChampSelect>
+          </Champ>
+          <Champ label={t("callsheet.duree_min")}>
+            <ChampNombre disabled={!peutEditer} value={shooting.duree_min} onChange={(e) => void majShooting({ duree_min: Number(e.target.value) })} />
+          </Champ>
+          <Champ label={t("callsheet.modeles")}>
+            <select
+              disabled={!peutEditer}
+              multiple
+              value={shooting.modele_ids}
+              onChange={(e) => void majShooting({ modele_ids: Array.from(e.target.selectedOptions).map((o) => o.value) })}
+              className="min-h-tap w-full rounded-field border border-line bg-panel2 px-3 text-off"
+            >
+              {modeles.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nom}
+                </option>
+              ))}
+            </select>
+          </Champ>
+        </div>
+      </SectionRepliable>
 
       {/* Looks */}
       <LooksComposer shootingId={tacheId} campagneId={campagneId} peutEditer={peutEditer} onChange={charger} />
 
       {/* Pièces à apporter (agrégées, origine visible) */}
-      <div className="mt-4">
-        <SectionTitre>{t("callsheet.pieces_a_apporter")}</SectionTitre>
+      <SectionRepliable titre={t("callsheet.pieces_a_apporter")} etat={etatPieces} ouvertParDefaut={premierIncomplet === "pieces"}>
         {shooting.pieces_effectives.length === 0 ? (
           <p className="text-sm text-dim">—</p>
         ) : (
@@ -211,15 +266,14 @@ export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string
             ))}
           </ul>
         )}
-      </div>
+      </SectionRepliable>
 
       {/* Shot list */}
       <ShotList shootingId={tacheId} looksVersion={looksVersion} peutEditer={peutEditer} onChange={charger} />
 
       {/* Matériel */}
       {shooting.materiel.length > 0 && (
-        <div className="mt-4">
-          <SectionTitre>{t("callsheet.materiel")}</SectionTitre>
+        <SectionRepliable titre={t("callsheet.materiel")} etat={etatMateriel} ouvertParDefaut={premierIncomplet === "materiel"}>
           <ul className="grid gap-1 md:grid-cols-2">
             {shooting.materiel.map((m, i) => (
               <li key={m.id}>
@@ -230,13 +284,12 @@ export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string
               </li>
             ))}
           </ul>
-        </div>
+        </SectionRepliable>
       )}
 
       {/* Préparation pièces */}
       {shooting.pieces_effectives.length > 0 && (
-        <div className="mt-4">
-          <SectionTitre>{t("callsheet.preparation_pieces")}</SectionTitre>
+        <SectionRepliable titre={t("callsheet.preparation_pieces")} etat={etatPreparation} ouvertParDefaut={premierIncomplet === "preparation"}>
           <ul className="grid gap-1 md:grid-cols-2">
             {shooting.pieces_effectives.map((p) => {
               const libelle = skusParId.get(p.article_sku_id) ?? p.article_sku_id;
@@ -251,13 +304,12 @@ export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string
               );
             })}
           </ul>
-        </div>
+        </SectionRepliable>
       )}
 
       {/* Retours */}
       {shooting.pieces_effectives.length > 0 && (
-        <div className="mt-4">
-          <SectionTitre>{t("callsheet.retours")}</SectionTitre>
+        <SectionRepliable titre={t("callsheet.retours")} etat={etatRetours} ouvertParDefaut={premierIncomplet === "retours"}>
           <ul className="flex flex-col gap-1">
             {shooting.pieces_effectives.map((p) => {
               const retour = shooting.retour_pieces.find((r) => r.article_sku_id === p.article_sku_id);
@@ -281,12 +333,11 @@ export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string
               );
             })}
           </ul>
-        </div>
+        </SectionRepliable>
       )}
 
       {/* Livrables / post-prod */}
-      <div className="mt-4">
-        <SectionTitre>{t("callsheet.livrables")}</SectionTitre>
+      <SectionRepliable titre={t("callsheet.livrables")} etat={etatLivrables} ouvertParDefaut={premierIncomplet === "livrables"}>
         <div className="grid gap-x-4 md:grid-cols-2">
           <Champ label={t("callsheet.statut_post_prod")}>
             <ChampSelect disabled={!peutEditer} value={shooting.statut_post_prod} onChange={(e) => void majShooting({ statut_post_prod: e.target.value })}>
@@ -319,7 +370,7 @@ export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string
             />
           </Champ>
         </div>
-      </div>
+      </SectionRepliable>
 
       {/* Notes */}
       <Champ label={t("callsheet.notes")}>

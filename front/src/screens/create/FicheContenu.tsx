@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { aCapacite, type Contenu, type ContenuVersion, type Asset, type ListeSimple, type Registre } from "@achirah/shared";
 import { Champ, ChampTexte, ChampZoneTexte, ChampSelect, BoutonPrimaire, BoutonSecondaire } from "../../components/ui/Champ.js";
+import { ProchaineEtape } from "../../components/ui/ProchaineEtape.js";
 import { useAuth } from "../../lib/auth-context.js";
 import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
@@ -135,6 +136,24 @@ export function FicheContenu() {
     champ("plateformes", nouveau);
   }
 
+  // CR-02 §C — bandeau « Prochaine étape » : ne réévalue rien de nouveau, reprend directement les
+  // gates déjà appliquées côté serveur — `soumettreContenu` (légende ou asset requis) et RG-AS1
+  // (droits UGC manquants, déjà signalés asset par asset plus bas) — à partir des données déjà
+  // chargées par cet écran.
+  const bandeau = (() => {
+    const etat = t(`contenus.statuts.${contenu.statut}`);
+    if (contenu.statut === "brouillon" && !contenu.caption.trim() && contenu.asset_ids.length === 0) {
+      return <ProchaineEtape etat={etat} manque={t("contenus.prochaine_etape.manque.caption_ou_asset")} />;
+    }
+    if (contenu.statut === "en_revue") {
+      const bloquants = assets.filter((a) => a.source === "ugc" && !a.droits);
+      if (bloquants.length > 0) {
+        return <ProchaineEtape etat={etat} manque={t("contenus.prochaine_etape.manque.droits_ugc", { count: bloquants.length })} />;
+      }
+    }
+    return <ProchaineEtape etat={etat} />;
+  })();
+
   return (
     <div>
       <button type="button" onClick={() => navigate(-1)} className="mb-3 min-h-tap text-sm text-dim hover:text-off">
@@ -145,6 +164,8 @@ export function FicheContenu() {
         <h1 className="font-display text-2xl text-off">{contenu.titre}</h1>
         <span className="text-sm font-medium text-sable">{t(`contenus.statuts.${contenu.statut}`)}</span>
       </div>
+
+      {bandeau}
 
       <div className="mb-4 flex flex-wrap gap-2">
         {peutEditer && contenu.statut === "brouillon" && (

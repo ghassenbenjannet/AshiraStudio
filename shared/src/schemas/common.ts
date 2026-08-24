@@ -25,3 +25,19 @@ export const checklistItemSchema = z.object({
   coche: z.boolean().default(false),
 });
 export type ChecklistItem = z.infer<typeof checklistItemSchema>;
+
+/**
+ * CR-02 §C — forme partagée du bandeau « Prochaine étape » : `[état actuel] → [ce qui manque] →
+ * [une action]`. Le serveur ne renvoie que des codes + paramètres numériques/textuels bruts (jamais
+ * de texte traduit) — c'est le front qui compose `t(\`prochaine_etape.<objet>.<cle>\`, params)` pour
+ * chaque segment, exactement comme `calculerPretATourner` renvoie des codes (`manques: string[]`)
+ * traduits côté front. Composant purement informatif (RG-PAR1) : `actionCle` peut toujours être
+ * ignoré, le chemin manuel (onglets/formulaires) reste intact.
+ */
+export interface ProchaineEtape {
+  etatCle: string;
+  etatParams?: Record<string, number | string>;
+  manqueCle: string | null;
+  manqueParams?: Record<string, number | string>;
+  actionCle: string | null;
+}

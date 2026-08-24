@@ -2,7 +2,7 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { articles, articleColoris, articleSkus, articleCouts, historiqueStatuts, gammes, lookItems } from "../db/schema.js";
 import { enregistrerAudit } from "../lib/audit.js";
-import { calculerCogs, calculerMargePct, STATUT_CYCLE_ARTICLE, type StatutCycleArticle } from "@achirah/shared";
+import { calculerCogs, calculerMargePct, compterSkusAvecMesures, SKUS_AVEC_MESURES_REQUIS, STATUT_CYCLE_ARTICLE, type StatutCycleArticle, type ProchaineEtape } from "@achirah/shared";
 
 export class ErreurMetier extends Error {
   code: string;
@@ -46,8 +46,7 @@ export async function transitionnerArticle(
 
   if (vers === "fit_valide") {
     const skus = await skusDeArticle(articleId);
-    const avecMesures = skus.filter((s) => Object.keys(s.mesures).length > 0);
-    if (avecMesures.length < 3) {
+    if (compterSkusAvecMesures(skus) < SKUS_AVEC_MESURES_REQUIS) {
       throw new ErreurMetier(422, "mesures_insuffisantes", "Des mesures sont requises sur au moins 3 tailles avant fit_valide");
     }
     if (!options.essayeSur5Morphologies) {
@@ -107,7 +106,35 @@ export async function transitionnerArticle(
   return { article: modifie!, avertissements };
 }
 
-async function skusDeArticle(articleId: string) {
+/**
+ * CR-02 §C — bandeau « Prochaine étape » d'un article. Ne réévalue rien de nouveau : réutilise
+ * `skusDeArticle` (même requête que la gate `fit_valide`) et `compterSkusAvecMesures`/
+ * `SKUS_AVEC_MESURES_REQUIS` (mêmes fonctions partagées que `transitionnerArticle`). Seul le
+ * statut `prototype` porte un message précis (c'est le seul cas listé par le CR) ; les autres
+ * statuts retournent un bandeau neutre qui réutilise les libellés `catalogue.statuts.*` existants.
+ */
+export async function prochaineEtapeArticle(articleId: string): Promise<ProchaineEtape> {
+  const [article] = await db.select().from(articles).where(eq(articles.id, articleId)).limit(1);
+  if (!article) throw new ErreurMetier(404, "introuvable", "Article introuvable");
+
+  if (article.statut_cycle === "prototype") {
+    const skus = await skusDeArticle(articleId);
+    const avecMesures = compterSkusAvecMesures(skus);
+    if (avecMesures < SKUS_AVEC_MESURES_REQUIS) {
+      return {
+        etatCle: "prototype",
+        manqueCle: "mesures_manquantes",
+        manqueParams: { actuel: avecMesures, requis: SKUS_AVEC_MESURES_REQUIS },
+        actionCle: "saisir_mesures",
+      };
+    }
+    return { etatCle: "prototype", manqueCle: null, actionCle: null };
+  }
+
+  return { etatCle: article.statut_cycle, manqueCle: null, actionCle: null };
+}
+
+export async function skusDeArticle(articleId: string) {
   const colorisList = await db.select({ id: articleColoris.id }).from(articleColoris).where(eq(articleColoris.article_id, articleId));
   if (colorisList.length === 0) return [];
   const tous = await db.select().from(articleSkus);
@@ -163,5 +190,3 @@ export async function verifierBaissePrix(
   }
   return {};
 }
-
-export { skusDeArticle };

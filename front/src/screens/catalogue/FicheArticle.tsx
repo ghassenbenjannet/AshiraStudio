@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { aCapacite, type Article, type Gamme } from "@achirah/shared";
+import { aCapacite, type Article, type Gamme, type ProchaineEtape as ProchaineEtapeData } from "@achirah/shared";
 import { Tabs } from "../../components/ui/Tabs.js";
+import { ProchaineEtape } from "../../components/ui/ProchaineEtape.js";
+import type { EtatCompletude } from "../../components/ui/EtatCompletude.js";
 import { useAuth } from "../../lib/auth-context.js";
 import { clientArticles } from "../../lib/resources/catalogue.js";
 import { clientGammes } from "../../lib/resources/referentiels.js";
@@ -36,11 +38,13 @@ export function FicheArticle() {
 
   const [article, setArticle] = useState<Article | null>(null);
   const [gammes, setGammes] = useState<Gamme[]>([]);
-  const [onglet, setOnglet] = useState<OngletId>("modele");
+  const [prochaineEtape, setProchaineEtape] = useState<ProchaineEtapeData | null>(null);
+  const [ongletChoisi, setOngletChoisi] = useState<OngletId | null>(null);
 
   const charger = () => {
     if (!id) return;
     clientArticles.obtenir(id).then(setArticle);
+    clientArticles.prochaineEtape(id).then(setProchaineEtape);
   };
 
   useEffect(() => {
@@ -51,14 +55,32 @@ export function FicheArticle() {
 
   if (!article) return <p className="text-sm text-dim">{t("commun.chargement")}</p>;
 
+  // CR-02 §C — bandeau + pastille du SKU : seul l'état `prototype` porte un manque précis côté
+  // serveur (`prochaineEtapeArticle`, mêmes fonctions que la gate `fit_valide`). Les autres statuts
+  // affichent un bandeau neutre qui réutilise les libellés `catalogue.statuts.*` déjà traduits.
+  const etatSku: EtatCompletude | undefined =
+    article.statut_cycle === "prototype" ? (prochaineEtape?.manqueCle === "mesures_manquantes" ? "manquant" : "complet") : undefined;
+
   const gamme = gammes.find((g) => g.id === article.gamme_id);
-  const onglets: { id: OngletId; label: string }[] = [
+  const onglets: { id: OngletId; label: string; etat?: EtatCompletude }[] = [
     { id: "modele", label: t("catalogue.onglets.modele") },
     { id: "coloris", label: t("catalogue.onglets.coloris") },
-    { id: "sku", label: t("catalogue.onglets.sku") },
+    { id: "sku", label: t("catalogue.onglets.sku"), etat: etatSku },
     ...(estAdmin ? [{ id: "couts" as const, label: t("catalogue.onglets.couts") }] : []),
     { id: "historique", label: t("catalogue.onglets.historique") },
   ];
+
+  const ongletParDefaut: OngletId = etatSku === "manquant" ? "sku" : "modele";
+  const onglet: OngletId = ongletChoisi ?? ongletParDefaut;
+
+  const bandeau = (() => {
+    if (!prochaineEtape) return null;
+    const etat = t(`catalogue.statuts.${prochaineEtape.etatCle}`);
+    const manque = prochaineEtape.manqueCle ? t(`catalogue.prochaine_etape.manque.${prochaineEtape.manqueCle}`, prochaineEtape.manqueParams) : null;
+    const action =
+      prochaineEtape.actionCle === "saisir_mesures" ? { label: t("catalogue.prochaine_etape.action.saisir_mesures"), onClick: () => setOngletChoisi("sku") } : null;
+    return <ProchaineEtape etat={etat} manque={manque} action={action} />;
+  })();
 
   return (
     <div>
@@ -77,7 +99,9 @@ export function FicheArticle() {
         {gamme && <span className="text-xs text-dim">{gamme.nom}</span>}
       </div>
 
-      <Tabs valeur={onglet} onChange={setOnglet} onglets={onglets} />
+      {bandeau}
+
+      <Tabs valeur={onglet} onChange={setOngletChoisi} onglets={onglets} />
 
       {onglet === "modele" && <OngletModele article={article} gammes={gammes} peutEditer={peutEditer} onChange={charger} />}
       {onglet === "coloris" && <OngletColoris articleId={article.id} peutEditer={peutEditer} />}

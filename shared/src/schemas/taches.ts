@@ -92,6 +92,17 @@ export function calculerPretATourner(input: {
   return { pret: manques.length === 0, manques };
 }
 
+/** CR-02 §C — pièces effectives jamais pointées en retour après un tournage passé. Purement dérivé
+ *  (pas de statut stocké) : compare `pieces_effectives` (calculée à la lecture, RG-LK1) aux entrées
+ *  de `retour_pieces` déjà saisies sur le shooting. */
+export function calculerRetoursIncomplets(
+  piecesEffectives: { article_sku_id: string }[],
+  retourPieces: { article_sku_id: string }[],
+): string[] {
+  const rendues = new Set(retourPieces.map((r) => r.article_sku_id));
+  return piecesEffectives.map((p) => p.article_sku_id).filter((id) => !rendues.has(id));
+}
+
 /** §4.4 — Look. */
 export const lookSchema = z.object({
   id: z.string().uuid(),

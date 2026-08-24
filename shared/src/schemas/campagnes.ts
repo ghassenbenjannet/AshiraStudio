@@ -58,6 +58,13 @@ export const campagneUpdateSchema = campagneInsertSchema.partial().extend({
 
 export const campagneFermetureSchema = z.object({ rapport: rapportCampagneSchema });
 
+/** RG-ECO2 — clés de `kpi_cibles` sans résultat correspondant dans `resultats`. Fonction pure
+ *  partagée : c'est la même liste qui bloque `fermerCampagne` (livree→fermee) et qui alimente le
+ *  bandeau « Prochaine étape » d'une campagne `livree` (CR-02 §C) — un seul endroit de vérité. */
+export function campagneResultatsManquants(campagne: Pick<Campagne, "kpi_cibles" | "resultats">): string[] {
+  return Object.keys(campagne.kpi_cibles).filter((cle) => campagne.resultats[cle] === undefined || campagne.resultats[cle] === null);
+}
+
 /** §4.3 — Ligne article de campagne : catalogue, lien Achirah, photo, ou texte libre. */
 export const campagneArticleSchema = baseEntitySchema.extend({
   campagne_id: z.string().uuid(),

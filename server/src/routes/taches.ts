@@ -13,6 +13,7 @@ import {
   poseInsertSchema,
   poseUpdateSchema,
   tacheEnRetard,
+  calculerRetoursIncomplets,
 } from "@achirah/shared";
 import { db } from "../db/client.js";
 import { taches, shootings, looks, lookItems, poses, personnes, articleSkus, articleColoris, coloris, articles, campagnes, utilisateurs } from "../db/schema.js";
@@ -129,7 +130,10 @@ async function chargerShootingEnrichi(tacheId: string) {
   if (!shooting) return null;
   const piecesEffectives = await calculerPiecesEffectives(tacheId, shooting.pieces);
   const pretATourner = await pretATournerDeShooting(tacheId);
-  return { ...shooting, pieces_effectives: piecesEffectives, pret_a_tourner: pretATourner };
+  // CR-02 §C : pièces sans entrée de retour correspondante — dérivé, jamais stocké (même principe
+  // que pieces_effectives/pret_a_tourner ci-dessus).
+  const retoursManquants = calculerRetoursIncomplets(piecesEffectives, shooting.retour_pieces);
+  return { ...shooting, pieces_effectives: piecesEffectives, pret_a_tourner: pretATourner, retours_manquants: retoursManquants };
 }
 
 tachesRoutes.get("/:id/shooting", async (c) => {

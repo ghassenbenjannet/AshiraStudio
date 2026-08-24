@@ -575,3 +575,91 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   (`CallSheet.tsx`/`LooksComposer.tsx`/`ShotList.tsx` du Bloc B non touchés par la fusion — aucun
   risque de régression sur les looks), rendu arabe/RTL cohérent sur le rail, la barre de contexte et le
   call sheet.
+
+## CR-02 — Bloc C : pilotage contextuel (bandeau « Prochaine étape », pastilles de section)
+
+- **Aucun changement de schéma.** Garde-fou respecté : chaque fonction « prochaine étape » ne fait que
+  relire des champs déjà en base et recombine des fonctions déjà partagées — `campagneResultatsManquants`
+  (déjà utilisée par `fermerCampagne`, RG-ECO2), `tacheEnRetard` (déjà utilisée par le cockpit
+  Aujourd'hui), `skusDeArticle`/`compterSkusAvecMesures` (déjà utilisées par la gate `fit_valide`),
+  `calculerPiecesEffectives`/`retour_pieces` (déjà utilisées par `pret_a_tourner`). Trois nouvelles
+  fonctions pures ajoutées à `shared/` pour rester dans ce même modèle « une seule fonction, appelée
+  identiquement serveur et client » : `campagneResultatsManquants` a été extraite (elle était inline
+  dans `fermerCampagne`), `calculerRetoursIncomplets` (taches.ts) et `compterSkusAvecMesures`
+  (catalogue.ts) sont nouvelles mais suivent le même patron.
+- **`ProchaineEtape` (type partagé, `shared/src/schemas/common.ts`)** : le serveur ne renvoie que des
+  codes sémantiques (`etatCle`, `manqueCle`, `actionCle` + paramètres bruts type `{n, jours, actuel}`),
+  jamais de texte traduit — même principe que `calculerPretATourner` qui renvoie déjà des codes
+  `manques: string[]` que le front traduit. Nouvelles routes en lecture seule, un GET par objet :
+  `GET /campagnes/:id/prochaine-etape`, `GET /articles/:id/prochaine-etape` (le shooting et le contenu
+  n'ont pas eu besoin de route dédiée, voir plus bas).
+- **Composants front réutilisables, nouveaux** : `ProchaineEtape.tsx` (bandeau `[état] → [manque] →
+  [action]`, purement informatif — RG-PAR1), `EtatCompletude.tsx` (type `"complet"|"en_cours"|"vide"|
+  "manquant"` + `PastilleEtat` ✓/●/○/⚠), `SectionRepliable.tsx` (section accordéon avec pastille,
+  ouverte par défaut si c'est la première section incomplète). `Tabs.tsx` étendu pour accepter un
+  `etat?: EtatCompletude` optionnel par onglet (rétrocompatible avec tous les usages existants qui ne le
+  passent pas).
+- **Action du bandeau = toujours une navigation, jamais un déclenchement d'écriture direct** : chaque
+  bouton d'action change d'onglet ou de sélection, il ne rappelle jamais `genererRituel()`/`noterGate()`
+  /etc. depuis le bandeau lui-même — ces écritures restent déclenchées uniquement par les boutons déjà
+  existants de l'écran cible. Objectif : un seul point de déclenchement par action d'écriture, pour
+  éviter un double appel (ex. générer le rituel deux fois) si le bandeau et le bouton habituel
+  coexistaient.
+- **FicheCampagne.tsx** : bandeau branché sur `prochaineEtapeCampagne` (4 branches : `preparation` avec
+  jusqu'à 3 manques successifs — description, cibles, rituel —, `active` avec compte à rebours + jalons
+  en retard, `livree` avec résultats manquants, `livree`/`fermee` neutre). Onglets réordonnés selon le
+  statut (§C.4 — rien n'est masqué, RG-PAR1, seul l'ordre change) et pastillés sur les 4 onglets où un
+  signal fiable existe sans fetch supplémentaire (stratégie, tâches, contenus, résultats) ; onglet par
+  défaut = premier onglet incomplet. Nouvel onglet **Résultats** (`OngletResultats.tsx`, stub
+  `EcranAConstruire` remplacé) : un champ numérique par clé de `kpi_cibles`, sauvegarde au blur via le
+  PATCH générique existant (`resultats` était déjà un champ de `Campagne`, aucun nouvel endpoint).
+- **CallSheet.tsx** : nouvelle prop `dateEcheance` (transmise par `FicheTache.tsx` depuis `tache.date_echeance`,
+  déjà en scope) pour choisir entre bandeau « prêt à tourner » (avant la date, réutilise
+  `pret_a_tourner.pret/.manques`) et bandeau « retours à traiter » (après la date, réutilise le nouveau
+  champ `retours_manquants`). L'ancien indicateur inline (point coloré + texte, dupliqué avec le
+  bandeau) est supprimé au profit du composant partagé. Sections repliables + pastillées : Équipe,
+  Pièces à apporter, Matériel, Préparation pièces, Retours, Livrables/post-prod — Équipe et Pièces à
+  apporter réutilisent directement les codes de `pret_a_tourner.manques` (même gate que le bandeau,
+  jamais recalculée). **Looks et Shot list restent hors accordéon** : ces deux sous-composants
+  gèrent déjà leur propre en-tête et leurs propres actions (« + Ajouter un look », « + Ajouter une
+  pose ») ; les envelopper aurait dupliqué leur titre pour un bénéfice marginal, alors que C.6 borne
+  explicitement ce CR à « pas de refonte du design system ».
+- **FicheArticle.tsx** : bandeau branché sur `prochaineEtapeArticle` (seul le statut `prototype` porte
+  un manque précis — mesures saisies sur N/3 tailles, action « Saisir les mesures » → bascule sur
+  l'onglet SKU ; tout autre statut affiche un bandeau neutre qui réutilise `catalogue.statuts.*`).
+  L'onglet SKU & Mesures porte la pastille correspondante et devient l'onglet par défaut si des mesures
+  manquent.
+- **FicheContenu.tsx** : bandeau **sans route serveur dédiée** — contrairement aux trois autres objets,
+  les deux seules gates réellement bloquantes d'un contenu (`soumettreContenu` : légende ou asset
+  requis ; RG-AS1 : droits UGC manquants) sont déjà entièrement dérivables des données que l'écran
+  charge pour son propre usage (`contenu`, `assets` liés) — ajouter un endpoint aurait dupliqué une
+  logique déjà lisible côté client sans rien recalculer de nouveau. Le check RG-AS1 du bandeau est
+  exactement le même prédicat que l'avertissement déjà affiché par asset (`source === "ugc" && !droits`),
+  juste agrégé en un compte. Pas de pastilles/réordonnancement ici : §C.3 ne cite que « hub campagne,
+  call sheet et fiche article » pour ce traitement, et `FicheContenu` est un défilement unique sans
+  onglets.
+- **Décisions de périmètre délibérées (pour rester dans C.6 — « pas de refonte du design system, pas de
+  nouvel endpoint métier au-delà de l'exposition en lecture seule des états de complétude »)** :
+  pas de bouton d'action « fixer les cibles » sur le bandeau de campagne (aucune UI d'édition de
+  `kpi_cibles` n'existe nulle part dans le front — lacune préexistante, non comblée par ce bloc, pas
+  masquée non plus) ; pas de pastille sur les onglets Budget/Équipe/Assets/Agents du hub campagne (aucun
+  signal fiable sans fetch supplémentaire) ; pastille du SKU sur `FicheArticle` uniquement au statut
+  `prototype` (seul cas listé par le CR).
+- **Vérifié par Playwright sur DB fraîche (FR + AR/RTL)** : bandeau de campagne active avec compte à
+  rebours + jalon en retard + action « Voir les tâches en retard » fonctionnelle, onglets réordonnés et
+  pastillés (⚠ Tâches en premier, onglet par défaut correct) ; call sheet avec bandeau « À préparer »
+  listant les manques et 4 sections repliables pastillées (⚠ Équipe ouverte par défaut, ⚠ Pièces à
+  apporter, ● Matériel, ○ Livrables) ; fiche article prototype avec bandeau « mesures saisies sur 0/3
+  tailles » et onglet SKU & Mesures auto-sélectionné et pastillé ⚠ ; fiche contenu brouillon avec
+  bandeau « une légende ou un asset » et fiche contenu en revue avec un asset UGC requalifié après coup
+  (recréé via PATCH `source: "ugc"`, la garde RG-AS1 bloquant la création directe) affichant « 1
+  asset(s) UGC sans droits renseignés » — cohérent avec l'avertissement déjà affiché sur la puce asset
+  correspondante ; rendu arabe/RTL correct sur les quatre écrans (dir=rtl, interpolations `{{n}}`/
+  `{{jours}}`/`{{actuel}}` correctes, aucune fuite de clé i18n brute) ; `npm run typecheck` propre sur
+  les trois workspaces après chaque ajout.
+- **Incident d'environnement (sans conséquence sur le dépôt)** : un redémarrage du process serveur pour
+  réinitialiser le limiteur de débit (§8.2, 300 req/15 min/IP, épuisé par les cycles de vérification
+  répétés) a été fait sans variable `DATABASE_PATH` définie, rouvrant par erreur une base SQLite locale
+  vide au lieu de la base de démonstration déjà peuplée — perte de données purement locale et
+  reproductible (`server/data/`, ignoré par git, jamais commité). Reconstituée par `db:migrate` +
+  `db:seed` + ré-initialisation du compte admin ; aucun fichier suivi par git n'a été affecté.

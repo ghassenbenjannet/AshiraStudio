@@ -4,6 +4,7 @@ import { db } from "../db/client.js";
 import { campagnes, typesCampagne, modelesRituel, taches, budgetLignes, contenus, metriqueSnapshots, lecons } from "../db/schema.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { ErreurMetier } from "./catalogue.js";
+import { campagneResultatsManquants, tacheEnRetard, type ProchaineEtape } from "@achirah/shared";
 
 /** RG-ECO1 : kpi_cibles verrouillées au passage `active` — une cible écrite après les résultats n'a aucune valeur. */
 export async function activerCampagne(campagneId: string, utilisateurId: string) {
@@ -43,9 +44,7 @@ export async function fermerCampagne(
     throw new ErreurMetier(422, "statut_invalide", "Seule une campagne livrée peut être fermée");
   }
 
-  const cibles = Object.keys(campagne.kpi_cibles ?? {});
-  const resultats = (campagne.resultats ?? {}) as Record<string, unknown>;
-  const manquants = cibles.filter((cle) => resultats[cle] === undefined || resultats[cle] === null);
+  const manquants = campagneResultatsManquants(campagne);
   if (manquants.length > 0) {
     throw new ErreurMetier(422, "kpi_manquants", `Résultats manquants pour : ${manquants.join(", ")}`, { manquants });
   }
@@ -107,6 +106,64 @@ export async function genererRituel(campagneId: string, utilisateurId: string) {
   if (nouvellesTaches.length > 0) await db.insert(taches).values(nouvellesTaches);
   await enregistrerAudit({ utilisateurId, action: "campagne.generer_rituel", entiteType: "campagne", entiteId: campagneId, apres: { nb_taches: nouvellesTaches.length } });
   return nouvellesTaches;
+}
+
+/**
+ * CR-02 §C — bandeau « Prochaine étape » d'une campagne. Lecture seule, aucune nouvelle donnée :
+ * réutilise `campagne.description`/`kpi_cibles` (déjà là), les tâches déjà générées par le rituel
+ * (`genererRituel`) filtrées par `tacheEnRetard` (même fonction partagée que le cockpit Aujourd'hui),
+ * les contenus déjà liés à la campagne, et `campagneResultatsManquants` — la même fonction qui bloque
+ * `fermerCampagne` (RG-ECO2), un seul endroit de vérité pour "résultats manquants".
+ */
+export async function prochaineEtapeCampagne(campagneId: string): Promise<ProchaineEtape> {
+  const [campagne] = await db.select().from(campagnes).where(eq(campagnes.id, campagneId)).limit(1);
+  if (!campagne) throw new ErreurMetier(404, "introuvable", "Campagne introuvable");
+
+  if (campagne.statut === "preparation") {
+    if (!campagne.description) return { etatCle: "preparation", manqueCle: "decrire_strategie", actionCle: null };
+    if (Object.keys(campagne.kpi_cibles ?? {}).length === 0) {
+      return { etatCle: "preparation", manqueCle: "fixer_cibles", actionCle: null };
+    }
+    const tachesCampagne = await db.select({ id: taches.id }).from(taches).where(eq(taches.campagne_id, campagneId));
+    if (tachesCampagne.length === 0) {
+      return { etatCle: "preparation", manqueCle: "generer_rituel", actionCle: "generer_rituel" };
+    }
+    return { etatCle: "preparation", manqueCle: null, actionCle: "activer" };
+  }
+
+  if (campagne.statut === "active") {
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const tachesCampagne = await db.select().from(taches).where(eq(taches.campagne_id, campagneId));
+    const jRestant = Math.round((new Date(campagne.date_fin).getTime() - new Date(aujourdhui).setHours(0, 0, 0, 0)) / 86400000);
+    const jalonsFaits = tachesCampagne.filter((t) => t.statut === "fait").length;
+    const jalonsEnRetard = tachesCampagne.filter((t) => tacheEnRetard(t as any, aujourdhui)).length;
+    const contenusCampagne = await db.select({ statut: contenus.statut }).from(contenus).where(eq(contenus.campagne_id, campagneId));
+    const contenusEnRevue = contenusCampagne.filter((c) => c.statut === "en_revue").length;
+    return {
+      etatCle: "active_resume",
+      etatParams: { jRestant, jalonsFaits, jalonsTotal: tachesCampagne.length, contenusEnRevue },
+      manqueCle: jalonsEnRetard > 0 ? "jalons_retard" : null,
+      manqueParams: jalonsEnRetard > 0 ? { n: jalonsEnRetard } : undefined,
+      actionCle: jalonsEnRetard > 0 ? "voir_retards" : null,
+    };
+  }
+
+  if (campagne.statut === "livree") {
+    const manquants = campagneResultatsManquants(campagne);
+    const jours = Math.round((Date.now() - new Date(campagne.updated_at).getTime()) / 86400000);
+    if (manquants.length > 0) {
+      return {
+        etatCle: "livree_depuis",
+        etatParams: { jours },
+        manqueCle: "resultats_manquants",
+        manqueParams: { n: manquants.length },
+        actionCle: "saisir_resultats",
+      };
+    }
+    return { etatCle: "livree_prete", manqueCle: null, actionCle: "fermer" };
+  }
+
+  return { etatCle: campagne.statut, manqueCle: null, actionCle: null };
 }
 
 const DOMAINES_AUTORISES = ["achirah.com", "achirah.tn"];

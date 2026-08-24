@@ -1,0 +1,51 @@
+{
+  "app": { "nom": "Achirah HQ" },
+  "nav": {
+    "espaces": {
+      "home": "Aujourd'hui",
+      "plan": "Plan",
+      "create": "Créer",
+      "grow": "Grow",
+      "measure": "Mesure",
+      "people": "Équipe",
+      "parametres": "Paramètres"
+    },
+    "mobile": {
+      "aujourdhui": "Aujourd'hui",
+      "campagnes": "Campagnes",
+      "studio": "Studio",
+      "catalogue": "Catalogue",
+      "plus": "Plus"
+    }
+  },
+  "auth": {
+    "connexion": "Connexion",
+    "email": "Email",
+    "mot_de_passe": "Mot de passe",
+    "se_connecter": "Se connecter",
+    "deconnexion": "Déconnexion",
+    "en_cours": "Connexion en cours…",
+    "erreur_identifiants": "Email ou mot de passe incorrect",
+    "compte_verrouille": "Compte verrouillé temporairement — réessayez dans quelques minutes"
+  },
+  "init": {
+    "titre": "Bienvenue sur Achirah HQ",
+    "sous_titre": "Configurons votre premier compte administrateur.",
+    "nom": "Nom",
+    "creer_compte": "Créer le compte et démarrer",
+    "en_cours": "Initialisation en cours…",
+    "etape_seed": "Mise en place des référentiels et des données de départ…"
+  },
+  "commun": {
+    "chargement": "Chargement…",
+    "erreur_generique": "Une erreur est survenue",
+    "reessayer": "Réessayer",
+    "annuler": "Annuler",
+    "enregistrer": "Enregistrer",
+    "a_construire": "Cet écran sera construit dans une prochaine phase."
+  },
+  "langue": {
+    "fr": "Français",
+    "ar": "العربية"
+  }
+}

@@ -11,6 +11,9 @@ import { assetsRoutes } from "./routes/assets.js";
 import { campagnesRoutes } from "./routes/campagnes.js";
 import { tachesRoutes, shootingsRoutes, looksRoutes, lookItemsRoutes, posesRoutes } from "./routes/taches.js";
 import { icalRoutes } from "./routes/ical.js";
+import { contenusRoutes } from "./routes/contenus.js";
+import { boardsRoutes } from "./routes/boards.js";
+import { ideesRoutes } from "./routes/idees.js";
 import { resoudreSession, exigerAuth } from "./middleware/auth.js";
 import { journaliserRequetes } from "./middleware/logging.js";
 import { limiteurDebit } from "./middleware/rate-limit.js";
@@ -59,6 +62,12 @@ export function creerApp() {
   app.route("/api/poses", posesRoutes);
   // §4.6 : le token est l'auth — jamais de session requise sur ce flux.
   app.route("/api/ical", icalRoutes);
+  app.use("/api/contenus/*", exigerAuth);
+  app.route("/api/contenus", contenusRoutes);
+  app.use("/api/boards/*", exigerAuth);
+  app.route("/api/boards", boardsRoutes);
+  app.use("/api/idees/*", exigerAuth);
+  app.route("/api/idees", ideesRoutes);
 
   app.notFound((c) => erreurApi(c, 404, "introuvable", "Ressource introuvable"));
   app.onError((err, c) => {

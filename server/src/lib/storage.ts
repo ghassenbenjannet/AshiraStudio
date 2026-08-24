@@ -12,6 +12,9 @@ export interface FichierStocke {
   url: string;
 }
 
+// Whitelist volontairement stricte (§8.3, décision verrouillée) : jpeg/png/webp/csv/pdf ≤8 Mo.
+// Les assets vidéo (type `video`) passent par une référence externe (source=externe, pas d'upload
+// binaire) — cf. DECISIONS.md Phase ④.
 const MIME_AUTORISES: Record<string, string> = {
   "image/jpeg": ".jpg",
   "image/png": ".png",

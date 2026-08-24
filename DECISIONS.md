@@ -111,3 +111,41 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   du cockpit, l'indicateur « prêt à tourner » (liste précise des champs manquants), et le rituel
   générant bien 7 tâches. Deux échecs console observés pendant les tests (fetch Google Fonts bloqué,
   401 sur `/auth/me` avant connexion) sont environnementaux/attendus, pas des bugs applicatifs.
+
+## Phase ④ — Contenus, assets, boards, idées, calendrier éditorial
+
+- **Ambiguïté MIME résolue en faveur de la sécurité verrouillée (§8.3)** : §4.5 décrit un asset
+  `type video` avec « vignettes serveur (vidéo = 1re frame) », mais §8.3 fige explicitement la
+  whitelist d'upload à **jpeg/png/webp/csv/pdf ≤8 Mo** — une décision de sécurité, pas un oubli.
+  Plutôt que d'élargir cette whitelist (ce que Partie X interdit de rouvrir implicitement), les
+  assets vidéo passent par une **référence externe** (`POST /assets`, `fichier_url` = lien direct,
+  pas de fichier local) au lieu d'un upload binaire (`POST /assets/upload`, réservé aux 5 MIME
+  autorisés). Cohérent avec le champ intelligent déjà utilisé ailleurs (référence lien vs upload).
+- **Vignettes vidéo** : honnêtement non générées (pas de `ffmpeg` dans l'environnement de build) —
+  `vignette_url` reste `null`, le front affiche une icône générique. Un vrai pipeline de miniature
+  serveur reste un TODO d'infrastructure, pas une simplification silencieuse.
+- **RG-AS1 appliqué à deux moments** : (1) préventif, à l'upload d'un asset `source=ugc` sans
+  `droits` (bloqué immédiatement, 422) ; (2) le gate décrit par le CDC, à l'approbation d'un contenu
+  qui référence un asset UGC sans `droits` (un asset peut être créé avec `droits`, puis vidé par une
+  édition ultérieure — le gate re-vérifie donc à chaque `POST /contenus/:id/approuver`, jamais mis
+  en cache sur l'asset).
+- **Workflow contenu en endpoints dédiés** (`soumettre/approuver/planifier/publier/archiver`), pas un
+  `POST .../transition` générique du §8.2 — chaque étape porte une garde différente (caption/asset
+  requis, RG-AS1, capacité `approbation.gerer` pour l'approbation seule) ; suit le même principe que
+  `campagnes` en Phase ③ (transitions à effets de bord = endpoint dédié, PATCH générique bloqué sur
+  `statut`).
+- **`contenu_version`** : snapshot de la légende **avant** modification, créé uniquement si le
+  contenu a déjà quitté `brouillon` (le brouillon s'édite librement, sans historique — bruit inutile
+  avant la première revue). Restaurer une version snapshotte d'abord l'état courant (réversible dans
+  les deux sens).
+- **« Transformer en campagne » (board→campagne)** : les champs obligatoires de `campagne`
+  (type, dates, objectif) ne sont pas déductibles d'un board — l'utilisateur les saisit au moment de
+  la transformation (comme la création manuelle de campagne), seuls `nom` et `description` (notes
+  concaténées) sont réellement pré-remplis, conformément à la lettre du §4.5.
+- **Idées** : `statut` (nouvelle/utilisee/ecartee) manquait du schéma de mise à jour partagé (même
+  angle mort que `campagne.statut` en Phase ③) — corrigé en l'ajoutant explicitement à
+  `ideeUpdateSchema`. Le générateur scoré (§4.5, formulaire→IA) est explicitement Phase ⑤ ; cette
+  phase ne construit que la création manuelle (`source: manuel`).
+- **Quotas assets** : mesure réelle de la taille des fichiers stockés localement (`fs.stat` sur
+  chaque asset), pas un chiffre fabriqué — aucune limite n'est imposée (stockage local, migration
+  S3/R2 possible sans changement d'API).

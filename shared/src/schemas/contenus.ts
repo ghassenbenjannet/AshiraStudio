@@ -56,6 +56,7 @@ export const contenuInsertSchema = contenuSchema.omit({
   publie_le: true,
   score_marque: true,
   score_detail: true,
+  auteur_id: true, // fixé par le serveur (utilisateur courant)
 });
 export const contenuUpdateSchema = contenuInsertSchema.partial();
 
@@ -117,7 +118,7 @@ export const ideeSchema = baseEntitySchema.extend({
 });
 export type Idee = z.infer<typeof ideeSchema>;
 export const ideeInsertSchema = ideeSchema.omit({ id: true, created_at: true, updated_at: true, statut: true });
-export const ideeUpdateSchema = ideeInsertSchema.partial();
+export const ideeUpdateSchema = ideeInsertSchema.partial().extend({ statut: z.enum(STATUT_IDEE).optional() });
 
 /** §4.5 — Générateur d'idées scorées : entrée. */
 export const genererIdeesEntreeSchema = z.object({

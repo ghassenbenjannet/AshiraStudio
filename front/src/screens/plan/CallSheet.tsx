@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { HEURE_LUMIERE, type Personne } from "@achirah/shared";
-import { Champ, ChampSelect, ChampNombre, BoutonSecondaire } from "../../components/ui/Champ.js";
+import { HEURE_LUMIERE, SORT_RETOUR_PIECE, STATUT_POST_PROD, type Personne } from "@achirah/shared";
+import { Champ, ChampSelect, ChampNombre, ChampTexte, BoutonSecondaire } from "../../components/ui/Champ.js";
 import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
 import { clientTaches, clientShootings, type BriefShooting } from "../../lib/resources/taches.js";
@@ -13,7 +13,11 @@ import { CommentairesPanel } from "../../components/collaboration/CommentairesPa
 
 const CLE_MANQUE_TRAD: Record<string, string> = { pieces: "pieces", photographe: "photographe", poses: "poses", date: "date", lieu: "lieu" };
 
-export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer: boolean }) {
+function SectionTitre({ children }: { children: React.ReactNode }) {
+  return <h3 className="mb-2 text-sm font-medium text-dim">{children}</h3>;
+}
+
+export function CallSheet({ tacheId, campagneId, peutEditer }: { tacheId: string; campagneId: string | null; peutEditer: boolean }) {
   const { t } = useTranslation();
   const { toaster } = useToast();
   const [shooting, setShooting] = useState<Awaited<ReturnType<typeof clientTaches.obtenirShooting>> | null>(null);
@@ -23,10 +27,15 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
   const [brief, setBrief] = useState<BriefShooting | null>(null);
   const [briefEnCours, setBriefEnCours] = useState(false);
   const [erreurBrief, setErreurBrief] = useState<string | null>(null);
+  // §CR-02 B — la liste des looks de ShotList doit se rafraîchir quand LooksComposer en crée un,
+  // pas seulement à son propre montage : ce compteur, bumpé à chaque `charger()`, force ShotList à
+  // refaire son fetch (sinon le sélecteur « Lier à un look » reste figé sur l'état du montage).
+  const [looksVersion, setLooksVersion] = useState(0);
 
   const charger = () =>
     clientTaches.obtenirShooting(tacheId).then(async (s) => {
       setShooting(s);
+      setLooksVersion((v) => v + 1);
       const manquants = s.pieces_effectives.filter((p) => !skusParId.has(p.article_sku_id));
       if (manquants.length > 0) {
         const details = await Promise.all(manquants.map((p) => clientArticleSkus.detail(p.article_sku_id).catch(() => null)));
@@ -76,10 +85,28 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
     await majShooting({ materiel });
   }
 
+  async function basculerPreparation(skuId: string, libelle: string) {
+    if (!shooting) return;
+    const existant = shooting.preparation_pieces.find((p) => p.id === skuId);
+    const suivant = existant
+      ? shooting.preparation_pieces.map((p) => (p.id === skuId ? { ...p, coche: !p.coche } : p))
+      : [...shooting.preparation_pieces, { id: skuId, libelle, coche: true }];
+    await majShooting({ preparation_pieces: suivant });
+  }
+
+  async function majRetour(skuId: string, sort: string) {
+    if (!shooting) return;
+    const suivant = sort
+      ? [...shooting.retour_pieces.filter((r) => r.article_sku_id !== skuId), { article_sku_id: skuId, sort: sort as (typeof SORT_RETOUR_PIECE)[number] }]
+      : shooting.retour_pieces.filter((r) => r.article_sku_id !== skuId);
+    await majShooting({ retour_pieces: suivant });
+  }
+
   if (!shooting) return <p className="text-sm text-dim">{t("commun.chargement")}</p>;
 
   return (
     <div className="rounded-card border border-line bg-panel p-4">
+      {/* En-tête + Prêt à tourner */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-lg text-off">{t("callsheet.titre")}</h2>
         <div className="flex items-center gap-3">
@@ -123,7 +150,9 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
         </div>
       )}
 
-      <div className="grid gap-x-4 md:grid-cols-2">
+      {/* Équipe */}
+      <SectionTitre>{t("callsheet.equipe")}</SectionTitre>
+      <div className="mb-4 grid gap-x-4 md:grid-cols-2">
         <Champ label={t("callsheet.photographe")}>
           <ChampSelect disabled={!peutEditer} value={shooting.photographe_id ?? ""} onChange={(e) => void majShooting({ photographe_id: e.target.value || null })}>
             <option value="">—</option>
@@ -164,22 +193,33 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
         </Champ>
       </div>
 
+      {/* Looks */}
+      <LooksComposer shootingId={tacheId} campagneId={campagneId} peutEditer={peutEditer} onChange={charger} />
+
+      {/* Pièces à apporter (agrégées, origine visible) */}
       <div className="mt-4">
-        <h3 className="mb-2 text-sm font-medium text-dim">{t("callsheet.pieces_a_apporter")}</h3>
+        <SectionTitre>{t("callsheet.pieces_a_apporter")}</SectionTitre>
         {shooting.pieces_effectives.length === 0 ? (
           <p className="text-sm text-dim">—</p>
         ) : (
-          <ul className="list-inside list-disc text-sm text-off">
+          <ul className="flex flex-col gap-1 text-sm text-off">
             {shooting.pieces_effectives.map((p) => (
-              <li key={p.article_sku_id}>{skusParId.get(p.article_sku_id) ?? p.article_sku_id}</li>
+              <li key={p.article_sku_id} className="flex items-center gap-2">
+                <span>{skusParId.get(p.article_sku_id) ?? p.article_sku_id}</span>
+                {p.origine === "look" && <span className="text-xs text-dim">({t("callsheet.pieces_issues_looks")})</span>}
+              </li>
             ))}
           </ul>
         )}
       </div>
 
+      {/* Shot list */}
+      <ShotList shootingId={tacheId} looksVersion={looksVersion} peutEditer={peutEditer} onChange={charger} />
+
+      {/* Matériel */}
       {shooting.materiel.length > 0 && (
         <div className="mt-4">
-          <h3 className="mb-2 text-sm font-medium text-dim">Matériel</h3>
+          <SectionTitre>{t("callsheet.materiel")}</SectionTitre>
           <ul className="grid gap-1 md:grid-cols-2">
             {shooting.materiel.map((m, i) => (
               <li key={m.id}>
@@ -193,9 +233,95 @@ export function CallSheet({ tacheId, peutEditer }: { tacheId: string; peutEditer
         </div>
       )}
 
-      <LooksComposer shootingId={tacheId} peutEditer={peutEditer} onChange={charger} />
-      <ShotList shootingId={tacheId} peutEditer={peutEditer} onChange={charger} />
+      {/* Préparation pièces */}
+      {shooting.pieces_effectives.length > 0 && (
+        <div className="mt-4">
+          <SectionTitre>{t("callsheet.preparation_pieces")}</SectionTitre>
+          <ul className="grid gap-1 md:grid-cols-2">
+            {shooting.pieces_effectives.map((p) => {
+              const libelle = skusParId.get(p.article_sku_id) ?? p.article_sku_id;
+              const coche = shooting.preparation_pieces.find((item) => item.id === p.article_sku_id)?.coche ?? false;
+              return (
+                <li key={p.article_sku_id}>
+                  <label className="flex min-h-tap items-center gap-2 text-sm text-off">
+                    <input type="checkbox" disabled={!peutEditer} checked={coche} onChange={() => void basculerPreparation(p.article_sku_id, libelle)} />
+                    {libelle}
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
+      {/* Retours */}
+      {shooting.pieces_effectives.length > 0 && (
+        <div className="mt-4">
+          <SectionTitre>{t("callsheet.retours")}</SectionTitre>
+          <ul className="flex flex-col gap-1">
+            {shooting.pieces_effectives.map((p) => {
+              const retour = shooting.retour_pieces.find((r) => r.article_sku_id === p.article_sku_id);
+              return (
+                <li key={p.article_sku_id} className="flex items-center justify-between gap-2 text-sm text-off">
+                  <span className="flex-1">{skusParId.get(p.article_sku_id) ?? p.article_sku_id}</span>
+                  <select
+                    disabled={!peutEditer}
+                    value={retour?.sort ?? ""}
+                    onChange={(e) => void majRetour(p.article_sku_id, e.target.value)}
+                    className="min-h-tap rounded-field border border-line bg-panel2 px-2 text-xs text-off"
+                  >
+                    <option value="">{t("callsheet.retour_non_rendu")}</option>
+                    {SORT_RETOUR_PIECE.map((s) => (
+                      <option key={s} value={s}>
+                        {t(`callsheet.sorts.${s}`)}
+                      </option>
+                    ))}
+                  </select>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* Livrables / post-prod */}
+      <div className="mt-4">
+        <SectionTitre>{t("callsheet.livrables")}</SectionTitre>
+        <div className="grid gap-x-4 md:grid-cols-2">
+          <Champ label={t("callsheet.statut_post_prod")}>
+            <ChampSelect disabled={!peutEditer} value={shooting.statut_post_prod} onChange={(e) => void majShooting({ statut_post_prod: e.target.value })}>
+              {STATUT_POST_PROD.map((s) => (
+                <option key={s} value={s}>
+                  {t(`callsheet.post_prod.${s}`)}
+                </option>
+              ))}
+            </ChampSelect>
+          </Champ>
+          <Champ label={t("callsheet.nb_photos_recues")}>
+            <ChampNombre disabled={!peutEditer} value={shooting.nb_photos_recues ?? ""} onChange={(e) => void majShooting({ nb_photos_recues: e.target.value ? Number(e.target.value) : null })} />
+          </Champ>
+          <Champ label={t("callsheet.livrable_photos")}>
+            <ChampTexte
+              key={`photos-${shooting.livrable_photos ?? ""}`}
+              disabled={!peutEditer}
+              defaultValue={shooting.livrable_photos ?? ""}
+              onBlur={(e) => void majShooting({ livrable_photos: e.target.value || null })}
+              placeholder="https://…"
+            />
+          </Champ>
+          <Champ label={t("callsheet.livrable_videos")}>
+            <ChampTexte
+              key={`videos-${shooting.livrable_videos ?? ""}`}
+              disabled={!peutEditer}
+              defaultValue={shooting.livrable_videos ?? ""}
+              onBlur={(e) => void majShooting({ livrable_videos: e.target.value || null })}
+              placeholder="https://…"
+            />
+          </Champ>
+        </div>
+      </div>
+
+      {/* Notes */}
       <Champ label={t("callsheet.notes")}>
         <textarea
           disabled={!peutEditer}

@@ -43,7 +43,7 @@ export async function calculerPiecesEffectives(shootingId: string, piecesManuell
   const items = idsLooks.length ? await db.select().from(lookItems).where(inArray(lookItems.look_id, idsLooks)) : [];
   const colorisIds = Array.from(new Set(items.filter((i) => i.source === "catalogue" && i.article_coloris_id).map((i) => i.article_coloris_id!)));
 
-  const autoDerivees: { article_sku_id: string; note?: string }[] = [];
+  const autoDerivees: { article_sku_id: string; note?: string; origine: "look" }[] = [];
   if (colorisIds.length > 0) {
     const skus = await db.select().from(articleSkus).where(inArray(articleSkus.article_coloris_id, colorisIds));
     for (const colorisId of colorisIds) {
@@ -51,12 +51,15 @@ export async function calculerPiecesEffectives(shootingId: string, piecesManuell
       const tailleDemandee = item?.note?.match(/taille\s*:\s*(\S+)/i)?.[1];
       const skusDuColoris = skus.filter((s) => s.article_coloris_id === colorisId);
       const sku = (tailleDemandee && skusDuColoris.find((s) => s.taille.toLowerCase() === tailleDemandee.toLowerCase())) ?? skusDuColoris[0];
-      if (sku) autoDerivees.push({ article_sku_id: sku.id });
+      if (sku) autoDerivees.push({ article_sku_id: sku.id, origine: "look" });
     }
   }
 
-  const fusion = new Map<string, { article_sku_id: string; note?: string }>();
-  [...autoDerivees, ...piecesManuelles].forEach((p) => fusion.set(p.article_sku_id, p));
+  // §CR-02 B : chaque pièce garde une trace de son origine (« issue des looks » vs ajoutée à la main)
+  // pour un affichage honnête sur le call sheet — un ajout manuel sur le même SKU prime toujours.
+  const fusion = new Map<string, { article_sku_id: string; note?: string; origine: "look" | "manuel" }>();
+  autoDerivees.forEach((p) => fusion.set(p.article_sku_id, p));
+  piecesManuelles.forEach((p) => fusion.set(p.article_sku_id, { ...p, origine: "manuel" }));
   return Array.from(fusion.values());
 }
 

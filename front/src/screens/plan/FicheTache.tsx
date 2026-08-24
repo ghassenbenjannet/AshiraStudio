@@ -122,7 +122,7 @@ export function FicheTache() {
         )}
       </form>
 
-      {tache.type === "shooting" && <CallSheet tacheId={tache.id} peutEditer={peutEditer} />}
+      {tache.type === "shooting" && <CallSheet tacheId={tache.id} campagneId={tache.campagne_id} peutEditer={peutEditer} />}
 
       <div className="mt-6">
         <CommentairesPanel entiteType="tache" entiteId={tache.id} />

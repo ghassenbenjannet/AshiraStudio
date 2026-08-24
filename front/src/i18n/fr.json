@@ -208,7 +208,8 @@
       "fournisseur": "Fournisseur",
       "delai_production_jours": "Délai de production (jours)",
       "moq": "MOQ",
-      "notes_interne": "Notes internes"
+      "notes_interne": "Notes internes",
+      "coloris": "Coloris"
     },
     "onglets": {
       "modele": "Modèle",
@@ -420,12 +421,21 @@
         "bas": "Bas",
         "chaussures": "Chaussures",
         "accessoire": "Accessoire"
-      }
+      },
+      "dupliquer": "Dupliquer",
+      "copie": "copie",
+      "duplique": "Look dupliqué",
+      "champ_emplacement": "Emplacement",
+      "photo_sans_campagne": "Cette tâche n'est rattachée à aucune campagne — pas de photothèque disponible.",
+      "aucune_photo": "Aucune photo disponible pour cette campagne.",
+      "aucun": "Aucun look pour l'instant."
     },
     "poses": {
       "titre": "Shot list",
       "ajouter": "Ajouter une pose",
-      "description_placeholder": "Ex. Plan large, marche dans la rue"
+      "description_placeholder": "Ex. Plan large, marche dans la rue",
+      "lier_look": "Lier à un look",
+      "aucun_look": "Aucun look"
     },
     "pieces_a_apporter": "Pièces à apporter",
     "notes": "Notes",
@@ -434,7 +444,30 @@
     "brief_modele": "Modèle",
     "brief_pieces": "Pièces",
     "brief_materiel": "Matériel",
-    "brief_attention": "Point d'attention"
+    "brief_attention": "Point d'attention",
+    "equipe": "Équipe",
+    "materiel": "Matériel",
+    "pieces_issues_looks": "issues des looks",
+    "preparation_pieces": "Préparation pièces",
+    "retours": "Retours",
+    "retour_non_rendu": "Pas encore rentrée",
+    "sorts": {
+      "rendu": "Rendue",
+      "garde_par": "Gardée par…",
+      "offert": "Offerte",
+      "abime": "Abîmée"
+    },
+    "livrables": "Livrables / post-prod",
+    "statut_post_prod": "Statut post-prod",
+    "post_prod": {
+      "a_trier": "À trier",
+      "selection_faite": "Sélection faite",
+      "retouche": "Retouche",
+      "livre": "Livré"
+    },
+    "nb_photos_recues": "Photos reçues",
+    "livrable_photos": "Lien photos",
+    "livrable_videos": "Lien vidéos"
   },
   "calendrier": {
     "titre": "Calendrier éditorial",

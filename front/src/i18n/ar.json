@@ -208,7 +208,8 @@
       "fournisseur": "المورّد",
       "delai_production_jours": "مهلة الإنتاج (أيام)",
       "moq": "الحد الأدنى للطلب",
-      "notes_interne": "ملاحظات داخلية"
+      "notes_interne": "ملاحظات داخلية",
+      "coloris": "اللون"
     },
     "onglets": {
       "modele": "النموذج",
@@ -420,12 +421,21 @@
         "bas": "الأسفل",
         "chaussures": "الحذاء",
         "accessoire": "إكسسوار"
-      }
+      },
+      "dupliquer": "نسخ",
+      "copie": "نسخة",
+      "duplique": "تم نسخ الإطلالة",
+      "champ_emplacement": "الموضع",
+      "photo_sans_campagne": "هذه المهمة غير مرتبطة بأي حملة — لا توجد مكتبة صور متاحة.",
+      "aucune_photo": "لا توجد صور متاحة لهذه الحملة.",
+      "aucun": "لا توجد إطلالات بعد."
     },
     "poses": {
       "titre": "قائمة اللقطات",
       "ajouter": "إضافة لقطة",
-      "description_placeholder": "مثال: لقطة عامة، مشي في الشارع"
+      "description_placeholder": "مثال: لقطة عامة، مشي في الشارع",
+      "lier_look": "ربط بإطلالة",
+      "aucun_look": "بدون إطلالة"
     },
     "pieces_a_apporter": "القطع الواجب إحضارها",
     "notes": "ملاحظات",
@@ -434,7 +444,30 @@
     "brief_modele": "العارض",
     "brief_pieces": "القطع",
     "brief_materiel": "المعدات",
-    "brief_attention": "نقطة انتباه"
+    "brief_attention": "نقطة انتباه",
+    "equipe": "الفريق",
+    "materiel": "المعدات",
+    "pieces_issues_looks": "من الإطلالات",
+    "preparation_pieces": "تحضير القطع",
+    "retours": "الإرجاعات",
+    "retour_non_rendu": "لم تُرجَع بعد",
+    "sorts": {
+      "rendu": "أُرجِعت",
+      "garde_par": "احتفظ بها…",
+      "offert": "أُهديت",
+      "abime": "تالفة"
+    },
+    "livrables": "التسليمات / ما بعد الإنتاج",
+    "statut_post_prod": "حالة ما بعد الإنتاج",
+    "post_prod": {
+      "a_trier": "بانتظار الفرز",
+      "selection_faite": "تم الاختيار",
+      "retouche": "قيد التعديل",
+      "livre": "تم التسليم"
+    },
+    "nb_photos_recues": "الصور المستلمة",
+    "livrable_photos": "رابط الصور",
+    "livrable_videos": "رابط الفيديوهات"
   },
   "calendrier": {
     "titre": "التقويم التحريري",

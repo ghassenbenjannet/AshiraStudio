@@ -393,3 +393,61 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   sauvegarde manuelle réelle + liste, statut d'observabilité, panneau de commentaires sur
   tâche/contenu/campagne/shooting, cloche avec badge non-lues et marquage lu, PWA buildée avec
   succès (manifest.webmanifest + sw.js générés, 9 entrées précachées).
+
+## CR-02 — Bloc B : looks visibles sur le call sheet (correctif rapide)
+
+- **Aucun changement de schéma.** Conforme au garde-fou du CR : `look_id` sur `poses` et les champs
+  `preparation_pieces`/`retour_pieces`/`livrable_photos`/`livrable_videos`/`statut_post_prod`/
+  `nb_photos_recues` sur `shootings` existaient déjà en base et côté Zod depuis le scaffold de la
+  Phase ① / le modèle RG-LK1 de la Phase ③ — ils n'étaient simplement jamais rendus dans une écran.
+  Ce bloc est donc purement UI/rendu, comme annoncé par le CR.
+- **Fichier prototype introuvable** : `achirah-hq-prototype.html`, cité par le CR comme référence de
+  structure/densité pour le call sheet, n'existe nulle part dans le dépôt (recherche exhaustive par
+  nom et par contenu). La description textuelle du CR (ordre de sections CDC E06, cartes 4 lignes,
+  traitement visuel par source) a été suivie directement en l'absence de ce fichier.
+- **Ordre des sections imposé (CDC E06)** dans `CallSheet.tsx` : En-tête + Prêt à tourner → Équipe
+  (photographe/heure/durée/modèles) → Looks → Pièces à apporter (agrégées, tag « issues des looks »
+  par ligne) → Shot list → Matériel → Préparation pièces → Retours → Livrables/post-prod → Notes →
+  Commentaires.
+- **Looks en cartes, pas en tableau** : `LooksComposer.tsx` réécrit — une carte par look, 4 lignes
+  fixes (Haut/Bas/Chaussures/Accessoires). Traitement visuel par source d'article : référence
+  catalogue en couleur accent (libellé résolu réf. + nom + coloris), vignette 📷 réelle pour une
+  photo (via `clientAssets`, avec repli emoji si l'image ne charge pas), texte libre en gris atténué.
+  Duplication (« Look copié » avec tous ses items) et réordonnancement (↑/↓, persistés via `ordre`)
+  accessibles directement sur la carte.
+- **Bug préexistant trouvé et corrigé (UUID brut affiché)** : l'ancien rendu résolvait le nom d'un
+  item catalogue via `colorisNomParId.get(item.article_coloris_id)`, mais `article_coloris_id`
+  référence la table de jonction article×coloris, pas le référentiel `coloris` — deux espaces d'id
+  différents. Le bug existait depuis la Phase ③ mais restait invisible tant que les items étaient de
+  petites puces peu visibles ; il est devenu flagrant une fois la carte mise en avant par ce bloc.
+  Corrigé par une résolution en deux étapes (`article_coloris_id` → `ArticleColoris` → `Article` +
+  nom du coloris) construisant un vrai libellé.
+- **Onglet photo du composeur de look, jusque-là un stub** (`commun.a_construire`), rendu
+  fonctionnel : grille de vignettes cliquables filtrées sur la campagne courante, sélection envoyée
+  comme item `source: "photo"`.
+- **Pose liée à un look** : `poses.look_id` (déjà nullable en base) exposé dans le formulaire d'ajout
+  et sur chaque ligne existante via un `<select>` ; la ligne affiche alors « — Nom du look ».
+  Vérifié par un correctif direct en base puis lecture du contenu DOM (« — Look 2 »).
+- **Bug trouvé et corrigé (liste des looks obsolète dans la shot list)** : `ShotList.tsx` chargeait
+  ses looks une seule fois au montage, sans rafraîchissement quand `LooksComposer` (composant frère)
+  créait un nouveau look. Corrigé par un compteur `looksVersion` détenu par `CallSheet` et incrémenté
+  à chaque rechargement partagé, transmis en prop, avec le chargement des looks de `ShotList` séparé
+  en un second `useEffect` dépendant de `[shootingId, looksVersion]`. A également fallu corriger
+  `LooksComposer.ajouterLook()` pour qu'il appelle `onChange` (jusque-là seules les mutations d'item
+  le faisaient), sinon créer un look vide ne déclenchait jamais la mise à jour du compteur.
+- **Sections « Préparation pièces », « Retours » et « Livrables/post-prod »** construites de zéro
+  (les champs existaient en schéma mais aucune UI ne les exposait) : case à cocher par pièce
+  effective pour la préparation, sélecteur de statut de retour par pièce (rendu/gardé par le
+  modèle/offert/abîmé), formulaire de statut post-prod + nombre de photos reçues + livrables
+  photos/vidéos (URLs ou identifiants, saisie libre).
+- **Origine des pièces exposée sans nouvelle colonne** : `calculerPiecesEffectives()` (service, déjà
+  existant) retourne désormais un champ calculé `origine: "look" | "manuel"` par pièce — dérivé à la
+  volée à partir des looks du shooting, jamais persisté, donc sans impact schéma. Le call sheet
+  affiche « (issues des looks) » sur les lignes concernées.
+- **Vérifié par Playwright sur DB fraîche (cycles répétés)** : 2 looks avec items multi-sources
+  visibles simultanément à l'écran, agrégation des pièces avec tag d'origine, duplication d'un look
+  avec ses 4 items, pose liée affichant le nom du look, export PDF du call sheet toujours fonctionnel
+  après les changements, rendu complet en arabe/RTL sans casse de mise en page. Limite d'environnement
+  notée (non-bloquante) : les images de test `picsum.photos` échouent en sandbox
+  (`ERR_TUNNEL_CONNECTION_FAILED`, hôte non autorisé par le proxy) — le `<img>` et son repli sont
+  corrects, seule l'image externe de démonstration ne charge pas ici.

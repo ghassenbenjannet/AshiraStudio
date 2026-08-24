@@ -2,7 +2,7 @@ import type { Tache, Shooting, Look, LookItem, Pose } from "@achirah/shared";
 import { api } from "../api.js";
 
 interface ShootingEnrichi extends Shooting {
-  pieces_effectives: { article_sku_id: string; note?: string }[];
+  pieces_effectives: { article_sku_id: string; note?: string; origine: "look" | "manuel" }[];
   pret_a_tourner: { pret: boolean; manques: string[] };
 }
 

@@ -55,4 +55,5 @@ export const clientArticleColoris = {
 
 export const clientArticleSkus = {
   modifier: (id: string, corps: Partial<ArticleSku>) => api<{ donnees: ArticleSku }>(`/skus/${id}`, { method: "PATCH", body: corps }).then((r) => r.donnees),
+  detail: (id: string) => api<{ donnees: { sku: ArticleSku; label: string } }>(`/skus/${id}/detail`).then((r) => r.donnees),
 };

@@ -15,7 +15,7 @@ import {
   STATUT_CYCLE_ARTICLE,
 } from "@achirah/shared";
 import { db } from "../db/client.js";
-import { articles, articleColoris, articleSkus, articleCouts, historiqueStatuts, gammes, assets } from "../db/schema.js";
+import { articles, articleColoris, articleSkus, articleCouts, historiqueStatuts, gammes, assets, coloris } from "../db/schema.js";
 import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
@@ -280,6 +280,21 @@ colorisRoutes.post("/:id/skus", exigerCapacite("entites.editer"), zValidator("js
 catalogueRoutes.route("/coloris", colorisRoutes);
 
 const skusRoutes = new Hono<AppEnv>();
+
+// Vue jointe pratique (référence + nom + coloris + taille) — réutilisée par le call sheet et sa liste de pièces.
+skusRoutes.get("/:id/detail", async (c) => {
+  const [sku] = await db.select().from(articleSkus).where(eq(articleSkus.id, c.req.param("id"))).limit(1);
+  if (!sku) return erreurApi(c, 404, "introuvable", "SKU introuvable");
+  const [ac] = await db.select().from(articleColoris).where(eq(articleColoris.id, sku.article_coloris_id)).limit(1);
+  const [article] = ac ? await db.select().from(articles).where(eq(articles.id, ac.article_id)) : [];
+  const [col] = ac ? await db.select().from(coloris).where(eq(coloris.id, ac.coloris_id)) : [];
+  return c.json({
+    donnees: {
+      sku,
+      label: `${article?.reference ?? "?"} — ${article?.nom ?? "?"} (${col?.nom_commercial ?? "?"}) — ${sku.taille}`,
+    },
+  });
+});
 
 skusRoutes.patch("/:id", exigerCapacite("entites.editer"), zValidator("json", articleSkuUpdateSchema), async (c) => {
   const utilisateur = c.get("utilisateur")!;

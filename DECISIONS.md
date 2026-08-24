@@ -102,3 +102,12 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   (2) `activerCampagne` ne verrouillait jamais les KPI d'une campagne **déjà** `active` (cas du seed,
   Chapitre I créé directement `active` par fidélité à l'Annexe A) — la garde d'idempotence teste
   désormais `statut === "active" ET kpi_cibles_verrouillees`, pas `statut === "active"` seul.
+- **Vue « Calendrier » du board de tâches (E04) = le calendrier éditorial (E18)** : le §4.6 décrit un
+  simple commutateur de vue Liste/Kanban/Calendrier sur le même board, pas un écran séparé — confirmé
+  par relecture du texte. Le calendrier ne source aujourd'hui que les `taches` ; les contenus/posts
+  y seront ajoutés en Phase ④/⑥ une fois ces entités construites.
+- **Front vérifié de bout en bout (10 captures Playwright, scénario complet init→campagne→rituel→
+  budget→board 3 vues→call sheet→cockpit)** : tout fonctionne correctement, y compris le calcul J±n
+  du cockpit, l'indicateur « prêt à tourner » (liste précise des champs manquants), et le rituel
+  générant bien 7 tâches. Deux échecs console observés pendant les tests (fetch Google Fonts bloqué,
+  401 sur `/auth/me` avant connexion) sont environnementaux/attendus, pas des bugs applicatifs.

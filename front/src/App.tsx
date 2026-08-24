@@ -6,6 +6,8 @@ import { Login } from "./screens/Login.js";
 import { Init } from "./screens/Init.js";
 import { Aujourdhui } from "./screens/Aujourdhui.js";
 import { Plan } from "./screens/Plan.js";
+import { FicheCampagne } from "./screens/plan/FicheCampagne.js";
+import { FicheTache } from "./screens/plan/FicheTache.js";
 import { Create } from "./screens/Create.js";
 import { Grow } from "./screens/Grow.js";
 import { Measure } from "./screens/Measure.js";
@@ -64,6 +66,8 @@ export function App() {
         <Route path="/" element={<Navigate to="/aujourdhui" replace />} />
         <Route path="/aujourdhui" element={<Aujourdhui />} />
         <Route path="/plan" element={<Plan />} />
+        <Route path="/plan/campagnes/:id" element={<FicheCampagne />} />
+        <Route path="/plan/taches/:id" element={<FicheTache />} />
         <Route path="/create" element={<Create />} />
         <Route path="/grow" element={<Grow />} />
         <Route path="/measure" element={<Measure />} />

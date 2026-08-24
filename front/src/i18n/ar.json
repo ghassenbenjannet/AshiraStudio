@@ -258,5 +258,177 @@
       "confirmer_import": "تأكيد الاستيراد",
       "rapport": "التقرير"
     }
+  },
+  "campagnes": {
+    "titre": "الحملات",
+    "nouvelle": "حملة جديدة",
+    "filtrer_statut": "الحالة",
+    "statuts": {
+      "preparation": "التحضير",
+      "active": "نشطة",
+      "livree": "مُنجَزة",
+      "fermee": "مغلقة",
+      "abandonnee": "متروكة"
+    },
+    "objectifs": {
+      "notoriete": "الشهرة",
+      "ventes": "المبيعات",
+      "lancement": "الإطلاق",
+      "communaute": "المجتمع"
+    },
+    "champs": {
+      "nom": "الاسم",
+      "type_campagne": "نوع الحملة",
+      "date_debut": "تاريخ البدء",
+      "date_fin": "تاريخ الانتهاء",
+      "objectif": "الهدف",
+      "description": "صف الأجواء والقصة والرسالة — سيستخدمها الوكلاء للإنشاء",
+      "budget_total_dt": "الميزانية الإجمالية (د.ت)"
+    },
+    "onglets": {
+      "strategie": "الاستراتيجية",
+      "budget": "الميزانية",
+      "taches": "المهام",
+      "equipe": "الفريق",
+      "contenus": "المحتوى",
+      "assets": "الأصول",
+      "agents": "الوكلاء",
+      "resultats": "النتائج"
+    },
+    "activer": "تفعيل",
+    "fermer": "إغلاق",
+    "fermer_de_force": "إغلاق إجباري",
+    "generer_rituel": "توليد الطقوس",
+    "rituel_genere": "تم توليد الطقوس",
+    "kpi_cibles": "المؤشرات المستهدفة",
+    "kpi_verrouillees": "المؤشرات مقفلة منذ التفعيل",
+    "resultats": "النتائج",
+    "rapport": {
+      "titre": "تقرير الحملة",
+      "marche": "ما نجح",
+      "pas_marche": "ما لم ينجح",
+      "decisions": "القرارات",
+      "kpi_manquants": "نتائج ناقصة لـ"
+    },
+    "dette_mesure": "حملة (حملات) مُنجَزة غير مغلقة منذ أكثر من 21 يومًا",
+    "champ_intelligent": {
+      "titre": "إضافة مرجع",
+      "catalogue": "الكتالوج",
+      "lien": "رابط",
+      "photo": "صورة",
+      "texte": "نص",
+      "url_placeholder": "https://achirah.tn/produits/...",
+      "promouvoir": "ترقية إلى منتج في الكتالوج"
+    },
+    "budget": {
+      "titre": "الميزانية",
+      "poste": "البند",
+      "libelle": "الوصف",
+      "prevu": "المخطط",
+      "engage": "الملتزم به",
+      "reel": "الفعلي",
+      "ajouter": "إضافة سطر",
+      "depassement": "تجاوز الميزانية المخططة"
+    }
+  },
+  "taches": {
+    "titre": "المهام",
+    "nouvelle": "مهمة جديدة",
+    "types": {
+      "shooting": "تصوير",
+      "contenu": "محتوى",
+      "livraison": "تسليم",
+      "paiement": "دفع",
+      "autre": "أخرى"
+    },
+    "statuts": {
+      "todo": "للقيام به",
+      "en_cours": "قيد التنفيذ",
+      "fait": "مُنجَز"
+    },
+    "champs": {
+      "titre": "العنوان",
+      "type": "النوع",
+      "date_echeance": "الموعد النهائي",
+      "lieu": "المكان",
+      "assignes": "المكلَّفون",
+      "description": "الوصف"
+    },
+    "en_retard": "متأخر",
+    "marquer_fait": "وضع علامة منجَز",
+    "reouvrir": "إعادة الفتح",
+    "ajouter_calendrier": "إضافة إلى تقويمي",
+    "vues": {
+      "liste": "قائمة",
+      "kanban": "كانبان",
+      "calendrier": "تقويم"
+    },
+    "filtres": {
+      "personne": "الشخص",
+      "campagne": "الحملة",
+      "type": "النوع"
+    }
+  },
+  "callsheet": {
+    "titre": "ورقة التصوير",
+    "pret_a_tourner": "جاهز للتصوير",
+    "manques": {
+      "pieces": "القطع",
+      "photographe": "المصور",
+      "poses": "اللقطات",
+      "date": "التاريخ",
+      "lieu": "المكان"
+    },
+    "generer_pdf": "تصدير PDF",
+    "photographe": "المصور",
+    "modeles": "العارضون",
+    "heure_lumiere": "توقيت الإضاءة",
+    "heures": {
+      "matin": "الصباح",
+      "midi_dur": "ظهيرة قاسية",
+      "golden_hour": "الساعة الذهبية",
+      "nuit": "الليل",
+      "studio": "استوديو"
+    },
+    "duree_min": "المدة (دقيقة)",
+    "looks": {
+      "titre": "الإطلالات",
+      "ajouter": "إضافة إطلالة",
+      "nouveau_look": "إطلالة",
+      "ajouter_item": "إضافة قطعة",
+      "slot": {
+        "haut": "الأعلى",
+        "bas": "الأسفل",
+        "chaussures": "الحذاء",
+        "accessoire": "إكسسوار"
+      }
+    },
+    "poses": {
+      "titre": "قائمة اللقطات",
+      "ajouter": "إضافة لقطة",
+      "description_placeholder": "مثال: لقطة عامة، مشي في الشارع"
+    },
+    "pieces_a_apporter": "القطع الواجب إحضارها",
+    "notes": "ملاحظات"
+  },
+  "calendrier": {
+    "titre": "التقويم التحريري",
+    "vues": { "jour": "يوم", "semaine": "أسبوع", "mois": "شهر" },
+    "aujourdhui": "اليوم",
+    "precedent": "السابق",
+    "suivant": "التالي"
+  },
+  "aujourdhui": {
+    "en_retard": "متأخر",
+    "aujourdhui": "اليوم",
+    "prochain_shooting": "التصوير القادم",
+    "dette_mesure": "ديْن القياس",
+    "brief_ia": "الملخص الذكي",
+    "brief_ia_indisponible": "الملخص الذكي سيكون متاحًا في المرحلة ⑤.",
+    "raccourcis": "اختصارات",
+    "nouvelle_tache": "+ مهمة",
+    "nouvelle_idee": "+ فكرة",
+    "aucune_tache": "لا توجد مهام.",
+    "aucun_shooting": "لا يوجد تصوير قادم."
   }
 }

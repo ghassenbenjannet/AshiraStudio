@@ -258,5 +258,177 @@
       "confirmer_import": "Confirmer l'import",
       "rapport": "Rapport"
     }
+  },
+  "campagnes": {
+    "titre": "Campagnes",
+    "nouvelle": "Nouvelle campagne",
+    "filtrer_statut": "Statut",
+    "statuts": {
+      "preparation": "Préparation",
+      "active": "Active",
+      "livree": "Livrée",
+      "fermee": "Fermée",
+      "abandonnee": "Abandonnée"
+    },
+    "objectifs": {
+      "notoriete": "Notoriété",
+      "ventes": "Ventes",
+      "lancement": "Lancement",
+      "communaute": "Communauté"
+    },
+    "champs": {
+      "nom": "Nom",
+      "type_campagne": "Type de campagne",
+      "date_debut": "Date de début",
+      "date_fin": "Date de fin",
+      "objectif": "Objectif",
+      "description": "Décris l'ambiance, l'histoire, le message — les agents s'en serviront pour créer",
+      "budget_total_dt": "Budget total (DT)"
+    },
+    "onglets": {
+      "strategie": "Stratégie",
+      "budget": "Budget",
+      "taches": "Tâches",
+      "equipe": "Équipe",
+      "contenus": "Contenus",
+      "assets": "Assets",
+      "agents": "Agents",
+      "resultats": "Résultats"
+    },
+    "activer": "Activer",
+    "fermer": "Fermer",
+    "fermer_de_force": "Fermeture forcée",
+    "generer_rituel": "Générer le rituel",
+    "rituel_genere": "Rituel généré",
+    "kpi_cibles": "Cibles KPI",
+    "kpi_verrouillees": "Cibles verrouillées depuis l'activation",
+    "resultats": "Résultats",
+    "rapport": {
+      "titre": "Rapport de campagne",
+      "marche": "Ce qui a marché",
+      "pas_marche": "Ce qui n'a pas marché",
+      "decisions": "Décisions",
+      "kpi_manquants": "Résultats manquants pour"
+    },
+    "dette_mesure": "campagne(s) livrée(s) non fermée(s) depuis plus de 21 jours",
+    "champ_intelligent": {
+      "titre": "Ajouter une référence",
+      "catalogue": "Catalogue",
+      "lien": "Lien",
+      "photo": "Photo",
+      "texte": "Texte",
+      "url_placeholder": "https://achirah.tn/produits/...",
+      "promouvoir": "Promouvoir en article catalogue"
+    },
+    "budget": {
+      "titre": "Budget",
+      "poste": "Poste",
+      "libelle": "Libellé",
+      "prevu": "Prévu",
+      "engage": "Engagé",
+      "reel": "Réel",
+      "ajouter": "Ajouter une ligne",
+      "depassement": "Dépassement du budget prévu"
+    }
+  },
+  "taches": {
+    "titre": "Tâches",
+    "nouvelle": "Nouvelle tâche",
+    "types": {
+      "shooting": "Shooting",
+      "contenu": "Contenu",
+      "livraison": "Livraison",
+      "paiement": "Paiement",
+      "autre": "Autre"
+    },
+    "statuts": {
+      "todo": "À faire",
+      "en_cours": "En cours",
+      "fait": "Fait"
+    },
+    "champs": {
+      "titre": "Titre",
+      "type": "Type",
+      "date_echeance": "Échéance",
+      "lieu": "Lieu",
+      "assignes": "Assignés",
+      "description": "Description"
+    },
+    "en_retard": "En retard",
+    "marquer_fait": "Marquer fait",
+    "reouvrir": "Réouvrir",
+    "ajouter_calendrier": "Ajouter à mon calendrier",
+    "vues": {
+      "liste": "Liste",
+      "kanban": "Kanban",
+      "calendrier": "Calendrier"
+    },
+    "filtres": {
+      "personne": "Personne",
+      "campagne": "Campagne",
+      "type": "Type"
+    }
+  },
+  "callsheet": {
+    "titre": "Call sheet",
+    "pret_a_tourner": "Prêt à tourner",
+    "manques": {
+      "pieces": "pièces",
+      "photographe": "photographe",
+      "poses": "poses",
+      "date": "date",
+      "lieu": "lieu"
+    },
+    "generer_pdf": "Export PDF",
+    "photographe": "Photographe",
+    "modeles": "Modèles",
+    "heure_lumiere": "Heure lumière",
+    "heures": {
+      "matin": "Matin",
+      "midi_dur": "Midi dur",
+      "golden_hour": "Golden hour",
+      "nuit": "Nuit",
+      "studio": "Studio"
+    },
+    "duree_min": "Durée (min)",
+    "looks": {
+      "titre": "Looks",
+      "ajouter": "Ajouter un look",
+      "nouveau_look": "Look",
+      "ajouter_item": "Ajouter un article",
+      "slot": {
+        "haut": "Haut",
+        "bas": "Bas",
+        "chaussures": "Chaussures",
+        "accessoire": "Accessoire"
+      }
+    },
+    "poses": {
+      "titre": "Shot list",
+      "ajouter": "Ajouter une pose",
+      "description_placeholder": "Ex. Plan large, marche dans la rue"
+    },
+    "pieces_a_apporter": "Pièces à apporter",
+    "notes": "Notes"
+  },
+  "calendrier": {
+    "titre": "Calendrier éditorial",
+    "vues": { "jour": "Jour", "semaine": "Semaine", "mois": "Mois" },
+    "aujourdhui": "Aujourd'hui",
+    "precedent": "Précédent",
+    "suivant": "Suivant"
+  },
+  "aujourdhui": {
+    "en_retard": "En retard",
+    "aujourdhui": "Aujourd'hui",
+    "prochain_shooting": "Prochain shooting",
+    "dette_mesure": "Dette de mesure",
+    "brief_ia": "Brief IA",
+    "brief_ia_indisponible": "Le brief IA sera disponible en Phase ⑤.",
+    "raccourcis": "Raccourcis",
+    "nouvelle_tache": "+ Tâche",
+    "nouvelle_idee": "+ Idée",
+    "aucune_tache": "Aucune tâche.",
+    "aucun_shooting": "Aucun shooting à venir."
   }
 }

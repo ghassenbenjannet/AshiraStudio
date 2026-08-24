@@ -42,10 +42,221 @@
     "reessayer": "Réessayer",
     "annuler": "Annuler",
     "enregistrer": "Enregistrer",
-    "a_construire": "Cet écran sera construit dans une prochaine phase."
+    "a_construire": "Cet écran sera construit dans une prochaine phase.",
+    "rechercher": "Rechercher",
+    "tous": "Tous",
+    "toutes": "Toutes",
+    "retour": "Retour",
+    "oui": "Oui",
+    "non": "Non",
+    "confirmer": "Confirmer",
+    "aucun_resultat": "Aucun résultat",
+    "supprimer": "Supprimer"
   },
   "langue": {
     "fr": "Français",
     "ar": "العربية"
+  },
+  "referentiels": {
+    "ajouter": "Ajouter",
+    "modifier_titre": "Modifier",
+    "cree": "Élément créé",
+    "modifie": "Modifications enregistrées",
+    "archive": "Élément archivé",
+    "reactive": "Élément réactivé",
+    "archiver_action": "Archiver",
+    "reactiver": "Réactiver",
+    "afficher_archives": "Afficher les éléments archivés",
+    "vide": "Aucun élément pour l'instant.",
+    "onglet_referentiels": "Référentiels",
+    "onglet_utilisateurs": "Utilisateurs",
+    "sections": {
+      "gammes": "Gammes",
+      "categories_produit": "Catégories produit",
+      "coloris": "Coloris",
+      "matieres": "Matières",
+      "codes_entretien": "Codes d'entretien",
+      "grilles_taille": "Grilles de tailles",
+      "postes_budgetaires": "Postes budgétaires",
+      "canaux": "Canaux",
+      "plateformes_contenu": "Plateformes de contenu",
+      "occasions": "Occasions commerciales",
+      "modeles_checklist": "Modèles de checklists",
+      "registres": "Registres de langue",
+      "types_campagne": "Types de campagne",
+      "modeles_rituel": "Modèles de rituel"
+    },
+    "champs": {
+      "nom": "Nom",
+      "code_prefixe": "Préfixe (2-3 lettres)",
+      "couleur": "Couleur",
+      "alerte_baisse_prix": "Alerter en cas de baisse de prix",
+      "message_alerte": "Message d'alerte",
+      "marge_cible_pct": "Marge cible (%)",
+      "slot_look": "Emplacement dans le look",
+      "gabarit_mesures": "Gabarit de mesures",
+      "code_3l": "Code (3 lettres)",
+      "hex": "Couleur (hex)",
+      "nom_ar": "Nom (arabe)",
+      "note": "Note",
+      "valeurs": "Valeurs (séparées par virgule)",
+      "code": "Code",
+      "description": "Description",
+      "items": "Éléments (séparés par virgule)"
+    }
+  },
+  "utilisateurs": {
+    "titre": "Utilisateurs",
+    "ajouter": "Ajouter un utilisateur",
+    "role": "Rôle",
+    "roles": {
+      "admin": "Admin",
+      "editeur": "Éditeur",
+      "contributeur": "Contributeur",
+      "lecteur": "Lecteur"
+    },
+    "mot_de_passe_initial": "Mot de passe initial"
+  },
+  "contacts": {
+    "titre": "Contacts",
+    "nouveau": "Nouveau contact",
+    "filtrer_categorie": "Catégorie",
+    "filtrer_type": "Type",
+    "interne": "Interne",
+    "externe": "Externe",
+    "actifs_uniquement": "Actifs uniquement",
+    "champs": {
+      "nom": "Nom",
+      "categories": "Catégories",
+      "type": "Type",
+      "telephone": "Téléphone",
+      "email": "Email",
+      "instagram": "Instagram (sans @)",
+      "ville": "Ville",
+      "tarif_jour_dt": "Tarif jour (DT)",
+      "portfolio_url": "Portfolio (URL)",
+      "materiel": "Matériel",
+      "styles": "Styles",
+      "specialites": "Spécialités",
+      "delai_moyen_jours": "Délai moyen (jours)",
+      "moq_habituel": "MOQ habituel",
+      "conditions_paiement": "Conditions de paiement",
+      "disponibilites": "Disponibilités",
+      "note_5": "Note (/5)",
+      "notes": "Notes",
+      "tailles_haut": "Taille haut",
+      "tailles_bas": "Taille bas",
+      "tailles_chaussures": "Pointure"
+    },
+    "desactive": "Contact désactivé",
+    "desactiver": "Désactiver",
+    "desactiver_confirmation": "Ce contact sera grisé et masqué des nouveaux sélecteurs, jamais supprimé.",
+    "partager": "Créer un lien de partage",
+    "lien_cree": "Lien créé — valable 30 jours",
+    "copier_lien": "Copier le lien",
+    "lien_copie": "Lien copié"
+  },
+  "cercle": {
+    "titre": "Cercle",
+    "objectif": "Objectif : 30 ambassadeurs actifs",
+    "ajouter": "Ajouter un ambassadeur",
+    "code_promo": "Code promo",
+    "ventes_attribuees": "Ventes attribuées",
+    "statuts": {
+      "contacte": "Contacté",
+      "confirme": "Confirmé",
+      "kit_envoye": "Kit envoyé",
+      "actif": "Actif",
+      "inactif": "Inactif"
+    }
+  },
+  "categories_contact": {
+    "titre": "Catégories de contact",
+    "ajouter": "Ajouter une catégorie",
+    "systeme_protegee": "Catégorie système — renommable, non supprimable"
+  },
+  "catalogue": {
+    "titre": "Catalogue",
+    "nouvel_article": "Nouvel article",
+    "importer": "Importer un CSV",
+    "filtrer_gamme": "Gamme",
+    "filtrer_statut": "Statut",
+    "statuts": {
+      "idee": "Idée",
+      "croquis": "Croquis",
+      "prototype": "Prototype",
+      "fit_valide": "Fit validé",
+      "production": "Production",
+      "stock": "Stock",
+      "epuise": "Épuisé",
+      "archive": "Archivé"
+    },
+    "champs": {
+      "reference": "Référence",
+      "nom": "Nom",
+      "gamme": "Gamme",
+      "categorie": "Catégorie",
+      "fit": "Coupe",
+      "description_commerciale": "Description commerciale",
+      "grammage_gsm": "Grammage (g/m²)",
+      "numerote": "Numéroté",
+      "numerotation_total": "Numérotation totale",
+      "fournisseur": "Fournisseur",
+      "delai_production_jours": "Délai de production (jours)",
+      "moq": "MOQ",
+      "notes_interne": "Notes internes"
+    },
+    "onglets": {
+      "modele": "Modèle",
+      "coloris": "Coloris",
+      "sku": "SKU & Mesures",
+      "couts": "Coûts",
+      "historique": "Historique"
+    },
+    "coloris": {
+      "ajouter": "Ajouter un coloris",
+      "prix": "Prix (DT)",
+      "statut": "Statut",
+      "photos": "Photos",
+      "ajouter_photos": "Ajouter des photos"
+    },
+    "sku": {
+      "ajouter": "Ajouter une taille",
+      "taille": "Taille",
+      "qte_produite": "Qté produite",
+      "qte_stock": "Qté en stock",
+      "mesures": "Mesures (cm)"
+    },
+    "couts": {
+      "admin_uniquement": "Visible admin uniquement",
+      "tissu_dt": "Tissu",
+      "faconnage_dt": "Façonnage",
+      "fournitures_dt": "Fournitures",
+      "packaging_dt": "Packaging",
+      "transport_unitaire_dt": "Transport unitaire",
+      "autre_dt": "Autre",
+      "cogs": "COGS total",
+      "marge": "Marge",
+      "non_saisi": "Coûts non saisis"
+    },
+    "transition": {
+      "passer_a": "Faire avancer vers",
+      "essaye_5_morphologies": "Essayée sur 5 morphologies",
+      "avertissements": "Avertissements (non bloquants)",
+      "confirmer_archivage": "Confirmer malgré l'utilisation existante"
+    },
+    "import": {
+      "titre": "Import CSV",
+      "zone": "Déposez un fichier CSV ou cliquez pour parcourir",
+      "gabarit": "Télécharger le gabarit",
+      "apercu": "Aperçu",
+      "ligne": "Ligne",
+      "action_nouveau": "Nouveau",
+      "action_maj": "Mise à jour",
+      "action_erreur": "Erreur",
+      "importer": "Importer",
+      "confirmer_import": "Confirmer l'import",
+      "rapport": "Rapport"
+    }
   }
 }

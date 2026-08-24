@@ -42,10 +42,221 @@
     "reessayer": "إعادة المحاولة",
     "annuler": "إلغاء",
     "enregistrer": "حفظ",
-    "a_construire": "سيتم بناء هذه الشاشة في مرحلة لاحقة."
+    "a_construire": "سيتم بناء هذه الشاشة في مرحلة لاحقة.",
+    "rechercher": "بحث",
+    "tous": "الكل",
+    "toutes": "الكل",
+    "retour": "رجوع",
+    "oui": "نعم",
+    "non": "لا",
+    "confirmer": "تأكيد",
+    "aucun_resultat": "لا توجد نتائج",
+    "supprimer": "حذف"
   },
   "langue": {
     "fr": "Français",
     "ar": "العربية"
+  },
+  "referentiels": {
+    "ajouter": "إضافة",
+    "modifier_titre": "تعديل",
+    "cree": "تم الإنشاء",
+    "modifie": "تم حفظ التعديلات",
+    "archive": "تمت الأرشفة",
+    "reactive": "تمت إعادة التفعيل",
+    "archiver_action": "أرشفة",
+    "reactiver": "إعادة تفعيل",
+    "afficher_archives": "عرض العناصر المؤرشفة",
+    "vide": "لا يوجد أي عنصر بعد.",
+    "onglet_referentiels": "البيانات المرجعية",
+    "onglet_utilisateurs": "المستخدمون",
+    "sections": {
+      "gammes": "الفئات (Gammes)",
+      "categories_produit": "فئات المنتج",
+      "coloris": "الألوان",
+      "matieres": "الأقمشة",
+      "codes_entretien": "رموز العناية",
+      "grilles_taille": "جداول المقاسات",
+      "postes_budgetaires": "بنود الميزانية",
+      "canaux": "القنوات",
+      "plateformes_contenu": "منصات المحتوى",
+      "occasions": "المناسبات التجارية",
+      "modeles_checklist": "نماذج قوائم التحقق",
+      "registres": "مستويات اللغة",
+      "types_campagne": "أنواع الحملات",
+      "modeles_rituel": "نماذج الطقوس"
+    },
+    "champs": {
+      "nom": "الاسم",
+      "code_prefixe": "البادئة (2-3 أحرف)",
+      "couleur": "اللون",
+      "alerte_baisse_prix": "التنبيه عند خفض السعر",
+      "message_alerte": "رسالة التنبيه",
+      "marge_cible_pct": "هامش الربح المستهدف (%)",
+      "slot_look": "موضع الإطلالة",
+      "gabarit_mesures": "نموذج القياسات",
+      "code_3l": "الرمز (3 أحرف)",
+      "hex": "اللون (hex)",
+      "nom_ar": "الاسم (عربي)",
+      "note": "ملاحظة",
+      "valeurs": "القيم (مفصولة بفاصلة)",
+      "code": "الرمز",
+      "description": "الوصف",
+      "items": "العناصر (مفصولة بفاصلة)"
+    }
+  },
+  "utilisateurs": {
+    "titre": "المستخدمون",
+    "ajouter": "إضافة مستخدم",
+    "role": "الدور",
+    "roles": {
+      "admin": "مدير",
+      "editeur": "محرر",
+      "contributeur": "مساهم",
+      "lecteur": "قارئ"
+    },
+    "mot_de_passe_initial": "كلمة المرور الأولية"
+  },
+  "contacts": {
+    "titre": "جهات الاتصال",
+    "nouveau": "جهة اتصال جديدة",
+    "filtrer_categorie": "الفئة",
+    "filtrer_type": "النوع",
+    "interne": "داخلي",
+    "externe": "خارجي",
+    "actifs_uniquement": "النشطون فقط",
+    "champs": {
+      "nom": "الاسم",
+      "categories": "الفئات",
+      "type": "النوع",
+      "telephone": "الهاتف",
+      "email": "البريد الإلكتروني",
+      "instagram": "إنستغرام (بدون @)",
+      "ville": "المدينة",
+      "tarif_jour_dt": "التعرفة اليومية (د.ت)",
+      "portfolio_url": "معرض الأعمال (رابط)",
+      "materiel": "المعدات",
+      "styles": "الأنماط",
+      "specialites": "التخصصات",
+      "delai_moyen_jours": "المهلة المتوسطة (أيام)",
+      "moq_habituel": "الحد الأدنى للطلب المعتاد",
+      "conditions_paiement": "شروط الدفع",
+      "disponibilites": "التوفر",
+      "note_5": "التقييم (/5)",
+      "notes": "ملاحظات",
+      "tailles_haut": "مقاس الأعلى",
+      "tailles_bas": "مقاس الأسفل",
+      "tailles_chaussures": "مقاس الحذاء"
+    },
+    "desactive": "تم تعطيل جهة الاتصال",
+    "desactiver": "تعطيل",
+    "desactiver_confirmation": "سيتم تعطيل جهة الاتصال وإخفاؤها من الاختيارات الجديدة، دون حذفها أبدًا.",
+    "partager": "إنشاء رابط مشاركة",
+    "lien_cree": "تم إنشاء الرابط — صالح لمدة 30 يومًا",
+    "copier_lien": "نسخ الرابط",
+    "lien_copie": "تم نسخ الرابط"
+  },
+  "cercle": {
+    "titre": "الدائرة",
+    "objectif": "الهدف: 30 سفيرًا نشطًا",
+    "ajouter": "إضافة سفير",
+    "code_promo": "رمز الخصم",
+    "ventes_attribuees": "المبيعات المنسوبة",
+    "statuts": {
+      "contacte": "تم التواصل",
+      "confirme": "مؤكد",
+      "kit_envoye": "تم إرسال الحقيبة",
+      "actif": "نشط",
+      "inactif": "غير نشط"
+    }
+  },
+  "categories_contact": {
+    "titre": "فئات جهات الاتصال",
+    "ajouter": "إضافة فئة",
+    "systeme_protegee": "فئة نظامية — يمكن إعادة تسميتها، لا يمكن حذفها"
+  },
+  "catalogue": {
+    "titre": "الكتالوج",
+    "nouvel_article": "منتج جديد",
+    "importer": "استيراد CSV",
+    "filtrer_gamme": "الفئة (Gamme)",
+    "filtrer_statut": "الحالة",
+    "statuts": {
+      "idee": "فكرة",
+      "croquis": "تصميم أولي",
+      "prototype": "نموذج أولي",
+      "fit_valide": "تم اعتماد المقاس",
+      "production": "الإنتاج",
+      "stock": "المخزون",
+      "epuise": "نفدت الكمية",
+      "archive": "مؤرشف"
+    },
+    "champs": {
+      "reference": "المرجع",
+      "nom": "الاسم",
+      "gamme": "الفئة (Gamme)",
+      "categorie": "التصنيف",
+      "fit": "القصّة",
+      "description_commerciale": "الوصف التجاري",
+      "grammage_gsm": "الوزن (غ/م²)",
+      "numerote": "مرقّم",
+      "numerotation_total": "إجمالي الترقيم",
+      "fournisseur": "المورّد",
+      "delai_production_jours": "مهلة الإنتاج (أيام)",
+      "moq": "الحد الأدنى للطلب",
+      "notes_interne": "ملاحظات داخلية"
+    },
+    "onglets": {
+      "modele": "النموذج",
+      "coloris": "الألوان",
+      "sku": "SKU والقياسات",
+      "couts": "التكاليف",
+      "historique": "السجل"
+    },
+    "coloris": {
+      "ajouter": "إضافة لون",
+      "prix": "السعر (د.ت)",
+      "statut": "الحالة",
+      "photos": "الصور",
+      "ajouter_photos": "إضافة صور"
+    },
+    "sku": {
+      "ajouter": "إضافة مقاس",
+      "taille": "المقاس",
+      "qte_produite": "الكمية المنتَجة",
+      "qte_stock": "الكمية في المخزون",
+      "mesures": "القياسات (سم)"
+    },
+    "couts": {
+      "admin_uniquement": "مرئي للمدير فقط",
+      "tissu_dt": "القماش",
+      "faconnage_dt": "التصنيع",
+      "fournitures_dt": "التوريدات",
+      "packaging_dt": "التغليف",
+      "transport_unitaire_dt": "النقل للوحدة",
+      "autre_dt": "أخرى",
+      "cogs": "إجمالي التكلفة (COGS)",
+      "marge": "هامش الربح",
+      "non_saisi": "لم يتم إدخال التكاليف"
+    },
+    "transition": {
+      "passer_a": "الانتقال إلى",
+      "essaye_5_morphologies": "تمت التجربة على 5 قوامات",
+      "avertissements": "تنبيهات (غير مانعة)",
+      "confirmer_archivage": "تأكيد رغم الاستخدام الحالي"
+    },
+    "import": {
+      "titre": "استيراد CSV",
+      "zone": "أفلت ملف CSV هنا أو اضغط للاستعراض",
+      "gabarit": "تنزيل النموذج",
+      "apercu": "معاينة",
+      "ligne": "السطر",
+      "action_nouveau": "جديد",
+      "action_maj": "تحديث",
+      "action_erreur": "خطأ",
+      "importer": "استيراد",
+      "confirmer_import": "تأكيد الاستيراد",
+      "rapport": "التقرير"
+    }
   }
 }

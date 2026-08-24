@@ -5,6 +5,7 @@ import "./i18n/index.js";
 import "./styles/index.css";
 import { App } from "./App.js";
 import { AuthProvider } from "./lib/auth-context.js";
+import { ToastProvider } from "./lib/toast-context.js";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("Élément #root introuvable");
@@ -12,9 +13,11 @@ if (!rootEl) throw new Error("Élément #root introuvable");
 createRoot(rootEl).render(
   <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   </StrictMode>,
 );

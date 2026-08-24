@@ -15,7 +15,7 @@ import {
   STATUT_CYCLE_ARTICLE,
 } from "@achirah/shared";
 import { db } from "../db/client.js";
-import { articles, articleColoris, articleSkus, articleCouts, historiqueStatuts, gammes } from "../db/schema.js";
+import { articles, articleColoris, articleSkus, articleCouts, historiqueStatuts, gammes, assets } from "../db/schema.js";
 import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
@@ -229,11 +229,25 @@ colorisRoutes.post("/:id/photos", exigerCapacite("entites.editer"), async (c) =>
   const fichiers = ([] as File[]).concat((corps["fichiers"] as any) ?? []).filter((f): f is File => f instanceof File);
   if (fichiers.length === 0) return erreurApi(c, 400, "fichiers_requis", "Au moins un fichier requis (champ 'fichiers')");
 
-  const nouveauxIds: string[] = [];
+  // photos = asset_ids (§4.2) : chaque fichier devient un asset réel, jamais un id de stockage brut.
+  const utilisateur = c.get("utilisateur")!;
+  const nouveauxAssetIds: string[] = [];
   for (const fichier of fichiers) {
     try {
       const stocke = await enregistrerFichier(new Uint8Array(await fichier.arrayBuffer()), fichier.type);
-      nouveauxIds.push(stocke.id);
+      const [asset] = (await db
+        .insert(assets)
+        .values({
+          type: "photo",
+          fichier_url: stocke.url,
+          vignette_url: null,
+          nom: fichier.name || `photo-${stocke.id}`,
+          source: "studio",
+          article_coloris_ids: [id],
+          createur_personne_ids: [],
+        })
+        .returning()) as any[];
+      nouveauxAssetIds.push(asset.id);
     } catch (err) {
       return erreurApi(c, 422, "fichier_invalide", err instanceof Error ? err.message : "Fichier invalide");
     }
@@ -241,9 +255,10 @@ colorisRoutes.post("/:id/photos", exigerCapacite("entites.editer"), async (c) =>
 
   const [modifie] = (await db
     .update(articleColoris)
-    .set({ photos: [...ac.photos, ...nouveauxIds] })
+    .set({ photos: [...ac.photos, ...nouveauxAssetIds] })
     .where(eq(articleColoris.id, id))
     .returning()) as any[];
+  await enregistrerAudit({ utilisateurId: utilisateur.id, action: "article_coloris.photos", entiteType: "article_coloris", entiteId: id, apres: { ajoutees: nouveauxAssetIds.length } });
   return c.json({ donnees: modifie }, 201);
 });
 

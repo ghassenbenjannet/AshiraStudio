@@ -25,8 +25,10 @@ export function creerRoutesReferentiel(options: {
   valeursFixes?: Record<string, unknown>;
   /** Tri secondaire optionnel si la table n'a pas de colonne `ordre` exploitable directement. */
   colonneTri?: any;
+  /** Validation métier avant modification (ex. RG §5.0 : code_prefixe immuable dès le 1er article). Retourne un message d'erreur ou null. */
+  validerAvantModification?: (id: string, corps: Record<string, unknown>) => Promise<string | null>;
 }) {
-  const { table, entiteType, insertSchema, updateSchema, valeursFixes = {}, colonneTri } = options;
+  const { table, entiteType, insertSchema, updateSchema, valeursFixes = {}, colonneTri, validerAvantModification } = options;
   const app = new Hono<AppEnv>();
   const triCol = colonneTri ?? table.ordre ?? table.nom;
 
@@ -70,6 +72,10 @@ export function creerRoutesReferentiel(options: {
     const id = c.req.param("id");
     const [avant] = await db.select().from(table).where(eq(table.id, id)).limit(1);
     if (!avant) return erreurApi(c, 404, "introuvable", "Référentiel introuvable");
+    if (validerAvantModification) {
+      const erreur = await validerAvantModification(id, c.req.valid("json") as Record<string, unknown>);
+      if (erreur) return erreurApi(c, 422, "modification_interdite", erreur);
+    }
     const [modifie] = (await db.update(table).set(c.req.valid("json")).where(eq(table.id, id)).returning()) as any[];
     await enregistrerAudit({
       utilisateurId: utilisateur.id,

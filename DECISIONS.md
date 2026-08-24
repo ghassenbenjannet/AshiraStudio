@@ -61,3 +61,19 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
 - **Coûts (COGS)** : lecture et écriture réservées à la capacité `parametres.gerer` (admin), cohérent
   avec la ligne « coûts articles » de la matrice RBAC §2.1, même si §8.2 ne précise pas explicitement
   le niveau de lecture.
+- **`/api/utilisateurs`** et **`PATCH /api/utilisateurs/me`** : ajoutés (le second est bien dans §8.2,
+  le premier non) — nécessaires pour que l'écran Paramètres → Utilisateurs fonctionne (création,
+  changement de rôle avec RG-R1 : toujours ≥ 1 admin).
+- **`/api/assets` (lecture minimale)** : la galerie complète (upload, tags, liens croisés) est prévue
+  en Phase ④. Un point de lecture minimal (`GET /assets?ids=...`, `GET /assets/:id`) a été ajouté dès
+  maintenant car `article_coloris.photos` référence de vrais `asset_ids` (§4.2) et le front doit
+  résoudre ces ids en URLs pour afficher les photos de coloris.
+- **Photos de coloris = de vrais assets** : chaque fichier envoyé via `POST /coloris/:id/photos` crée
+  une ligne `asset` (type `photo`, source `studio`) plutôt qu'un id de stockage brut, pour rester
+  fidèle au modèle de données (`photos: asset_ids[]`) et pour que l'extension réelle du fichier soit
+  toujours résolue correctement côté client.
+- **Champs conditionnels de la fiche contact (E11, §4.1)** : la détection (Modèle / Photographe·
+  Vidéaste / Fournisseur / Lieu / Ambassadeur) se fait par **nom** de catégorie système, pas par un
+  champ de configuration dédié — ces catégories sont *renommables* (§2.1), donc les renommer changerait
+  ce comportement. Accepté comme limitation simple ; une vraie solution demanderait un champ de type
+  sur `categorie_contact`, absent du CDC.

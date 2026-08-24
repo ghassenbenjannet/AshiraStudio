@@ -10,8 +10,12 @@ import { Create } from "./screens/Create.js";
 import { Grow } from "./screens/Grow.js";
 import { Measure } from "./screens/Measure.js";
 import { People } from "./screens/People.js";
+import { FicheContact } from "./screens/people/FicheContact.js";
+import { Cercle } from "./screens/people/Cercle.js";
 import { Parametres } from "./screens/Parametres.js";
 import { Catalogue } from "./screens/Catalogue.js";
+import { FicheArticle } from "./screens/catalogue/FicheArticle.js";
+import { ImportCsv } from "./screens/catalogue/ImportCsv.js";
 import { Plus } from "./screens/Plus.js";
 
 function ChargementPleinEcran() {
@@ -64,8 +68,12 @@ export function App() {
         <Route path="/grow" element={<Grow />} />
         <Route path="/measure" element={<Measure />} />
         <Route path="/people" element={<People />} />
+        <Route path="/people/cercle" element={<Cercle />} />
+        <Route path="/people/:id" element={<FicheContact />} />
         <Route path="/parametres" element={<Parametres />} />
         <Route path="/catalogue" element={<Catalogue />} />
+        <Route path="/catalogue/import" element={<ImportCsv />} />
+        <Route path="/catalogue/:id" element={<FicheArticle />} />
         <Route path="/plus" element={<Plus />} />
       </Route>
       <Route path="*" element={<Navigate to="/aujourdhui" replace />} />

@@ -6,6 +6,8 @@ import { initRoutes } from "./routes/init.js";
 import { referentielsRoutes } from "./routes/referentiels.js";
 import { contactsRoutes, partagePersonneRoutes } from "./routes/contacts.js";
 import { catalogueRoutes } from "./routes/catalogue.js";
+import { utilisateursRoutes, moiRoutes } from "./routes/utilisateurs.js";
+import { assetsRoutes } from "./routes/assets.js";
 import { resoudreSession, exigerAuth } from "./middleware/auth.js";
 import { journaliserRequetes } from "./middleware/logging.js";
 import { limiteurDebit } from "./middleware/rate-limit.js";
@@ -35,6 +37,11 @@ export function creerApp() {
   app.use("/api/coloris/*", exigerAuth);
   app.use("/api/skus/*", exigerAuth);
   app.route("/api", catalogueRoutes);
+  app.use("/api/utilisateurs/*", exigerAuth);
+  app.route("/api/utilisateurs/me", moiRoutes);
+  app.route("/api/utilisateurs", utilisateursRoutes);
+  app.use("/api/assets/*", exigerAuth);
+  app.route("/api/assets", assetsRoutes);
 
   app.notFound((c) => erreurApi(c, 404, "introuvable", "Ressource introuvable"));
   app.onError((err, c) => {

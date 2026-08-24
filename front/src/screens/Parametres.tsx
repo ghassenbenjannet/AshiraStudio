@@ -1,8 +1,120 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { EcranAConstruire } from "../components/ui/EcranAConstruire.js";
+import { aCapacite } from "@achirah/shared";
+import { Tabs } from "../components/ui/Tabs.js";
+import { TableReferentiel, type ChampConfig } from "../components/referentiels/TableReferentiel.js";
+import { useAuth } from "../lib/auth-context.js";
+import {
+  clientGammes,
+  clientCategoriesProduit,
+  clientColoris,
+  clientMatieres,
+  clientCodesEntretien,
+  clientGrillesTaille,
+  clientPostesBudgetaires,
+  clientCanaux,
+  clientPlateformesContenu,
+  clientOccasions,
+  clientModelesChecklist,
+  clientRegistres,
+  clientTypesCampagne,
+  clientModelesRituel,
+} from "../lib/resources/referentiels.js";
+import { UtilisateursAdmin } from "./parametres/UtilisateursAdmin.js";
 
-/** RÉFÉRENTIELS/PARAMÈTRES — catalogue, listes, leçons, lexique, utilisateurs. Construit en Phase ②. */
+const champsGamme: ChampConfig[] = [
+  { cle: "nom", label: "Nom", type: "texte", requis: true },
+  { cle: "code_prefixe", label: "Préfixe (2-3 lettres)", type: "texte", requis: true, verrouilleSiExistant: true },
+  { cle: "couleur", label: "Couleur", type: "couleur" },
+  { cle: "marge_cible_pct", label: "Marge cible (%)", type: "nombre" },
+  { cle: "alerte_baisse_prix", label: "Alerter en cas de baisse de prix", type: "case" },
+  { cle: "message_alerte", label: "Message d'alerte", type: "texte" },
+];
+
+const champsCategorieProduit: ChampConfig[] = [
+  { cle: "nom", label: "Nom", type: "texte", requis: true },
+  { cle: "slot_look", label: "Emplacement (haut|bas|chaussures|accessoire)", type: "texte", requis: true },
+  { cle: "grille_tailles_id", label: "ID grille de tailles", type: "texte", requis: true },
+  { cle: "gabarit_mesures", label: "Gabarit (haut|bas|tete|aucun)", type: "texte", requis: true },
+];
+
+const champsColoris: ChampConfig[] = [
+  { cle: "nom_commercial", label: "Nom commercial", type: "texte", requis: true },
+  { cle: "code_3l", label: "Code (3 lettres)", type: "texte", requis: true },
+  { cle: "hex", label: "Couleur (hex)", type: "couleur", requis: true },
+];
+
+const champsMatiere: ChampConfig[] = [
+  { cle: "nom", label: "Nom", type: "texte", requis: true },
+  { cle: "nom_ar", label: "Nom (arabe)", type: "texte" },
+  { cle: "note", label: "Note", type: "texte" },
+];
+
+const champsNomOrdre: ChampConfig[] = [{ cle: "nom", label: "Nom", type: "texte", requis: true }];
+
+const champsGrilleTaille: ChampConfig[] = [
+  { cle: "nom", label: "Nom", type: "texte", requis: true },
+  { cle: "valeurs", label: "Valeurs (séparées par virgule)", type: "valeurs", requis: true },
+];
+
+const champsModeleChecklist: ChampConfig[] = [
+  { cle: "nom", label: "Nom", type: "texte", requis: true },
+  { cle: "items", label: "Éléments (séparés par virgule)", type: "valeurs" },
+];
+
+const champsRegistre: ChampConfig[] = [
+  { cle: "code", label: "Code", type: "texte", requis: true },
+  { cle: "nom", label: "Nom", type: "texte", requis: true },
+  { cle: "description", label: "Description", type: "texte" },
+];
+
+const champsTypeCampagne: ChampConfig[] = [
+  { cle: "nom", label: "Nom", type: "texte", requis: true },
+  { cle: "modele_rituel_id", label: "ID modèle de rituel (optionnel)", type: "texte" },
+];
+
+const champsModeleRituel: ChampConfig[] = [{ cle: "nom", label: "Nom", type: "texte", requis: true }];
+
+/** E31 — Paramètres : référentiels (Partie V) + utilisateurs. */
 export function Parametres() {
   const { t } = useTranslation();
-  return <EcranAConstruire titre={t("nav.espaces.parametres")} />;
+  const { utilisateur } = useAuth();
+  const [onglet, setOnglet] = useState<"referentiels" | "utilisateurs">("referentiels");
+  const peutGererReferentiels = !!utilisateur && aCapacite(utilisateur.role_systeme, "approbation.gerer");
+  const peutGererUtilisateurs = !!utilisateur && aCapacite(utilisateur.role_systeme, "parametres.gerer");
+
+  return (
+    <div>
+      <h1 className="mb-4 font-display text-2xl text-off">{t("nav.espaces.parametres")}</h1>
+      <Tabs
+        valeur={onglet}
+        onChange={setOnglet}
+        onglets={[
+          { id: "referentiels", label: t("referentiels.onglet_referentiels") },
+          { id: "utilisateurs", label: t("referentiels.onglet_utilisateurs") },
+        ]}
+      />
+
+      {onglet === "referentiels" && (
+        <div>
+          <TableReferentiel titre={t("referentiels.sections.gammes")} champs={champsGamme} colonneAffichage={(l: any) => `${l.nom} (${l.code_prefixe})`} client={clientGammes} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.categories_produit")} champs={champsCategorieProduit} colonneAffichage={(l: any) => l.nom} client={clientCategoriesProduit} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.coloris")} champs={champsColoris} colonneAffichage={(l: any) => `${l.nom_commercial} (${l.code_3l})`} client={clientColoris} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.matieres")} champs={champsMatiere} colonneAffichage={(l: any) => l.nom} client={clientMatieres} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.codes_entretien")} champs={champsNomOrdre} colonneAffichage={(l: any) => l.nom} client={clientCodesEntretien} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.grilles_taille")} champs={champsGrilleTaille} colonneAffichage={(l: any) => `${l.nom} — ${l.valeurs.join(", ")}`} client={clientGrillesTaille} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.postes_budgetaires")} champs={champsNomOrdre} colonneAffichage={(l: any) => l.nom} client={clientPostesBudgetaires} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.canaux")} champs={champsNomOrdre} colonneAffichage={(l: any) => l.nom} client={clientCanaux} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.plateformes_contenu")} champs={champsNomOrdre} colonneAffichage={(l: any) => l.nom} client={clientPlateformesContenu} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.occasions")} champs={champsNomOrdre} colonneAffichage={(l: any) => l.nom} client={clientOccasions} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.modeles_checklist")} champs={champsModeleChecklist} colonneAffichage={(l: any) => `${l.nom} (${l.items.length})`} client={clientModelesChecklist} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.registres")} champs={champsRegistre} colonneAffichage={(l: any) => `${l.code} — ${l.nom}`} client={clientRegistres} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.types_campagne")} champs={champsTypeCampagne} colonneAffichage={(l: any) => l.nom} client={clientTypesCampagne} peutEditer={peutGererReferentiels} />
+          <TableReferentiel titre={t("referentiels.sections.modeles_rituel")} champs={champsModeleRituel} colonneAffichage={(l: any) => `${l.nom} (${l.jalons.length} jalons)`} client={clientModelesRituel} peutEditer={peutGererReferentiels} />
+        </div>
+      )}
+
+      {onglet === "utilisateurs" && <UtilisateursAdmin peutGerer={peutGererUtilisateurs} />}
+    </div>
+  );
 }

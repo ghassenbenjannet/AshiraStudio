@@ -13,8 +13,11 @@ import {
   typeCampagneInsertSchema,
   modeleRituelInsertSchema,
 } from "@achirah/shared";
+import { eq } from "drizzle-orm";
+import { db } from "../db/client.js";
 import {
   gammes,
+  articles,
   categoriesProduit,
   coloris,
   matieres,
@@ -43,6 +46,13 @@ referentielsRoutes.route(
     entiteType: "gamme",
     insertSchema: gammeInsertSchema,
     updateSchema: gammeUpdateSchema,
+    // §5.0 : le code_prefixe devient immuable dès le premier article créé (préserve la cohérence des références).
+    validerAvantModification: async (id, corps) => {
+      if (!("code_prefixe" in corps)) return null;
+      const [unArticle] = await db.select({ id: articles.id }).from(articles).where(eq(articles.gamme_id, id)).limit(1);
+      if (unArticle) return "Le préfixe est verrouillé : au moins un article utilise déjà cette gamme.";
+      return null;
+    },
   }),
 );
 

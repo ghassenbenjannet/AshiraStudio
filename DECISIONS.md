@@ -663,3 +663,23 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   vide au lieu de la base de démonstration déjà peuplée — perte de données purement locale et
   reproductible (`server/data/`, ignoré par git, jamais commité). Reconstituée par `db:migrate` +
   `db:seed` + ré-initialisation du compte admin ; aucun fichier suivi par git n'a été affecté.
+
+## CR-02 — Vérification finale (régression toutes phases + tous les blocs)
+
+- **Balayage Playwright complet, FR, sur base fraîche** : les 25 écrans/onglets couvrant les 7 phases
+  et les 3 blocs du CR (Aujourd'hui, liste et hub campagne avec ses 8 onglets, fiche tâche/call sheet,
+  catalogue liste + fiche article, contacts, cercle, contenus liste + fiche, idées, assets, boards,
+  calendrier, studio, mesure, grow, paramètres) chargent tous sans erreur applicative — aucune régression
+  détectée sur les écrans non touchés par ce CR ni sur ceux modifiés par les blocs A/B/C. Les seules
+  entrées console relevées sont attendues et déjà documentées ailleurs dans ce fichier : 503 sur
+  `/api/brain/brief` (scénario « Panne IA », pas de clé Anthropic en local) et des `ERR_CONNECTION_RESET`
+  isolés à la navigation (requêtes de sondage annulées par le démontage du composant, sans contrepartie
+  dans les logs serveur — comportement client normal, pas un échec réseau réel).
+- **`npm run typecheck` propre sur les trois workspaces** à l'état final du dépôt (aucune régression de
+  type introduite par l'un des trois blocs, y compris sur les deux seuls autres consommateurs de
+  `Tabs`/`CallSheet` — `Parametres.tsx` et `FicheTache.tsx` — vérifiés individuellement pour confirmer
+  qu'aucun n'est cassé par l'extension de `Tabs` ou le nouveau prop `dateEcheance`).
+- **Portée du garde-fou du CR tenue de bout en bout** : aucune migration, aucun changement de FK sur les
+  trois blocs — seules deux évolutions de schéma sont entrées dans ce dépôt pendant cette période, et
+  toutes deux viennent du push parallèle du propriétaire fusionné avant le Bloc A (`0004_configurations_systeme`,
+  déjà documenté plus haut), pas de l'exécution de ce CR.

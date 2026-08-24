@@ -44,7 +44,17 @@ export const campagneInsertSchema = campagneSchema.omit({
   resultats: true,
   rapport: true,
 });
-export const campagneUpdateSchema = campagneInsertSchema.partial();
+/**
+ * `statut` et `resultats` sont exclus de l'insert (une campagne naît toujours `preparation`, sans
+ * résultats) mais doivent rester modifiables ensuite : `livree`/`abandonnee`/`preparation` via ce
+ * PATCH générique, `active` et `fermee` réservés aux endpoints dédiés (verrouillage KPI, rapport —
+ * RG-ECO1/ECO2), appliqué côté serveur. `resultats` alimente le Rapport de campagne (chiffres en
+ * face des cibles) avant fermeture.
+ */
+export const campagneUpdateSchema = campagneInsertSchema.partial().extend({
+  statut: z.enum(STATUT_CAMPAGNE).optional(),
+  resultats: z.record(z.string(), z.unknown()).optional(),
+});
 
 export const campagneFermetureSchema = z.object({ rapport: rapportCampagneSchema });
 

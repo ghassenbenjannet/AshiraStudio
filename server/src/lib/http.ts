@@ -7,7 +7,7 @@ export interface ApiErrorBody {
 /** Format d'erreur unique de l'API (§8.2) : `{error:{code,message,champ?}}`. */
 export function erreurApi(
   c: Context,
-  status: 401 | 403 | 404 | 409 | 422 | 400 | 429 | 500,
+  status: 401 | 403 | 404 | 409 | 422 | 400 | 429 | 500 | 501,
   code: string,
   message: string,
   champ?: string,

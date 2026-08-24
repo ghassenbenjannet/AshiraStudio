@@ -77,3 +77,28 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   champ de configuration dédié — ces catégories sont *renommables* (§2.1), donc les renommer changerait
   ce comportement. Accepté comme limitation simple ; une vraie solution demanderait un champ de type
   sur `categorie_contact`, absent du CDC.
+
+## Phase ③ — Campagnes, tâches/shootings, calendrier
+
+- **`campagne.statut` : `preparation`/`livree`/`abandonnee` via `PATCH` générique**, `active` et
+  `fermee` réservés à `POST .../activer` et `POST .../fermer` (422 explicite si on les vise par
+  PATCH) — seuls ces deux derniers portent des effets de bord (verrouillage KPI RG-ECO1, gate
+  rapport RG-ECO2) qui ne doivent jamais être contournables par une écriture directe.
+- **RG-LK1 (pièces à apporter)** : `look_item` référence un **coloris**, pas une taille — la CDC
+  mentionne « tailles demandées à l'ajout » sans étendre le schéma. La taille effective est lue dans
+  le champ libre `note` du look_item (convention `Taille: XL`) ; à défaut, le premier SKU du coloris
+  sert de valeur par défaut. La liste agrégée est **calculée à la lecture** (jamais stockée), fusionnée
+  avec les ajouts manuels déjà présents dans `shooting.pieces` — une seule liste de vérité, jamais de
+  désynchronisation possible.
+- **`fermer-de-force`** (fermeture forcée, §2.1) : ajoutée en plus de `fermer`, réservée
+  `parametres.gerer` (admin), sans exiger KPI complets ni les 3 champs — distincte de la fermeture
+  normale qui, elle, applique RG-ECO2 strictement.
+- **Call sheet PDF** : généré avec `pdfkit` (nouvelle dépendance serveur), 1 page, sections Équipe/
+  Pièces/Looks/Shot list/Matériel — pas de mise en page graphique poussée (logos, couleurs de marque)
+  dans cette passe ; à enrichir si besoin visuel plus tard.
+- **Deux bugs trouvés et corrigés pendant la vérification manuelle** (avant tout usage front) :
+  (1) `DESCRIPTION` ICS doublait l'échappement des retours à la ligne (`\\n` au lieu de `\n`) —
+  chaque partie est maintenant échappée individuellement puis jointe avec le séparateur RFC 5545 brut ;
+  (2) `activerCampagne` ne verrouillait jamais les KPI d'une campagne **déjà** `active` (cas du seed,
+  Chapitre I créé directement `active` par fidélité à l'Annexe A) — la garde d'idempotence teste
+  désormais `statut === "active" ET kpi_cibles_verrouillees`, pas `statut === "active"` seul.

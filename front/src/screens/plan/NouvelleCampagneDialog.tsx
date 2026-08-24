@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { OBJECTIF_CAMPAGNE, type TypeCampagne } from "@achirah/shared";
+import { OBJECTIF_CAMPAGNE, type Campagne, type TypeCampagne } from "@achirah/shared";
 import { Dialog } from "../../components/ui/Dialog.js";
 import { Champ, ChampTexte, ChampSelect, ChampZoneTexte, BoutonPrimaire, BoutonSecondaire } from "../../components/ui/Champ.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
@@ -9,7 +9,7 @@ import { clientTypesCampagne } from "../../lib/resources/referentiels.js";
 import { ApiError } from "../../lib/api.js";
 import { useToast } from "../../lib/toast-context.js";
 
-export function NouvelleCampagneDialog({ ouvert, onFermer, onCree }: { ouvert: boolean; onFermer: () => void; onCree: () => void }) {
+export function NouvelleCampagneDialog({ ouvert, onFermer, onCree }: { ouvert: boolean; onFermer: () => void; onCree: (campagne: Campagne) => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { toaster } = useToast();
@@ -36,7 +36,7 @@ export function NouvelleCampagneDialog({ ouvert, onFermer, onCree }: { ouvert: b
       });
       toaster(t("referentiels.cree"));
       onFermer();
-      onCree();
+      onCree(campagne);
       navigate(`/plan/campagnes/${campagne.id}`);
     } catch (err) {
       setErreur(err instanceof ApiError ? err.message : t("commun.erreur_generique"));

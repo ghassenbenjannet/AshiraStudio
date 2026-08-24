@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next";
 import { SideRail } from "./SideRail.js";
 import { BottomNav } from "./BottomNav.js";
 import { NotificationsCloche } from "./NotificationsCloche.js";
+import { CampagneSwitcherBar } from "./CampagneSwitcherBar.js";
 import { useAuth } from "../../lib/auth-context.js";
+import { CampagneContexteProvider } from "../../lib/campagne-contexte.js";
 import { LANGUES_DISPONIBLES, type LangueDisponible } from "../../i18n/index.js";
 
 function SelecteurLangue() {
@@ -32,36 +34,39 @@ export function AppShell() {
   const { utilisateur, deconnecter } = useAuth();
 
   return (
-    <div className="flex min-h-dvh bg-bg">
-      <SideRail />
-      <div className="flex flex-1 flex-col">
-        <header className="flex min-h-tap items-center justify-between gap-3 border-b border-line bg-panel px-4 py-2 lg:hidden">
-          <span className="font-display text-base text-off">{t("app.nom")}</span>
-          <div className="flex items-center gap-2">
-            <NotificationsCloche />
-            <SelecteurLangue />
-          </div>
-        </header>
-        <main className="mx-auto w-full max-w-content flex-1 px-4 pb-20 pt-4 md:pb-4">
-          <div className="mb-4 hidden items-center justify-between lg:flex">
-            <div />
-            <div className="flex items-center gap-3">
-              {utilisateur && <span className="text-sm text-dim">{utilisateur.nom}</span>}
+    <CampagneContexteProvider>
+      <div className="flex min-h-dvh bg-bg">
+        <SideRail />
+        <div className="flex flex-1 flex-col">
+          <header className="flex min-h-tap items-center justify-between gap-3 border-b border-line bg-panel px-4 py-2 lg:hidden">
+            <span className="font-display text-base text-off">{t("app.nom")}</span>
+            <div className="flex items-center gap-2">
               <NotificationsCloche />
               <SelecteurLangue />
-              <button
-                type="button"
-                onClick={() => void deconnecter()}
-                className="min-h-tap rounded-field border border-line px-3 text-sm text-dim hover:text-off"
-              >
-                {t("auth.deconnexion")}
-              </button>
             </div>
-          </div>
-          <Outlet />
-        </main>
-        <BottomNav />
+          </header>
+          <main className="mx-auto w-full max-w-content flex-1 px-4 pb-20 pt-4 md:pb-4">
+            <div className="mb-4 hidden items-center justify-between lg:flex">
+              <div />
+              <div className="flex items-center gap-3">
+                {utilisateur && <span className="text-sm text-dim">{utilisateur.nom}</span>}
+                <NotificationsCloche />
+                <SelecteurLangue />
+                <button
+                  type="button"
+                  onClick={() => void deconnecter()}
+                  className="min-h-tap rounded-field border border-line px-3 text-sm text-dim hover:text-off"
+                >
+                  {t("auth.deconnexion")}
+                </button>
+              </div>
+            </div>
+            <CampagneSwitcherBar />
+            <Outlet />
+          </main>
+          <BottomNav />
+        </div>
       </div>
-    </div>
+    </CampagneContexteProvider>
   );
 }

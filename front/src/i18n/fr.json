@@ -5,8 +5,9 @@
   "nav": {
     "espaces": {
       "home": "Aujourd'hui",
-      "plan": "Plan",
-      "create": "Créer",
+      "plan": "Espace de travail",
+      "create": "Studio",
+      "catalogue": "Catalogue",
       "grow": "Grow",
       "measure": "Mesure",
       "people": "Équipe",
@@ -14,10 +15,20 @@
     },
     "mobile": {
       "aujourdhui": "Aujourd'hui",
-      "campagnes": "Campagnes",
+      "campagnes": "Campagne",
       "studio": "Studio",
       "catalogue": "Catalogue",
       "plus": "Plus"
+    },
+    "groupes": {
+      "campagne": "Campagne",
+      "patrimoine": "Patrimoine"
+    },
+    "contexte": {
+      "titre": "Contexte",
+      "toutes": "Toutes les campagnes",
+      "gerer": "Gérer les campagnes",
+      "definir_active": "Définir comme campagne active"
     }
   },
   "auth": {
@@ -349,7 +360,8 @@
         "outils": "Outils actifs"
       }
     },
-    "exporter_rapport_pdf": "Exporter le rapport (PDF)"
+    "exporter_rapport_pdf": "Exporter le rapport (PDF)",
+    "gerer": "Gérer les campagnes"
   },
   "taches": {
     "titre": "Tâches",
@@ -387,7 +399,8 @@
       "personne": "Personne",
       "campagne": "Campagne",
       "type": "Type"
-    }
+    },
+    "voir_board": "Voir toutes les tâches (Kanban/Calendrier) →"
   },
   "callsheet": {
     "titre": "Call sheet",

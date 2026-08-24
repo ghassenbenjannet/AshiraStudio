@@ -5,6 +5,7 @@ import { aCapacite, type Campagne } from "@achirah/shared";
 import { Tabs } from "../../components/ui/Tabs.js";
 import { EcranAConstruire } from "../../components/ui/EcranAConstruire.js";
 import { useAuth } from "../../lib/auth-context.js";
+import { useCampagneContexte } from "../../lib/campagne-contexte.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
 import { OngletStrategie } from "./OngletStrategie.js";
 import { OngletBudget } from "./OngletBudget.js";
@@ -22,6 +23,7 @@ export function FicheCampagne() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { utilisateur } = useAuth();
+  const { campagneActiveId, definirCampagneActive } = useCampagneContexte();
   const peutEditer = !!utilisateur && aCapacite(utilisateur.role_systeme, "entites.editer");
   const [campagne, setCampagne] = useState<Campagne | null>(null);
   const [onglet, setOnglet] = useState<OngletId>("strategie");
@@ -47,10 +49,21 @@ export function FicheCampagne() {
 
   return (
     <div>
-      <button type="button" onClick={() => navigate("/plan")} className="mb-3 min-h-tap text-sm text-dim hover:text-off">
+      <button type="button" onClick={() => navigate("/plan/campagnes")} className="mb-3 min-h-tap text-sm text-dim hover:text-off">
         ← {t("commun.retour")}
       </button>
-      <h1 className="mb-4 font-display text-2xl text-off">{campagne.nom}</h1>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="font-display text-2xl text-off">{campagne.nom}</h1>
+        {campagneActiveId !== campagne.id && (
+          <button
+            type="button"
+            onClick={() => definirCampagneActive(campagne.id)}
+            className="min-h-tap rounded-field border border-sable/40 px-3 text-sm text-sable hover:bg-panel2"
+          >
+            {t("nav.contexte.definir_active")}
+          </button>
+        )}
+      </div>
       <Tabs valeur={onglet} onChange={setOnglet} onglets={onglets} />
 
       {onglet === "strategie" && <OngletStrategie campagne={campagne} peutEditer={peutEditer} onChange={charger} />}

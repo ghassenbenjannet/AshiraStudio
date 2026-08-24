@@ -5,8 +5,9 @@
   "nav": {
     "espaces": {
       "home": "اليوم",
-      "plan": "التخطيط",
-      "create": "الإنشاء",
+      "plan": "مساحة العمل",
+      "create": "الاستوديو",
+      "catalogue": "الكتالوج",
       "grow": "النمو",
       "measure": "القياس",
       "people": "الفريق",
@@ -14,10 +15,20 @@
     },
     "mobile": {
       "aujourdhui": "اليوم",
-      "campagnes": "الحملات",
+      "campagnes": "الحملة",
       "studio": "الاستوديو",
       "catalogue": "الكتالوج",
       "plus": "المزيد"
+    },
+    "groupes": {
+      "campagne": "الحملة",
+      "patrimoine": "الأصول الدائمة"
+    },
+    "contexte": {
+      "titre": "السياق",
+      "toutes": "كل الحملات",
+      "gerer": "إدارة الحملات",
+      "definir_active": "تعيينها كحملة نشطة"
     }
   },
   "auth": {
@@ -349,7 +360,8 @@
         "outils": "الأدوات المفعّلة"
       }
     },
-    "exporter_rapport_pdf": "تصدير التقرير (PDF)"
+    "exporter_rapport_pdf": "تصدير التقرير (PDF)",
+    "gerer": "إدارة الحملات"
   },
   "taches": {
     "titre": "المهام",
@@ -387,7 +399,8 @@
       "personne": "الشخص",
       "campagne": "الحملة",
       "type": "النوع"
-    }
+    },
+    "voir_board": "عرض كل المهام (كانبان/التقويم) ←"
   },
   "callsheet": {
     "titre": "ورقة التصوير",

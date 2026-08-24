@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { STATUT_CAMPAGNE, aCapacite, type Campagne } from "@achirah/shared";
 import { ChampSelect, BoutonPrimaire } from "../../components/ui/Champ.js";
 import { useAuth } from "../../lib/auth-context.js";
+import { useCampagneContexte } from "../../lib/campagne-contexte.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
 import { NouvelleCampagneDialog } from "./NouvelleCampagneDialog.js";
 import { clientExports } from "../../lib/resources/systeme.js";
@@ -20,6 +21,7 @@ export function CampagnesListe() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { utilisateur } = useAuth();
+  const { definirCampagneActive, rafraichir } = useCampagneContexte();
   const peutEditer = !!utilisateur && aCapacite(utilisateur.role_systeme, "entites.editer");
   const [campagnes, setCampagnes] = useState<Campagne[] | null>(null);
   const [statut, setStatut] = useState("");
@@ -39,6 +41,7 @@ export function CampagnesListe() {
 
   return (
     <div>
+      <h1 className="mb-4 font-display text-2xl text-off">{t("campagnes.gerer")}</h1>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <ChampSelect value={statut} onChange={(e) => setStatut(e.target.value)} className="!w-44">
           <option value="">{t("campagnes.filtrer_statut")}</option>
@@ -91,7 +94,15 @@ export function CampagnesListe() {
         </ul>
       )}
 
-      <NouvelleCampagneDialog ouvert={dialogueOuvert} onFermer={() => setDialogueOuvert(false)} onCree={charger} />
+      <NouvelleCampagneDialog
+        ouvert={dialogueOuvert}
+        onFermer={() => setDialogueOuvert(false)}
+        onCree={(campagne) => {
+          charger();
+          rafraichir();
+          definirCampagneActive(campagne.id);
+        }}
+      />
     </div>
   );
 }

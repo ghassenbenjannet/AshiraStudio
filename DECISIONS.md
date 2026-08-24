@@ -451,3 +451,78 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   notée (non-bloquante) : les images de test `picsum.photos` échouent en sandbox
   (`ERR_TUNNEL_CONNECTION_FAILED`, hôte non autorisé par le proxy) — le `<img>` et son repli sont
   corrects, seule l'image externe de démonstration ne charge pas ici.
+
+## CR-02 — Bloc A : la campagne comme monde (architecture de navigation)
+
+- **Aucun changement de schéma.** Conforme au garde-fou du CR : c'est un contexte de navigation
+  entièrement côté client (React context + `localStorage`), jamais une vérité de données. Aucune
+  table, aucune colonne, aucune migration. `article`/`personne`/référentiels/mesure restent
+  transverses — c'est exactement pour ça qu'ils forment le groupe « Patrimoine », séparé de la
+  campagne en contexte, plutôt que d'être eux-mêmes rattachés à une campagne.
+- **`CampagneContexteProvider`** (`front/src/lib/campagne-contexte.tsx`), monté dans `AppShell` (donc
+  partagé par toutes les routes authentifiées) : expose `campagneActive`, `campagneActiveId`, `mode`
+  (`"campagne" | "toutes"`), `definirCampagneActive(id)`, `activerToutesCampagnes()`, `rafraichir()`.
+  Sélection initiale automatique — campagne `active` la plus proche, sinon `preparation`, sinon mode
+  « toutes campagnes » (aucune campagne exploitable) — puis mémorisée dans `localStorage` et pilotée
+  ensuite exclusivement par l'utilisateur ; jamais de blocage si `localStorage` est indisponible
+  (navigation privée) : le contexte reste simplement en mémoire pour la session.
+- **Sélecteur de contexte persistant sous le header** (`CampagneSwitcherBar`, `front/src/components/
+  layout/CampagneSwitcherBar.tsx`) : rendu dans `AppShell` juste au-dessus de l'`<Outlet/>`, donc visible
+  sur tout écran mobile et desktop, avec un lien « Gérer les campagnes ». Le rail desktop
+  (`SideRail.tsx`) porte son propre sélecteur compact en tête du groupe « CAMPAGNE » (même contexte
+  partagé, pas de logique dupliquée) — c'est la réalisation concrète du « CAMPAGNE — [nom] ▾ » demandé.
+- **Rail desktop scindé en deux groupes** (`nav-config.ts` : `ESPACES_CAMPAGNE` / `ESPACES_PATRIMOINE`) :
+  CAMPAGNE (Aujourd'hui, Espace de travail, Studio) puis, séparés par un filet, PATRIMOINE (Catalogue,
+  Équipe, Mesure, Grow, Paramètres). Bonus constaté en migrant : Catalogue n'était auparavant accessible
+  nulle part depuis le rail desktop (seulement depuis l'onglet mobile) — un oubli pré-existant, corrigé
+  au passage par ce regroupement.
+- **`/plan` n'est plus la liste des campagnes** : nouveau composant `PlanContexte` — redirige (`Navigate
+  replace`) directement vers `/plan/campagnes/{id}` de la campagne en contexte ; ne retombe sur la liste
+  (`CampagnesListe`, désormais montée sur `/plan/campagnes`) que si le mode est « toutes campagnes » ou
+  qu'aucune campagne n'existe encore. C'est le mécanisme qui fait que l'onglet mobile « Campagne » et le
+  lien rail « Espace de travail » ouvrent tous les deux le hub directement, jamais la liste. L'ancien
+  `Plan.tsx` (bascule d'onglets Campagnes/Tâches) est supprimé — son rôle de bascule n'a plus de sens
+  une fois la campagne posée comme le monde par défaut.
+- **Le board de tâches multi-vues (Kanban/Calendrier/Liste, E04/E18) n'est pas perdu** : il reste
+  entièrement disponible sur `/plan/taches`, simplement retiré de la navigation de premier niveau (il
+  n'apparaît plus comme onglet séparé, cohérent avec « campagne = monde, sous-objets en dessous »).
+  Un lien « Voir toutes les tâches (Kanban/Calendrier) → » a été ajouté dans l'onglet Tâches du hub de
+  campagne (`OngletTachesCampagne`), pré-filtré sur la campagne courante via `?campagne_id=`.
+- **Cockpit (Aujourd'hui) filtré sur la campagne en contexte par défaut** : `clientTaches.lister()` et
+  la dette de mesure prennent désormais `campagne_id` du contexte quand `mode === "campagne"` (aucun
+  filtre en mode « toutes »). La bannière « chapitre actif » vient maintenant de
+  `campagneActive` (le contexte) et non plus d'un `clientCampagnes.lister("active")[0]` local — c'était
+  exactement le défaut pointé par le propriétaire (« aucune impression de gérer 1 section selon le
+  contexte »). L'échappatoire « Toutes les campagnes » est le sélecteur global lui-même (une option de
+  plus dans la liste), pas un second contrôle dupliqué sur chaque écran.
+- **Studio filtré sur le contexte par défaut** : le sélecteur de campagne par message se pré-remplit
+  sur `campagneActiveId` (au lieu de rester sur `"Campagne (par défaut)"`), et se resynchronise tant que
+  l'utilisateur ne l'a pas modifié manuellement pour ce message (drapeau local, pas de logique serveur
+  dupliquée — RG-AGC1 continue de résoudre le `campagne_id` transmis exactement comme avant).
+- **Bug trouvé et corrigé (pré-remplissage de « Nouvelle tâche » jamais appliqué)** :
+  `NouvelleTacheDialog` initialisait son état de formulaire une seule fois via `useState(() => ...)`, à
+  l'instant du montage — or ce dialogue reste monté en permanence (juste masqué visuellement tant que
+  `ouvert` est faux), donc ce montage a lieu bien avant que le contexte de campagne (asynchrone) ne se
+  résolve : `campagne_id` restait vide quel que soit le contexte. Corrigé par un `useEffect` qui
+  réinitialise le formulaire à chaque transition vers `ouvert === true`, avec la valeur courante de
+  `campagneParDefaut` — vérifié par lecture directe de la valeur du `<select>` après ouverture du
+  dialogue (`2f238d28-…` bien présent, plus de champ vide).
+- **« Définir comme campagne active »** sur le hub de campagne (`FicheCampagne`) : bouton visible
+  uniquement quand la campagne consultée diffère du contexte courant, permet de promouvoir n'importe
+  quelle campagne (même `préparation` ou `livrée`) comme contexte en un clic — cohérent avec « la
+  campagne devient le monde », y compris pour une campagne pas encore active. Créer une nouvelle
+  campagne (`NouvelleCampagneDialog`) la définit aussi automatiquement comme contexte.
+- **Test artifact identifié et non corrigé côté app (limiteur de débit, §8.2)** : plusieurs cycles de
+  vérification Playwright consécutifs contre le même processus serveur long-lived ont déclenché le
+  limiteur en mémoire (300 req/15 min/IP) — confirmé par les logs serveur (`statut:429` en rafale sur
+  `/api/campagnes`, `/api/taches`, etc.). Diagnostiqué en isolant un script minimal avec écoute réseau ;
+  résolu en redémarrant le processus serveur (qui réinitialise le compteur en mémoire) entre les
+  vérifications, sans toucher au limiteur lui-même — c'est un contrôle de sécurité légitime, pas un
+  défaut.
+- **Vérifié par Playwright sur DB fraîche (FR + AR/RTL, desktop + mobile)** : sélection automatique du
+  contexte à la première connexion, bascule manuelle et « Toutes les campagnes », clic sur « Espace de
+  travail »/onglet mobile « Campagne » atterrissant directement sur le hub, liste accessible uniquement
+  via « Gérer les campagnes », pré-remplissage du dialogue de tâche et du sélecteur Studio, bouton
+  « Définir comme campagne active », lien vers le board complet depuis l'onglet Tâches du hub, les cinq
+  écrans du groupe Patrimoine chargeant sans erreur, rail et barre de contexte cohérents en arabe/RTL
+  desktop et mobile.

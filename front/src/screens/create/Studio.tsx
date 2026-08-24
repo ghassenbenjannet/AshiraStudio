@@ -4,6 +4,7 @@ import { aCapacite, type Campagne, type AgentCampagne } from "@achirah/shared";
 import { ChampSelect, ChampZoneTexte, BoutonPrimaire, BoutonSecondaire } from "../../components/ui/Champ.js";
 import { MarkdownLeger } from "../../components/ui/MarkdownLeger.js";
 import { useAuth } from "../../lib/auth-context.js";
+import { useCampagneContexte } from "../../lib/campagne-contexte.js";
 import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
 import { clientConversations, type ConversationDetail, type ActionAgent } from "../../lib/resources/conversations.js";
@@ -30,6 +31,7 @@ const CHIPS_RAPIDES: ChipRapide[] = [
 export function Studio() {
   const { t } = useTranslation();
   const { utilisateur } = useAuth();
+  const { campagneActiveId, mode: modeContexte } = useCampagneContexte();
   const { toaster } = useToast();
   const peutEditer = !!utilisateur && aCapacite(utilisateur.role_systeme, "entites.editer");
 
@@ -40,6 +42,12 @@ export function Studio() {
   const [campagnes, setCampagnes] = useState<Campagne[]>([]);
   const [agentId, setAgentId] = useState<string>("");
   const [campagneId, setCampagneId] = useState<string>("__defaut__");
+  const [campagneIdModifieManuellement, setCampagneIdModifieManuellement] = useState(false);
+
+  useEffect(() => {
+    if (campagneIdModifieManuellement) return;
+    setCampagneId(modeContexte === "campagne" && campagneActiveId ? campagneActiveId : "__defaut__");
+  }, [campagneActiveId, modeContexte, campagneIdModifieManuellement]);
   const [texte, setTexte] = useState("");
   const [imagesEnAttente, setImagesEnAttente] = useState<string[]>([]);
   const [envoiEnCours, setEnvoiEnCours] = useState(false);
@@ -193,7 +201,13 @@ export function Studio() {
             </ChampSelect>
           </div>
           <div className="w-56">
-            <ChampSelect value={campagneId} onChange={(e) => setCampagneId(e.target.value)}>
+            <ChampSelect
+              value={campagneId}
+              onChange={(e) => {
+                setCampagneId(e.target.value);
+                setCampagneIdModifieManuellement(true);
+              }}
+            >
               <option value="__defaut__">{t("studio.campagne_defaut")}</option>
               <option value="__aucune__">{t("studio.campagne_aucune")}</option>
               {campagnes.map((c) => (

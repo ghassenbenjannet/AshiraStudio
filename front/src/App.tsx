@@ -5,8 +5,10 @@ import { AppShell } from "./components/layout/AppShell.js";
 import { Login } from "./screens/Login.js";
 import { Init } from "./screens/Init.js";
 import { Aujourdhui } from "./screens/Aujourdhui.js";
-import { Plan } from "./screens/Plan.js";
+import { PlanContexte } from "./screens/plan/PlanContexte.js";
+import { CampagnesListe } from "./screens/plan/CampagnesListe.js";
 import { FicheCampagne } from "./screens/plan/FicheCampagne.js";
+import { TachesBoard } from "./screens/plan/TachesBoard.js";
 import { FicheTache } from "./screens/plan/FicheTache.js";
 import { Create } from "./screens/Create.js";
 import { FicheContenu } from "./screens/create/FicheContenu.js";
@@ -67,8 +69,10 @@ export function App() {
       <Route element={<AppShell />}>
         <Route path="/" element={<Navigate to="/aujourdhui" replace />} />
         <Route path="/aujourdhui" element={<Aujourdhui />} />
-        <Route path="/plan" element={<Plan />} />
+        <Route path="/plan" element={<PlanContexte />} />
+        <Route path="/plan/campagnes" element={<CampagnesListe />} />
         <Route path="/plan/campagnes/:id" element={<FicheCampagne />} />
+        <Route path="/plan/taches" element={<TachesBoard />} />
         <Route path="/plan/taches/:id" element={<FicheTache />} />
         <Route path="/create" element={<Create />} />
         <Route path="/create/contenus/:id" element={<FicheContenu />} />

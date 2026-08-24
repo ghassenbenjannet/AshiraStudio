@@ -5,6 +5,7 @@ import { tacheEnRetard, aCapacite, type Tache, type Campagne } from "@achirah/sh
 import { BoutonPrimaire, BoutonSecondaire, ChampTexte } from "../components/ui/Champ.js";
 import { MarkdownLeger } from "../components/ui/MarkdownLeger.js";
 import { useAuth } from "../lib/auth-context.js";
+import { useCampagneContexte } from "../lib/campagne-contexte.js";
 import { ApiError } from "../lib/api.js";
 import { clientTaches } from "../lib/resources/taches.js";
 import { clientCampagnes } from "../lib/resources/campagnes.js";
@@ -37,6 +38,7 @@ export function Aujourdhui() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { utilisateur } = useAuth();
+  const { campagneActive, campagneActiveId, mode } = useCampagneContexte();
   const peutEditer = !!utilisateur && aCapacite(utilisateur.role_systeme, "entites.editer");
 
   const [enRetard, setEnRetard] = useState<Tache[] | null>(null);
@@ -53,19 +55,20 @@ export function Aujourdhui() {
   const [erreurQuestion, setErreurQuestion] = useState<string | null>(null);
 
   useEffect(() => {
-    clientTaches.lister({ quand: "retard" }).then(setEnRetard);
-    clientTaches.lister({ quand: "aujourdhui" }).then(setAujourdhui);
-    clientTaches.lister({ type: "shooting" }).then((liste) => {
+    const filtreCampagne = mode === "campagne" ? (campagneActiveId ?? undefined) : undefined;
+    clientTaches.lister({ quand: "retard", campagne_id: filtreCampagne }).then(setEnRetard);
+    clientTaches.lister({ quand: "aujourdhui", campagne_id: filtreCampagne }).then(setAujourdhui);
+    clientTaches.lister({ type: "shooting", campagne_id: filtreCampagne }).then((liste) => {
       const aVenir = liste.filter((t) => t.date_echeance >= new Date().toISOString().slice(0, 10) && t.statut !== "fait");
       setProchainsShootings(aVenir.slice(0, 3));
     });
-    clientCampagnes.lister("active").then(setCampagnes);
-    clientCampagnes.detteDeMesure().then(setDette);
+    clientCampagnes.lister().then(setCampagnes);
+    clientCampagnes.detteDeMesure().then((liste) => setDette(filtreCampagne ? liste.filter((c) => c.id === filtreCampagne) : liste));
     clientBrain
       .brief()
       .then(setBrief)
       .catch((err) => setErreurBrief(err instanceof ApiError && err.status === 503 ? t("aujourdhui.brief_ia_indisponible") : t("commun.erreur_generique")));
-  }, [t]);
+  }, [t, campagneActiveId, mode]);
 
   async function poserQuestion() {
     if (!question.trim()) return;
@@ -82,18 +85,16 @@ export function Aujourdhui() {
     }
   }
 
-  const chapitreActif = campagnes[0];
-
   return (
     <div>
       <h1 className="mb-1 font-display text-2xl text-off">{t("nav.espaces.home")}</h1>
 
-      {chapitreActif && (
+      {campagneActive && (
         <div className="mb-4 rounded-card border border-line bg-panel p-4">
-          <Link to={`/plan/campagnes/${chapitreActif.id}`} className="font-display text-lg text-off hover:text-sable">
-            {chapitreActif.nom}
+          <Link to={`/plan/campagnes/${campagneActive.id}`} className="font-display text-lg text-off hover:text-sable">
+            {campagneActive.nom}
           </Link>
-          <p className="text-sm text-dim">J{joursRestants(chapitreActif.date_fin) >= 0 ? "-" : "+"}{Math.abs(joursRestants(chapitreActif.date_fin))} · {chapitreActif.date_fin}</p>
+          <p className="text-sm text-dim">J{joursRestants(campagneActive.date_fin) >= 0 ? "-" : "+"}{Math.abs(joursRestants(campagneActive.date_fin))} · {campagneActive.date_fin}</p>
         </div>
       )}
 
@@ -183,7 +184,13 @@ export function Aujourdhui() {
         </section>
       )}
 
-      <NouvelleTacheDialog ouvert={dialogueOuvert} onFermer={() => setDialogueOuvert(false)} campagnes={campagnes} onCree={() => {}} />
+      <NouvelleTacheDialog
+        ouvert={dialogueOuvert}
+        onFermer={() => setDialogueOuvert(false)}
+        campagnes={campagnes}
+        campagneParDefaut={campagneActiveId ?? undefined}
+        onCree={() => {}}
+      />
     </div>
   );
 }

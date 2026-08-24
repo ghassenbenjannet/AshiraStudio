@@ -5,6 +5,7 @@ import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-
 import { STATUT_TACHE, TYPE_TACHE, tacheEnRetard, type Tache, type Campagne, type Contenu } from "@achirah/shared";
 import { ChampSelect } from "../../components/ui/Champ.js";
 import { useAuth } from "../../lib/auth-context.js";
+import { useCampagneContexte } from "../../lib/campagne-contexte.js";
 import { useToast } from "../../lib/toast-context.js";
 import { clientTaches } from "../../lib/resources/taches.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
@@ -72,6 +73,7 @@ export function TachesBoard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { utilisateur } = useAuth();
+  const { campagneActiveId } = useCampagneContexte();
   const { toaster } = useToast();
   const [params, setParams] = useSearchParams();
   const [taches, setTaches] = useState<Tache[] | null>(null);
@@ -233,7 +235,13 @@ export function TachesBoard() {
         />
       )}
 
-      <NouvelleTacheDialog ouvert={dialogueOuvert} onFermer={() => setDialogueOuvert(false)} campagnes={campagnes} onCree={charger} />
+      <NouvelleTacheDialog
+        ouvert={dialogueOuvert}
+        onFermer={() => setDialogueOuvert(false)}
+        campagnes={campagnes}
+        campagneParDefaut={filtreCampagne || (campagneActiveId ?? undefined)}
+        onCree={charger}
+      />
     </div>
   );
 }

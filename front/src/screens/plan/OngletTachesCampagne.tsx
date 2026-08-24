@@ -13,25 +13,33 @@ export function OngletTachesCampagne({ campagneId }: { campagneId: string }) {
     clientTaches.lister({ campagne_id: campagneId }).then(setTaches);
   }, [campagneId]);
 
-  if (!taches) return <p className="text-sm text-dim">{t("commun.chargement")}</p>;
-  if (taches.length === 0) return <p className="text-sm text-dim">{t("aujourdhui.aucune_tache")}</p>;
-
   return (
-    <ul className="divide-y divide-line rounded-card border border-line">
-      {taches
-        .slice()
-        .sort((a, b) => a.date_echeance.localeCompare(b.date_echeance))
-        .map((tache) => (
-          <li key={tache.id}>
-            <Link to={`/plan/taches/${tache.id}`} className="flex min-h-tap items-center justify-between gap-3 px-4 py-3 hover:bg-panel2">
-              <span className="text-sm text-off">{tache.titre}</span>
-              <span className={`text-xs ${tacheEnRetard(tache, aujourdhui) ? "text-danger-fg" : "text-dim"}`}>
-                {tache.statut === "fait" ? "✓ " : ""}
-                {tache.date_echeance}
-              </span>
-            </Link>
-          </li>
-        ))}
-    </ul>
+    <div>
+      <div className="mb-2 flex justify-end">
+        <Link to={`/plan/taches?campagne_id=${campagneId}`} className="text-xs text-dim underline hover:text-off">
+          {t("taches.voir_board")}
+        </Link>
+      </div>
+      {!taches && <p className="text-sm text-dim">{t("commun.chargement")}</p>}
+      {taches && taches.length === 0 && <p className="text-sm text-dim">{t("aujourdhui.aucune_tache")}</p>}
+      {taches && taches.length > 0 && (
+        <ul className="divide-y divide-line rounded-card border border-line">
+          {taches
+            .slice()
+            .sort((a, b) => a.date_echeance.localeCompare(b.date_echeance))
+            .map((tache) => (
+              <li key={tache.id}>
+                <Link to={`/plan/taches/${tache.id}`} className="flex min-h-tap items-center justify-between gap-3 px-4 py-3 hover:bg-panel2">
+                  <span className="text-sm text-off">{tache.titre}</span>
+                  <span className={`text-xs ${tacheEnRetard(tache, aujourdhui) ? "text-danger-fg" : "text-dim"}`}>
+                    {tache.statut === "fait" ? "✓ " : ""}
+                    {tache.date_echeance}
+                  </span>
+                </Link>
+              </li>
+            ))}
+        </ul>
+      )}
+    </div>
   );
 }

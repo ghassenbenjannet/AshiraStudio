@@ -8,9 +8,9 @@ export function Plus() {
   const { utilisateur, deconnecter } = useAuth();
 
   const liens = [
-    { chemin: "/grow", labelKey: "nav.espaces.grow" },
-    { chemin: "/measure", labelKey: "nav.espaces.measure" },
     { chemin: "/people", labelKey: "nav.espaces.people" },
+    { chemin: "/measure", labelKey: "nav.espaces.measure" },
+    { chemin: "/grow", labelKey: "nav.espaces.grow" },
     { chemin: "/parametres", labelKey: "nav.espaces.parametres" },
   ];
 

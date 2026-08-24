@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TYPE_TACHE, type Campagne } from "@achirah/shared";
 import { Dialog } from "../../components/ui/Dialog.js";
@@ -24,6 +24,16 @@ export function NouvelleTacheDialog({
   const { toaster } = useToast();
   const [form, setForm] = useState({ titre: "", type: "autre" as (typeof TYPE_TACHE)[number], date_echeance: "", campagne_id: campagneParDefaut ?? "", lieu: "" });
   const [erreur, setErreur] = useState<string | null>(null);
+
+  // Le contexte de campagne (CR-02 §A) se résout de façon asynchrone, souvent après le montage de
+  // ce dialogue (toujours monté, juste masqué) : on ne peut donc pas se fier au seul état initial
+  // du useState ci-dessus. On réinitialise le formulaire à chaque ouverture avec la valeur courante.
+  useEffect(() => {
+    if (!ouvert) return;
+    setForm({ titre: "", type: "autre", date_echeance: "", campagne_id: campagneParDefaut ?? "", lieu: "" });
+    setErreur(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ouvert]);
 
   async function creer() {
     setErreur(null);

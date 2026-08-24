@@ -149,3 +149,13 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
 - **Quotas assets** : mesure réelle de la taille des fichiers stockés localement (`fs.stat` sur
   chaque asset), pas un chiffre fabriqué — aucune limite n'est imposée (stockage local, migration
   S3/R2 possible sans changement d'API).
+- **Board canvas (E17) simplifié** : positionnement libre au pointeur (drag simple, coordonnées
+  x/y persistées par item) sans pan/zoom ni multi-sélection au lasso — le §4.6 décrit un « canvas
+  libre pan/zoom desktop », ici livré comme positionnement libre sans zoom. La parité de contenu
+  (liste = mêmes items que le canvas) est respectée : aucune fonctionnalité n'existe uniquement en
+  vue canvas.
+- **Front vérifié de bout en bout (12 captures Playwright + vérification calendrier)** : workflow
+  contenu complet (brouillon→en_revue→approuve, snapshot de version confirmé visuellement, contenu
+  planifié apparaissant sur le calendrier éditorial le jour exact avec la bonne couleur neutre),
+  idées (création, marquage utilisée/écartée), assets (upload réel, quotas exacts en octets,
+  indicateur ⚠ droits manquants), board (note ajoutée, canvas rendu). Aucun bug trouvé.

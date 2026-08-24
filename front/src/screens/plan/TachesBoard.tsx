@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
-import { STATUT_TACHE, TYPE_TACHE, tacheEnRetard, type Tache, type Campagne } from "@achirah/shared";
+import { STATUT_TACHE, TYPE_TACHE, tacheEnRetard, type Tache, type Campagne, type Contenu } from "@achirah/shared";
 import { ChampSelect } from "../../components/ui/Champ.js";
 import { useAuth } from "../../lib/auth-context.js";
 import { useToast } from "../../lib/toast-context.js";
 import { clientTaches } from "../../lib/resources/taches.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
+import { clientContenus } from "../../lib/resources/contenus.js";
 import { clientPersonnes } from "../../lib/resources/contacts.js";
 import { api } from "../../lib/api.js";
 import { NouvelleTacheDialog } from "./NouvelleTacheDialog.js";
@@ -75,6 +76,7 @@ export function TachesBoard() {
   const [params, setParams] = useSearchParams();
   const [taches, setTaches] = useState<Tache[] | null>(null);
   const [campagnes, setCampagnes] = useState<Campagne[]>([]);
+  const [contenusPlanifies, setContenusPlanifies] = useState<Contenu[]>([]);
   const [personnesParId, setPersonnesParId] = useState<Map<string, string>>(new Map());
   const [dialogueOuvert, setDialogueOuvert] = useState(false);
 
@@ -92,6 +94,8 @@ export function TachesBoard() {
     charger();
     clientCampagnes.lister().then(setCampagnes);
     clientPersonnes.lister({ actif: "1" }).then((liste) => setPersonnesParId(new Map(liste.map((p) => [p.id, p.nom]))));
+    // Calendrier éditorial (§4.6) : les contenus planifiés/publiés rejoignent les tâches sur la vue Calendrier.
+    clientContenus.lister().then((liste) => setContenusPlanifies(liste.filter((c) => c.date_publication && (c.statut === "planifie" || c.statut === "publie"))));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtreType, filtreCampagne, filtrePersonne]);
 
@@ -219,7 +223,15 @@ export function TachesBoard() {
         </DndContext>
       )}
 
-      {taches && vue === "calendrier" && <CalendrierEditorial taches={taches} campagneParId={campagneParId} onOuvrirTache={(id) => navigate(`/plan/taches/${id}`)} />}
+      {taches && vue === "calendrier" && (
+        <CalendrierEditorial
+          taches={taches}
+          contenus={contenusPlanifies}
+          campagneParId={campagneParId}
+          onOuvrirTache={(id) => navigate(`/plan/taches/${id}`)}
+          onOuvrirContenu={(id) => navigate(`/create/contenus/${id}`)}
+        />
+      )}
 
       <NouvelleTacheDialog ouvert={dialogueOuvert} onFermer={() => setDialogueOuvert(false)} campagnes={campagnes} onCree={charger} />
     </div>

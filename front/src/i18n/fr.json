@@ -1,5 +1,7 @@
 {
-  "app": { "nom": "Achirah HQ" },
+  "app": {
+    "nom": "Achirah HQ"
+  },
   "nav": {
     "espaces": {
       "home": "Aujourd'hui",
@@ -413,7 +415,11 @@
   },
   "calendrier": {
     "titre": "Calendrier éditorial",
-    "vues": { "jour": "Jour", "semaine": "Semaine", "mois": "Mois" },
+    "vues": {
+      "jour": "Jour",
+      "semaine": "Semaine",
+      "mois": "Mois"
+    },
     "aujourdhui": "Aujourd'hui",
     "precedent": "Précédent",
     "suivant": "Suivant"
@@ -430,5 +436,130 @@
     "nouvelle_idee": "+ Idée",
     "aucune_tache": "Aucune tâche.",
     "aucun_shooting": "Aucun shooting à venir."
+  },
+  "contenus": {
+    "titre": "Contenus",
+    "tous_statuts": "Tous les statuts",
+    "toutes_campagnes": "Toutes les campagnes",
+    "statuts": {
+      "brouillon": "Brouillon",
+      "en_revue": "En révision",
+      "approuve": "Approuvé",
+      "planifie": "Planifié",
+      "publie": "Publié",
+      "archive": "Archivé"
+    },
+    "types": {
+      "post": "Post",
+      "reel": "Reel",
+      "story": "Story",
+      "tiktok": "TikTok",
+      "carrousel": "Carrousel",
+      "email": "Email",
+      "autre": "Autre"
+    },
+    "nouveau": "Nouveau contenu",
+    "champs": {
+      "campagne": "Campagne",
+      "type": "Type",
+      "titre": "Titre",
+      "caption": "Légende",
+      "registre": "Registre",
+      "plateformes": "Plateformes",
+      "date_publication": "Date de publication"
+    },
+    "soumettre": "Soumettre à la révision",
+    "approuver": "Approuver",
+    "planifier": "Planifier",
+    "publier": "Marquer publié",
+    "archiver": "Archiver",
+    "dupliquer": "Dupliquer",
+    "dupliquee": "Contenu dupliqué",
+    "versions": "Versions",
+    "aucune_version": "Aucune version enregistrée",
+    "restaurer": "Restaurer",
+    "version_restauree": "Version restaurée",
+    "assets_lies": "Assets liés",
+    "ajouter_asset": "+ Ajouter un asset",
+    "droits_manquants": "Droits manquants (RG-AS1)"
+  },
+  "idees": {
+    "titre": "Idées",
+    "tous_statuts": "Tous les statuts",
+    "statuts": {
+      "nouvelle": "Nouvelle",
+      "utilisee": "Utilisée",
+      "ecartee": "Écartée"
+    },
+    "sources": {
+      "studio": "Studio",
+      "manuel": "Manuelle",
+      "generateur": "Générateur"
+    },
+    "nouvelle": "Nouvelle idée",
+    "champs": {
+      "contenu": "Idée (gras **texte**, sauts de ligne)",
+      "tache_liee": "Tâche liée"
+    },
+    "copier": "Copier",
+    "copiee": "Idée copiée",
+    "marquer_utilisee": "Marquer utilisée",
+    "ecarter": "Écarter"
+  },
+  "assets": {
+    "titre": "Assets",
+    "tous_types": "Tous les types",
+    "types": {
+      "photo": "Photo",
+      "video": "Vidéo",
+      "logo": "Logo",
+      "typo": "Typo",
+      "design": "Design",
+      "ugc": "UGC",
+      "document": "Document"
+    },
+    "sources": {
+      "shooting": "Shooting",
+      "ugc": "UGC",
+      "externe": "Externe",
+      "studio": "Studio"
+    },
+    "televerser": "Téléverser",
+    "televersee": "Asset(s) téléversé(s)",
+    "reference_externe": "Référence externe",
+    "reference_externe_note": "Pour une vidéo ou un fichier hébergé ailleurs : un lien direct, pas d'envoi de fichier.",
+    "whitelist_note": "Formats acceptés à l'envoi : JPEG, PNG, WebP, PDF (≤8 Mo).",
+    "champs": {
+      "fichiers": "Fichiers",
+      "type": "Type",
+      "source": "Source",
+      "tags": "Tags",
+      "droits": "Droits (autorisation)",
+      "url": "Lien",
+      "nom": "Nom"
+    },
+    "selection": "{{n}} sélectionné(s)",
+    "tags_a_ajouter": "Tags à ajouter",
+    "appliquer": "Appliquer",
+    "masse_appliquee": "Rattachement appliqué",
+    "utilise_dans": "Utilisé dans",
+    "vient_de": "Vient de"
+  },
+  "boards": {
+    "titre": "Boards",
+    "nouveau": "Nouveau board",
+    "items": "items",
+    "champs": {
+      "nom": "Nom",
+      "campagne": "Campagne",
+      "texte": "Texte",
+      "url": "Lien"
+    },
+    "ajouter_note": "+ Note",
+    "ajouter_lien": "+ Lien",
+    "transformer": "Transformer en campagne",
+    "transformer_note": "{{n}} item(s) sélectionné(s) — les notes deviennent la description, les images/assets deviennent des références.",
+    "transformee": "Campagne créée",
+    "asset_id": "Asset"
   }
 }

@@ -1,5 +1,7 @@
 {
-  "app": { "nom": "أشيرة إتش كيو" },
+  "app": {
+    "nom": "أشيرة إتش كيو"
+  },
   "nav": {
     "espaces": {
       "home": "اليوم",
@@ -413,7 +415,11 @@
   },
   "calendrier": {
     "titre": "التقويم التحريري",
-    "vues": { "jour": "يوم", "semaine": "أسبوع", "mois": "شهر" },
+    "vues": {
+      "jour": "يوم",
+      "semaine": "أسبوع",
+      "mois": "شهر"
+    },
     "aujourdhui": "اليوم",
     "precedent": "السابق",
     "suivant": "التالي"
@@ -430,5 +436,130 @@
     "nouvelle_idee": "+ فكرة",
     "aucune_tache": "لا توجد مهام.",
     "aucun_shooting": "لا يوجد تصوير قادم."
+  },
+  "contenus": {
+    "titre": "المحتوى",
+    "tous_statuts": "كل الحالات",
+    "toutes_campagnes": "كل الحملات",
+    "statuts": {
+      "brouillon": "مسودة",
+      "en_revue": "قيد المراجعة",
+      "approuve": "معتمد",
+      "planifie": "مبرمج",
+      "publie": "منشور",
+      "archive": "مؤرشف"
+    },
+    "types": {
+      "post": "منشور",
+      "reel": "ريل",
+      "story": "ستوري",
+      "tiktok": "تيك توك",
+      "carrousel": "كاروسيل",
+      "email": "بريد إلكتروني",
+      "autre": "آخر"
+    },
+    "nouveau": "محتوى جديد",
+    "champs": {
+      "campagne": "الحملة",
+      "type": "النوع",
+      "titre": "العنوان",
+      "caption": "النص",
+      "registre": "السجل",
+      "plateformes": "المنصات",
+      "date_publication": "تاريخ النشر"
+    },
+    "soumettre": "إرسال للمراجعة",
+    "approuver": "اعتماد",
+    "planifier": "برمجة",
+    "publier": "تعليم كمنشور",
+    "archiver": "أرشفة",
+    "dupliquer": "تكرار",
+    "dupliquee": "تم تكرار المحتوى",
+    "versions": "النسخ",
+    "aucune_version": "لا توجد نسخ محفوظة",
+    "restaurer": "استعادة",
+    "version_restauree": "تمت استعادة النسخة",
+    "assets_lies": "الأصول المرتبطة",
+    "ajouter_asset": "+ إضافة أصل",
+    "droits_manquants": "الحقوق ناقصة (RG-AS1)"
+  },
+  "idees": {
+    "titre": "الأفكار",
+    "tous_statuts": "كل الحالات",
+    "statuts": {
+      "nouvelle": "جديدة",
+      "utilisee": "مستخدمة",
+      "ecartee": "مستبعدة"
+    },
+    "sources": {
+      "studio": "الاستوديو",
+      "manuel": "يدوية",
+      "generateur": "المولّد"
+    },
+    "nouvelle": "فكرة جديدة",
+    "champs": {
+      "contenu": "الفكرة (**نص عريض**، أسطر جديدة)",
+      "tache_liee": "المهمة المرتبطة"
+    },
+    "copier": "نسخ",
+    "copiee": "تم نسخ الفكرة",
+    "marquer_utilisee": "تعليم كمستخدمة",
+    "ecarter": "استبعاد"
+  },
+  "assets": {
+    "titre": "الأصول",
+    "tous_types": "كل الأنواع",
+    "types": {
+      "photo": "صورة",
+      "video": "فيديو",
+      "logo": "شعار",
+      "typo": "خط",
+      "design": "تصميم",
+      "ugc": "محتوى المستخدمين",
+      "document": "مستند"
+    },
+    "sources": {
+      "shooting": "تصوير",
+      "ugc": "محتوى المستخدمين",
+      "externe": "خارجي",
+      "studio": "الاستوديو"
+    },
+    "televerser": "رفع",
+    "televersee": "تم رفع الأصل (الأصول)",
+    "reference_externe": "مرجع خارجي",
+    "reference_externe_note": "لفيديو أو ملف مستضاف في مكان آخر: رابط مباشر، بدون رفع ملف.",
+    "whitelist_note": "الصيغ المقبولة للرفع: JPEG، PNG، WebP، PDF (≤8 م.ب).",
+    "champs": {
+      "fichiers": "الملفات",
+      "type": "النوع",
+      "source": "المصدر",
+      "tags": "الوسوم",
+      "droits": "الحقوق (الإذن)",
+      "url": "الرابط",
+      "nom": "الاسم"
+    },
+    "selection": "{{n}} محدد",
+    "tags_a_ajouter": "وسوم لإضافتها",
+    "appliquer": "تطبيق",
+    "masse_appliquee": "تم تطبيق الربط الجماعي",
+    "utilise_dans": "مستخدم في",
+    "vient_de": "مصدره"
+  },
+  "boards": {
+    "titre": "لوحات الأفكار",
+    "nouveau": "لوحة جديدة",
+    "items": "عنصر",
+    "champs": {
+      "nom": "الاسم",
+      "campagne": "الحملة",
+      "texte": "النص",
+      "url": "الرابط"
+    },
+    "ajouter_note": "+ ملاحظة",
+    "ajouter_lien": "+ رابط",
+    "transformer": "تحويل إلى حملة",
+    "transformer_note": "{{n}} عنصر محدد — تصبح الملاحظات الوصف، وتصبح الصور/الأصول مراجع.",
+    "transformee": "تم إنشاء الحملة",
+    "asset_id": "الأصل"
   }
 }

@@ -9,6 +9,8 @@ import { Plan } from "./screens/Plan.js";
 import { FicheCampagne } from "./screens/plan/FicheCampagne.js";
 import { FicheTache } from "./screens/plan/FicheTache.js";
 import { Create } from "./screens/Create.js";
+import { FicheContenu } from "./screens/create/FicheContenu.js";
+import { BoardCanvas } from "./screens/create/BoardCanvas.js";
 import { Grow } from "./screens/Grow.js";
 import { Measure } from "./screens/Measure.js";
 import { People } from "./screens/People.js";
@@ -69,6 +71,8 @@ export function App() {
         <Route path="/plan/campagnes/:id" element={<FicheCampagne />} />
         <Route path="/plan/taches/:id" element={<FicheTache />} />
         <Route path="/create" element={<Create />} />
+        <Route path="/create/contenus/:id" element={<FicheContenu />} />
+        <Route path="/create/boards/:id" element={<BoardCanvas />} />
         <Route path="/grow" element={<Grow />} />
         <Route path="/measure" element={<Measure />} />
         <Route path="/people" element={<People />} />

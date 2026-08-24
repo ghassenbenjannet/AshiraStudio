@@ -1,15 +1,28 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { eq, desc } from "drizzle-orm";
-import { ideeInsertSchema, ideeUpdateSchema } from "@achirah/shared";
+import { ideeInsertSchema, ideeUpdateSchema, genererIdeesEntreeSchema } from "@achirah/shared";
 import { db } from "../db/client.js";
 import { idees } from "../db/schema.js";
 import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
+import { genererIdees } from "../services/ia/generation.js";
+import { ErreurIaIndisponible } from "../lib/anthropic.js";
 import type { AppEnv } from "../types.js";
 
 export const ideesRoutes = new Hono<AppEnv>();
+
+// §4.5 — Générateur d'idées scorées : ne persiste rien, l'utilisateur choisit ensuite lesquelles sauvegarder.
+ideesRoutes.post("/generer", exigerCapacite("entites.editer"), zValidator("json", genererIdeesEntreeSchema), async (c) => {
+  try {
+    const resultat = await genererIdees(c.req.valid("json"));
+    return c.json({ donnees: resultat });
+  } catch (err) {
+    if (err instanceof ErreurIaIndisponible) return erreurApi(c, 503, "ia_indisponible", err.message);
+    throw err;
+  }
+});
 
 /** §4.5 — Idées : liste antéchronologique, filtres statut/liaison. Le générateur scoré arrive en Phase ⑤. */
 ideesRoutes.get("/", async (c) => {

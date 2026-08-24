@@ -159,3 +159,52 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   planifié apparaissant sur le calendrier éditorial le jour exact avec la bonne couleur neutre),
   idées (création, marquage utilisée/écartée), assets (upload réel, quotas exacts en octets,
   indicateur ⚠ droits manquants), board (note ajoutée, canvas rendu). Aucun bug trouvé.
+
+## Phase ⑤ — IA (Studio, agents, gate, brief, générateur d'idées, brain)
+
+- **Pas de clé `ANTHROPIC_API_KEY` réelle disponible dans cet environnement de build.** Vérifié :
+  `api.anthropic.com` est bien joignable (hors proxy agent, whitelisté), donc l'absence de réponse
+  n'est pas un problème réseau — juste l'absence de secret. Décision : construire la couche IA
+  complète et correcte, avec une garde honnête (`ErreurIaIndisponible`, 503 `ia_indisponible`)
+  partout où un appel LLM est nécessaire, plutôt que de fabriquer une réponse ou bloquer le reste de
+  l'app. C'est très exactement le **scénario de recette 6 « Panne IA »** du CDC — cette limitation
+  d'environnement sert de test réel de ce scénario, pas d'un cas hypothétique : `POST
+  /conversations/:id/messages`, `POST /agents/:id/tester`, `POST /contenus/:id/gate`, `POST
+  /taches/:id/brief`, `POST /idees/generer`, `POST /brain/brief`, `POST /brain/question` renvoient
+  tous 503 proprement, et tout le reste (CRUD conversations/agents, workflow contenu manuel,
+  RBAC des outils) continue à fonctionner à 100 % — vérifié par des tests curl sur DB fraîche.
+- **Gate auto au passage `en_revue`** (scénario 8) : `soumettreContenu` (Phase ④) appelle
+  `noterContenu` et avale silencieusement `ErreurIaIndisponible` — la soumission manuelle réussit
+  toujours même IA coupée (RG-PAR1d), seul le score reste absent. Un bouton « Renoter » manuel
+  (`POST /contenus/:id/gate`) permet de re-tenter après édition ou une fois l'IA revenue.
+  Vérifié : contenu soumis avec IA coupée → `statut: en_revue`, `score_marque: null`, 200 (pas 503).
+- **Sortie structurée forcée** (gate, brief shooting, générateur d'idées, brief quotidien) : chaque
+  appel utilise `tool_choice: {type: "tool", name: ...}` avec un unique outil dont l'`input_schema`
+  reproduit exactement le schéma Zod partagé — jamais de parsing de texte libre côté serveur.
+- **RG-AGW4 (≤10 écritures/tour, ≤100/jour/utilisateur)** : le compteur/tour est en mémoire pour la
+  durée de la boucle ; le compteur/jour interroge `audits` (`via_agent=true`, `at` ≥ aujourd'hui) —
+  aucun état dupliqué, la table d'audit existante est la source unique de vérité.
+- **Cartes de confirmation persistées** (`actions_agent`, nouvelle table) : une proposition d'outil
+  « carte de confirmation » (modifier_tache, ajouter_poses, ajouter_look, creer_personne) est
+  enregistrée (avant/après prévisualisés) avant toute écriture réelle — `POST
+  .../actions/:id/confirmer` exécute, `.../annuler` classe sans écrire. Choisi plutôt qu'un état en
+  mémoire ou encodé dans le texte du message : survit à un rechargement de page, auditable, et
+  évite de mélanger données structurées et texte affiché dans `messages.contenu`.
+- **Brief quotidien mis en cache en mémoire** (variable de module, pas de table dédiée) — l'app est
+  mono-processus (§8.1), et le brief est un artefact dérivé régénérable à la demande, pas une donnée
+  de système d'enregistrement : la solution la plus simple qui respecte « mis en cache la journée,
+  régénérable à la demande » sans complexifier le schéma.
+- **Q&A (« Demander ») en lecture seule, sans persistance** : `POST /brain/question` réutilise les
+  mêmes outils de lecture RBAC-scopés mais n'ouvre pas de conversation Studio — une question rapide
+  depuis le cockpit ne doit pas polluer l'historique de conversations, et n'a pas besoin d'écrire
+  (le §6.5 ne décrit aucune écriture depuis le Brain).
+- **Brief de shooting non persisté** : `POST /taches/:id/brief` calcule et renvoie le brief à la
+  volée (looks/poses/pièces réels + photos jointes en pièce jointe image si présentes) sans le
+  stocker — pas de colonne dédiée sur `shootings` dans le CDC, et le régénérer coûte peu.
+- **Ambiguïté résolue — outils lecture/écriture par agent** : `agent_campagne.outils_actives` vide
+  = accès à tous les outils (comportement « standard ») ; une liste explicite restreint aux noms
+  listés. Le mode Tester (RG-AGC2) ignore `outils_actives` et ne propose jamais d'outil d'écriture,
+  quelle que soit la configuration de l'agent.
+- **Bug trouvé et corrigé** : `agentCampagneInsertSchema` exigeait `cree_par` (champ fixé par le
+  serveur) — même angle mort que `contenu.auteur_id` en Phase ④, corrigé en l'omettant du schéma
+  d'insertion partagé.

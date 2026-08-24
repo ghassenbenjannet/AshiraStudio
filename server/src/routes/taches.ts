@@ -23,6 +23,8 @@ import { creerTacheAvecCascade, supprimerTacheAvecCascade, calculerPiecesEffecti
 import { genererVevent, genererIcsUnitaire } from "../lib/ics.js";
 import { genererCallSheetPdf } from "../lib/callsheet-pdf.js";
 import { ErreurMetier } from "../services/catalogue.js";
+import { genererBriefShooting } from "../services/ia/generation.js";
+import { ErreurIaIndisponible } from "../lib/anthropic.js";
 import type { AppEnv } from "../types.js";
 
 export const tachesRoutes = new Hono<AppEnv>();
@@ -143,7 +145,15 @@ tachesRoutes.get("/:id/ics", async (c) => {
   return c.body(genererIcsUnitaire(vevent), 200, { "Content-Type": "text/calendar; charset=utf-8" });
 });
 
-tachesRoutes.get("/:id/brief", (c) => erreurApi(c, 501, "non_disponible", "Le brief IA sera disponible en Phase ⑤"));
+tachesRoutes.post("/:id/brief", exigerCapacite("entites.editer"), async (c) => {
+  try {
+    const brief = await genererBriefShooting(c.req.param("id"));
+    return c.json({ donnees: brief });
+  } catch (err) {
+    if (err instanceof ErreurIaIndisponible) return erreurApi(c, 503, "ia_indisponible", err.message);
+    throw err;
+  }
+});
 
 // ───────────────────────── Call sheet PDF ─────────────────────────
 

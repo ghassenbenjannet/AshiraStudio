@@ -515,6 +515,9 @@ export const messages = sqliteTable("messages", {
   role: text("role").notNull(),
   contenu: text("contenu").notNull(),
   images: json<string[]>("images").notNull().default([]),
+  // Tokens réellement consommés (entrée+sortie) par ce message assistant — alimente le budget/jour
+  // affiché en Paramètres (§6.1) ; null pour les messages utilisateur.
+  tokens: integer("tokens"),
   created_at: text("created_at").notNull().$defaultFn(isoNow),
 });
 
@@ -529,6 +532,25 @@ export const agentsCampagne = sqliteTable("agents_campagne", {
   outils_actives: json<string[]>("outils_actives").notNull().default([]),
   actif: bool("actif", true),
   cree_par: text("cree_par").notNull().references(() => utilisateurs.id),
+  ...timestamps,
+});
+
+/**
+ * Outils d'écriture « carte de confirmation » (§6.4) : la proposition est persistée avant toute
+ * écriture réelle — rien n'est écrit avant le tap de l'utilisateur. `groupe_id` réunit plusieurs
+ * actions d'un même tour assistant en une seule carte (et une seule entrée d'audit groupée, RG-AGW5).
+ */
+export const actionsAgent = sqliteTable("actions_agent", {
+  id: uuid(),
+  conversation_id: text("conversation_id").notNull().references(() => conversations.id),
+  message_id: text("message_id").notNull().references(() => messages.id),
+  groupe_id: text("groupe_id").notNull(),
+  outil: text("outil").notNull(),
+  entree: json<Record<string, unknown>>("entree").notNull(),
+  avant: json<Record<string, unknown> | null>("avant"),
+  apres_previsualise: json<Record<string, unknown> | null>("apres_previsualise"),
+  statut: text("statut").notNull().default("en_attente"),
+  utilisateur_id: text("utilisateur_id").notNull().references(() => utilisateurs.id),
   ...timestamps,
 });
 

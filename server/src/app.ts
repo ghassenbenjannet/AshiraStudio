@@ -14,6 +14,9 @@ import { icalRoutes } from "./routes/ical.js";
 import { contenusRoutes } from "./routes/contenus.js";
 import { boardsRoutes } from "./routes/boards.js";
 import { ideesRoutes } from "./routes/idees.js";
+import { conversationsRoutes } from "./routes/conversations.js";
+import { agentsRoutes } from "./routes/agents.js";
+import { brainRoutes } from "./routes/brain.js";
 import { resoudreSession, exigerAuth } from "./middleware/auth.js";
 import { journaliserRequetes } from "./middleware/logging.js";
 import { limiteurDebit } from "./middleware/rate-limit.js";
@@ -68,6 +71,12 @@ export function creerApp() {
   app.route("/api/boards", boardsRoutes);
   app.use("/api/idees/*", exigerAuth);
   app.route("/api/idees", ideesRoutes);
+  app.use("/api/conversations/*", exigerAuth);
+  app.route("/api/conversations", conversationsRoutes);
+  app.use("/api/agents/*", exigerAuth);
+  app.route("/api/agents", agentsRoutes);
+  app.use("/api/brain/*", exigerAuth);
+  app.route("/api/brain", brainRoutes);
 
   app.notFound((c) => erreurApi(c, 404, "introuvable", "Ressource introuvable"));
   app.onError((err, c) => {

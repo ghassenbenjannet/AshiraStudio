@@ -2,6 +2,8 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { contenus, contenuVersions, assets } from "../db/schema.js";
 import { enregistrerAudit } from "../lib/audit.js";
+import { noterContenu } from "./ia/generation.js";
+import { ErreurIaIndisponible } from "../lib/anthropic.js";
 
 export class ErreurMetier extends Error {
   code: string;
@@ -48,7 +50,16 @@ export async function soumettreContenu(id: string, utilisateurId: string) {
   }
   const [modifie] = (await db.update(contenus).set({ statut: "en_revue" }).where(eq(contenus.id, id)).returning()) as any[];
   await enregistrerAudit({ utilisateurId, action: "contenu.soumettre", entiteType: "contenu", entiteId: id, avant: { statut: contenu.statut }, apres: { statut: "en_revue" } });
-  return modifie;
+
+  // Gate auto affiché en revue (scénario recette 8) — jamais bloquant : panne IA = soumission
+  // manuelle inchangée (scénario 6, RG-PAR1d), le score reste simplement absent.
+  try {
+    const { score_marque, score_detail } = await noterContenu(id, utilisateurId);
+    return { ...modifie, score_marque, score_detail };
+  } catch (err) {
+    if (err instanceof ErreurIaIndisponible) return modifie;
+    throw err;
+  }
 }
 
 export async function approuverContenu(id: string, utilisateurId: string) {

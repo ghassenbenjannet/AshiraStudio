@@ -19,6 +19,8 @@ import {
   snapshotVersionSiNecessaire,
   ErreurMetier,
 } from "../services/contenus.js";
+import { noterContenu } from "../services/ia/generation.js";
+import { ErreurIaIndisponible } from "../lib/anthropic.js";
 import type { AppEnv } from "../types.js";
 
 export const contenusRoutes = new Hono<AppEnv>();
@@ -121,6 +123,18 @@ contenusRoutes.post("/:id/dupliquer", exigerCapacite("entites.editer"), zValidat
     return c.json({ donnees: copie }, 201);
   } catch (err) {
     return gererErreurMetier(c, err);
+  }
+});
+
+// Renoter manuellement (ex. après édition de la légende) — même gate que la soumission auto.
+contenusRoutes.post("/:id/gate", exigerCapacite("entites.editer"), async (c) => {
+  const utilisateur = c.get("utilisateur")!;
+  try {
+    const resultat = await noterContenu(c.req.param("id"), utilisateur.id);
+    return c.json({ donnees: resultat });
+  } catch (err) {
+    if (err instanceof ErreurIaIndisponible) return erreurApi(c, 503, "ia_indisponible", err.message);
+    throw err;
   }
 });
 

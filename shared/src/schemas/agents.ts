@@ -12,5 +12,5 @@ export const agentCampagneSchema = baseEntitySchema.extend({
   cree_par: z.string().uuid(),
 });
 export type AgentCampagne = z.infer<typeof agentCampagneSchema>;
-export const agentCampagneInsertSchema = agentCampagneSchema.omit({ id: true, created_at: true, updated_at: true });
+export const agentCampagneInsertSchema = agentCampagneSchema.omit({ id: true, created_at: true, updated_at: true, cree_par: true });
 export const agentCampagneUpdateSchema = agentCampagneInsertSchema.partial();

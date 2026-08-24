@@ -287,3 +287,37 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   réels et non-duplication au second appel, consolidation avant/après snapshot+budget (ROAS exact),
   connexion Shopify avec identifiants fictifs → vraie erreur HTTP 403 honnête, validation lexique
   (a_valider→validee), RG-LC4 (fermeture → compteur +1 → reconfirmer → compteur à 0).
+
+## Phase ⑥ Frontend — MEASURE (E27/E28), GROW (E21/E22/E23/E25/E26)
+
+- **`NiveauMesure`/`ConsolidationCampagne` — sélection par défaut synchronisée après chargement
+  async** (bug trouvé et corrigé en vérification Playwright) : `Measure.tsx` charge
+  `plateformesSocial`/`canauxPaid`/`campagnes` de façon asynchrone puis les passe en props ; les
+  deux composants enfants initialisaient leur `useState` de sélection (`plateforme`/`campagneId`)
+  une seule fois au montage (`plateformes[0]?.valeur ?? ""`). Si le montage précède la résolution du
+  fetch parent (cas réel au tout premier chargement de page), la sélection reste verrouillée sur
+  `""` en permanence — le `<select>` affiche visuellement la première option réelle dès qu'elle
+  apparaît (comportement par défaut du navigateur pour une `value` qui ne correspond à aucune
+  `option`), mais l'état React reste vide, et toute soumission échoue silencieusement en 400
+  (`plateforme` requis, `min(1)`) sans qu'aucun message d'erreur explicite ne le signale à
+  l'utilisateur. Corrigé par un `useEffect` qui bascule la sélection sur la première valeur dès que
+  le tableau de props se peuple et que la sélection est encore vide, dans les deux composants.
+- **Onglet Paid et Site non affectés** : `Measure.tsx` fournit un tableau de repli non vide pour Paid
+  (`meta_ads`/`tiktok_ads`) et une liste statique pour Site (`shopify`) — seul l'onglet Social,
+  entièrement dépendant du fetch référentiels, était exposé à la course ci-dessus.
+- **RG-LC1 vérifié de bout en bout via Playwright** : campagne active → passage `livree` → fermeture
+  avec rapport (3 champs) → les 3 boutons « Proposer comme leçon » créent bien 3 leçons distinctes
+  via `POST /lecons`, chacune marquée d'un badge « Leçon proposée » côté client (état local, non
+  persisté — se réinitialise à un rechargement, ce qui est volontaire : la leçon elle-même est
+  persistée en base, seul l'indicateur anti-double-clic est éphémère).
+- **Textes des recommandations GROW non traduits par la couche i18n** : `Recommandation.titre` est
+  un texte généré côté serveur par les règles internes (ex. « 14 coloris actif(s) sans visuel »),
+  stocké tel quel en base — comme le reste du contenu métier généré (rapports, briefs), il n'est pas
+  retraduit dynamiquement par le front en arabe ; seuls les libellés d'interface (onglets, boutons,
+  statuts) suivent `i18n`. Cohérent avec le choix déjà fait en Phase ⑤ pour le contenu généré par IA.
+- **Vérifié via Playwright sur DB fraîche (FR + AR/RTL)** : MEASURE (saisie manuelle Social avec
+  table de résultats, Consolidation avec sélection de campagne auto-résolue, Intégrations avec vraie
+  erreur HTTP 403 Meta affichée honnêtement) ; GROW (génération de recommandations réelles,
+  recherche de tendances → 503 IA indisponible affiché proprement, veille concurrents, lexique avec
+  statuts validée/interdite, leçons) ; RG-LC1 complet sur une fermeture de campagne réelle ; bascule
+  FR/AR avec `dir="rtl"` correct et tous les nouveaux libellés `grow.*`/`mesure.*` traduits.

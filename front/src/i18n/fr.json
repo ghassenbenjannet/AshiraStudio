@@ -654,5 +654,155 @@
       "ajouter_look": "Ajouter un look",
       "creer_personne": "Créer une personne"
     }
+  },
+  "grow": {
+    "onglets": {
+      "recommandations": "Recommandations",
+      "tendances": "Tendances",
+      "veille": "Veille",
+      "lexique": "Lexique",
+      "lecons": "Leçons"
+    },
+    "recommandations": {
+      "generer": "Générer",
+      "aucune": "Aucune recommandation active.",
+      "impacts": {
+        "haut": "Impact haut",
+        "moyen": "Impact moyen",
+        "bas": "Impact bas"
+      },
+      "pourquoi": "Pourquoi ?",
+      "faite": "Faite",
+      "ignorer": "Ignorer"
+    },
+    "tendances": {
+      "rechercher": "Rechercher des tendances",
+      "non_verifiee": "Source non vérifiée",
+      "statuts": {
+        "a_evaluer": "À évaluer",
+        "adoptee": "Adoptée",
+        "ecartee": "Écartée"
+      },
+      "champs": {
+        "categorie": "Catégorie"
+      },
+      "categories": {
+        "tunisie": "Tunisie",
+        "mode": "Mode",
+        "international": "International"
+      },
+      "maturites": {
+        "emergente": "Émergente",
+        "pic": "Pic",
+        "declin": "Déclin"
+      },
+      "adapter": "Adapter à Achirah",
+      "adopter": "Adopter",
+      "ecarter": "Écarter"
+    },
+    "veille": {
+      "nouveau": "Nouveau concurrent",
+      "champs": {
+        "nom": "Nom",
+        "instagram": "Instagram",
+        "segment": "Segment",
+        "followers": "Followers",
+        "posts_semaine": "Posts / semaine",
+        "observation": "Observation"
+      },
+      "ajouter_releve": "Ajouter un relevé"
+    },
+    "lexique": {
+      "en_attente": "{{n}} en attente de validation",
+      "proposer": "Proposer une expression",
+      "statuts": {
+        "validee": "Validée",
+        "interdite": "Interdite",
+        "a_valider": "À valider"
+      },
+      "valider": "Valider",
+      "interdire": "Interdire",
+      "champs": {
+        "texte": "Expression",
+        "transliteration": "Translittération",
+        "registre": "Registre",
+        "contexte": "Contexte d'usage"
+      }
+    },
+    "lecons": {
+      "statuts": {
+        "active": "Active",
+        "archivee": "Archivée"
+      },
+      "ajouter": "Ajouter une leçon",
+      "types": {
+        "gagnant": "Gagnant",
+        "perdant": "Perdant",
+        "regle_maison": "Règle maison"
+      },
+      "suggestion_archivage": "Non reconfirmée depuis {{n}} fermetures de campagne — archiver ?",
+      "reconfirmer": "Reconfirmer",
+      "archiver": "Archiver",
+      "champs": {
+        "type": "Type",
+        "texte": "Texte",
+        "preuve": "Preuve"
+      },
+      "proposee": "Leçon proposée",
+      "proposer_depuis_rapport": "Proposer comme leçon"
+    }
+  },
+  "mesure": {
+    "onglets": {
+      "social": "Social",
+      "paid": "Paid",
+      "site": "Site",
+      "consolidation": "Consolidation",
+      "integrations": "Intégrations"
+    },
+    "champs": {
+      "plateforme": "Plateforme",
+      "date": "Date",
+      "campagne": "Campagne",
+      "aucune_campagne": "Aucune campagne"
+    },
+    "source": "Source",
+    "sources": {
+      "manuel": "Saisie manuelle",
+      "api": "API"
+    },
+    "consolidation": {
+      "budget_reel": "Budget réel",
+      "reach_cumule": "Reach cumulé",
+      "contenus_publies": "Contenus publiés",
+      "sessions": "Sessions",
+      "commandes": "Commandes",
+      "ca": "CA",
+      "roas": "ROAS"
+    },
+    "plateformes": {
+      "meta": "Meta",
+      "tiktok": "TikTok",
+      "ga4": "Google Analytics 4",
+      "shopify": "Shopify"
+    },
+    "integrations": {
+      "prerequis": "Connectez vos comptes pour synchroniser automatiquement les indicateurs. Les identifiants sont chiffrés.",
+      "statuts": {
+        "connectee": "Connectée",
+        "deconnectee": "Déconnectée",
+        "erreur": "Erreur"
+      },
+      "dernier_sync": "Dernière synchro",
+      "connecter": "Connecter",
+      "sync": "Synchroniser",
+      "deconnecter": "Déconnecter",
+      "champs": {
+        "boutique": "Boutique (myshop.myshopify.com)",
+        "access_token": "Jeton d'accès",
+        "advertiser_id": "ID annonceur",
+        "property_id": "ID de propriété"
+      }
+    }
   }
 }

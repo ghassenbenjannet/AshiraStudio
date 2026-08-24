@@ -1,6 +1,20 @@
 import type { Campagne, CampagneArticle, AjoutIntelligent, BudgetLigne, Tache } from "@achirah/shared";
 import { api } from "../api.js";
 
+interface ChiffreConsolide {
+  valeur: number | null;
+  methode: string;
+}
+export interface Consolidation {
+  budget: { prevu: number; engage: number; reel: number; methode: string };
+  reach_cumule: ChiffreConsolide;
+  contenus_publies: ChiffreConsolide;
+  sessions_attribuees: ChiffreConsolide;
+  commandes_attribuees: ChiffreConsolide;
+  ca_attribue: ChiffreConsolide;
+  roas: ChiffreConsolide;
+}
+
 export const clientCampagnes = {
   lister: (statut?: string) => api<{ donnees: Campagne[] }>(`/campagnes${statut ? `?statut=${statut}` : ""}`).then((r) => r.donnees),
   obtenir: (id: string) => api<{ donnees: Campagne }>(`/campagnes/${id}`).then((r) => r.donnees),
@@ -12,7 +26,7 @@ export const clientCampagnes = {
   fermerDeForce: (id: string, rapport: { marche: string; pas_marche: string; decisions: string }) =>
     api<{ donnees: Campagne }>(`/campagnes/${id}/fermer-de-force`, { method: "POST", body: { rapport } }).then((r) => r.donnees),
   genererRituel: (id: string) => api<{ donnees: Tache[] }>(`/campagnes/${id}/rituel`, { method: "POST" }).then((r) => r.donnees),
-  consolidation: (id: string) => api<{ donnees: any }>(`/campagnes/${id}/consolidation`).then((r) => r.donnees),
+  consolidation: (id: string) => api<{ donnees: Consolidation }>(`/campagnes/${id}/consolidation`).then((r) => r.donnees),
   detteDeMesure: () => api<{ donnees: Campagne[] }>("/campagnes/dette-mesure").then((r) => r.donnees),
 
   listerArticles: (id: string) => api<{ donnees: CampagneArticle[] }>(`/campagnes/${id}/articles`).then((r) => r.donnees),

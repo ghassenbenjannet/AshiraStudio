@@ -654,5 +654,155 @@
       "ajouter_look": "إضافة إطلالة",
       "creer_personne": "إنشاء شخص"
     }
+  },
+  "grow": {
+    "onglets": {
+      "recommandations": "التوصيات",
+      "tendances": "الاتجاهات",
+      "veille": "مراقبة المنافسين",
+      "lexique": "المعجم",
+      "lecons": "الدروس"
+    },
+    "recommandations": {
+      "generer": "توليد",
+      "aucune": "لا توجد توصيات نشطة.",
+      "impacts": {
+        "haut": "تأثير مرتفع",
+        "moyen": "تأثير متوسط",
+        "bas": "تأثير منخفض"
+      },
+      "pourquoi": "لماذا؟",
+      "faite": "منجَزة",
+      "ignorer": "تجاهل"
+    },
+    "tendances": {
+      "rechercher": "البحث عن اتجاهات",
+      "non_verifiee": "مصدر غير مؤكد",
+      "statuts": {
+        "a_evaluer": "قيد التقييم",
+        "adoptee": "معتمَدة",
+        "ecartee": "مستبعَدة"
+      },
+      "champs": {
+        "categorie": "الفئة"
+      },
+      "categories": {
+        "tunisie": "تونس",
+        "mode": "الموضة",
+        "international": "دولي"
+      },
+      "maturites": {
+        "emergente": "ناشئة",
+        "pic": "ذروة",
+        "declin": "تراجع"
+      },
+      "adapter": "تكييف مع عشيرة",
+      "adopter": "اعتماد",
+      "ecarter": "استبعاد"
+    },
+    "veille": {
+      "nouveau": "منافس جديد",
+      "champs": {
+        "nom": "الاسم",
+        "instagram": "إنستغرام",
+        "segment": "الشريحة",
+        "followers": "المتابعون",
+        "posts_semaine": "منشورات / أسبوع",
+        "observation": "ملاحظة"
+      },
+      "ajouter_releve": "إضافة رصد"
+    },
+    "lexique": {
+      "en_attente": "{{n}} في انتظار المصادقة",
+      "proposer": "اقتراح تعبير",
+      "statuts": {
+        "validee": "مصادَق عليه",
+        "interdite": "ممنوع",
+        "a_valider": "بانتظار المصادقة"
+      },
+      "valider": "مصادقة",
+      "interdire": "منع",
+      "champs": {
+        "texte": "التعبير",
+        "transliteration": "النقحرة",
+        "registre": "السجل",
+        "contexte": "سياق الاستعمال"
+      }
+    },
+    "lecons": {
+      "statuts": {
+        "active": "نشطة",
+        "archivee": "مؤرشفة"
+      },
+      "ajouter": "إضافة درس",
+      "types": {
+        "gagnant": "رابح",
+        "perdant": "خاسر",
+        "regle_maison": "قاعدة داخلية"
+      },
+      "suggestion_archivage": "لم تُعاد تأكيدها منذ {{n}} من إغلاقات الحملات — أرشفة؟",
+      "reconfirmer": "إعادة التأكيد",
+      "archiver": "أرشفة",
+      "champs": {
+        "type": "النوع",
+        "texte": "النص",
+        "preuve": "الدليل"
+      },
+      "proposee": "تم اقتراح الدرس",
+      "proposer_depuis_rapport": "اقتراح كدرس"
+    }
+  },
+  "mesure": {
+    "onglets": {
+      "social": "التواصل الاجتماعي",
+      "paid": "الإعلانات المدفوعة",
+      "site": "الموقع",
+      "consolidation": "التجميع",
+      "integrations": "التكاملات"
+    },
+    "champs": {
+      "plateforme": "المنصة",
+      "date": "التاريخ",
+      "campagne": "الحملة",
+      "aucune_campagne": "بدون حملة"
+    },
+    "source": "المصدر",
+    "sources": {
+      "manuel": "إدخال يدوي",
+      "api": "واجهة برمجية"
+    },
+    "consolidation": {
+      "budget_reel": "الميزانية الفعلية",
+      "reach_cumule": "الوصول التراكمي",
+      "contenus_publies": "المحتوى المنشور",
+      "sessions": "الجلسات",
+      "commandes": "الطلبات",
+      "ca": "رقم الأعمال",
+      "roas": "العائد على الإنفاق الإعلاني"
+    },
+    "plateformes": {
+      "meta": "ميتا",
+      "tiktok": "تيك توك",
+      "ga4": "Google Analytics 4",
+      "shopify": "شوبيفاي"
+    },
+    "integrations": {
+      "prerequis": "اربط حساباتك لمزامنة المؤشرات تلقائيًا. بيانات الاعتماد مشفّرة.",
+      "statuts": {
+        "connectee": "متصلة",
+        "deconnectee": "غير متصلة",
+        "erreur": "خطأ"
+      },
+      "dernier_sync": "آخر مزامنة",
+      "connecter": "ربط",
+      "sync": "مزامنة",
+      "deconnecter": "قطع الاتصال",
+      "champs": {
+        "boutique": "المتجر (myshop.myshopify.com)",
+        "access_token": "رمز الوصول",
+        "advertiser_id": "معرّف المعلن",
+        "property_id": "معرّف الخاصية"
+      }
+    }
   }
 }

@@ -6,6 +6,7 @@ import { Dialog } from "../../components/ui/Dialog.js";
 import { useToast } from "../../lib/toast-context.js";
 import { ApiError } from "../../lib/api.js";
 import { clientCampagnes } from "../../lib/resources/campagnes.js";
+import { clientLecons } from "../../lib/resources/grow.js";
 import { ReferencesCampagne } from "./ReferencesCampagne.js";
 
 export function OngletStrategie({ campagne, peutEditer, onChange }: { campagne: Campagne; peutEditer: boolean; onChange: () => void }) {
@@ -15,6 +16,7 @@ export function OngletStrategie({ campagne, peutEditer, onChange }: { campagne: 
   const [dialogueFermetureOuvert, setDialogueFermetureOuvert] = useState(false);
   const [rapport, setRapport] = useState({ marche: "", pas_marche: "", decisions: "" });
   const [erreurFermeture, setErreurFermeture] = useState<string | null>(null);
+  const [leconsProposees, setLeconsProposees] = useState<Set<"marche" | "pas_marche" | "decisions">>(new Set());
 
   useEffect(() => setDescription(campagne.description ?? ""), [campagne.description]);
 
@@ -56,6 +58,24 @@ export function OngletStrategie({ campagne, peutEditer, onChange }: { campagne: 
       onChange();
     } catch (err) {
       setErreurFermeture(err instanceof ApiError ? err.message : t("commun.erreur_generique"));
+    }
+  }
+
+  const TYPE_PAR_CHAMP = { marche: "gagnant", pas_marche: "perdant", decisions: "regle_maison" } as const;
+
+  async function proposerLecon(champ: "marche" | "pas_marche" | "decisions") {
+    if (!campagne.rapport) return;
+    try {
+      await clientLecons.creer({
+        type: TYPE_PAR_CHAMP[champ],
+        texte: campagne.rapport[champ].slice(0, 280),
+        preuve: TYPE_PAR_CHAMP[champ] === "regle_maison" ? null : `${campagne.nom} — ${t(`campagnes.rapport.${champ}`)}`,
+        campagne_id: campagne.id,
+      });
+      setLeconsProposees((s) => new Set(s).add(champ));
+      toaster(t("grow.lecons.proposee"));
+    } catch (err) {
+      toaster(err instanceof ApiError ? err.message : t("commun.erreur_generique"), { type: "erreur" });
     }
   }
 
@@ -123,16 +143,22 @@ export function OngletStrategie({ campagne, peutEditer, onChange }: { campagne: 
 
       {campagne.rapport && (
         <div className="mb-4 rounded-card border border-line bg-panel p-3 text-sm">
-          <p className="mb-1 font-medium text-off">{t("campagnes.rapport.titre")}</p>
-          <p>
-            <span className="text-dim">{t("campagnes.rapport.marche")}:</span> {campagne.rapport.marche}
-          </p>
-          <p>
-            <span className="text-dim">{t("campagnes.rapport.pas_marche")}:</span> {campagne.rapport.pas_marche}
-          </p>
-          <p>
-            <span className="text-dim">{t("campagnes.rapport.decisions")}:</span> {campagne.rapport.decisions}
-          </p>
+          <p className="mb-2 font-medium text-off">{t("campagnes.rapport.titre")}</p>
+          {(["marche", "pas_marche", "decisions"] as const).map((champ) => (
+            <div key={champ} className="mb-2 flex items-center justify-between gap-2">
+              <p>
+                <span className="text-dim">{t(`campagnes.rapport.${champ}`)}:</span> {campagne.rapport![champ]}
+              </p>
+              {peutEditer &&
+                (leconsProposees.has(champ) ? (
+                  <span className="shrink-0 text-xs text-olive">{t("grow.lecons.proposee")}</span>
+                ) : (
+                  <BoutonSecondaire type="button" onClick={() => void proposerLecon(champ)} className="!min-h-8 shrink-0 px-2 text-xs">
+                    {t("grow.lecons.proposer_depuis_rapport")}
+                  </BoutonSecondaire>
+                ))}
+            </div>
+          ))}
         </div>
       )}
 

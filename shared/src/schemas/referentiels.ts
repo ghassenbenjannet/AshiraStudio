@@ -7,9 +7,9 @@ import { GABARIT_MESURES, SLOT_LOOK } from "../constants/enums.js";
 export const gammeSchema = archivableEntitySchema.extend({
   nom: z.string().min(1).max(60),
   code_prefixe: z.string().regex(CODE_PREFIXE_GAMME_REGEX, "2-3 lettres majuscules"),
-  couleur: z.string().regex(HEX_COLOR_REGEX).nullable(),
+  couleur: z.string().regex(HEX_COLOR_REGEX).nullable().optional(),
   alerte_baisse_prix: z.boolean().default(false),
-  message_alerte: z.string().max(200).nullable(),
+  message_alerte: z.string().max(200).nullable().optional(),
   marge_cible_pct: z.number().min(0).max(100).default(60),
   ordre: z.number().int().nonnegative(),
 });
@@ -24,7 +24,7 @@ export const categorieProduitSchema = archivableEntitySchema.extend({
   nom: z.string().min(1).max(60),
   slot_look: z.enum(SLOT_LOOK),
   grille_tailles_id: z.string().uuid(),
-  grille_tailles_id_secondaire: z.string().uuid().nullable(), // pour les "Set" (grilles doubles)
+  grille_tailles_id_secondaire: z.string().uuid().nullable().optional(), // pour les "Set" (grilles doubles)
   gabarit_mesures: z.enum(GABARIT_MESURES),
   ordre: z.number().int().nonnegative(),
 });
@@ -48,8 +48,8 @@ export const colorisInsertSchema = colorisSchema.omit({ id: true, created_at: tr
 /** §5.3 — Matières. */
 export const matiereSchema = archivableEntitySchema.extend({
   nom: z.string().min(1).max(60),
-  nom_ar: z.string().max(60).nullable(),
-  note: z.string().max(500).nullable(),
+  nom_ar: z.string().max(60).nullable().optional(),
+  note: z.string().max(500).nullable().optional(),
 });
 export type Matiere = z.infer<typeof matiereSchema>;
 export const matiereInsertSchema = matiereSchema.omit({ id: true, created_at: true, updated_at: true, archived_at: true });
@@ -57,7 +57,7 @@ export const matiereInsertSchema = matiereSchema.omit({ id: true, created_at: tr
 /** §5.4 — Codes d'entretien. */
 export const codeEntretienSchema = archivableEntitySchema.extend({
   nom: z.string().min(1).max(60),
-  icone: z.string().max(60).nullable(),
+  icone: z.string().max(60).nullable().optional(),
   ordre: z.number().int().nonnegative(),
 });
 export type CodeEntretien = z.infer<typeof codeEntretienSchema>;
@@ -126,7 +126,7 @@ export const registreInsertSchema = registreSchema.omit({
 /** §5.7 — Types de campagne. */
 export const typeCampagneSchema = archivableEntitySchema.extend({
   nom: z.string().min(1).max(60),
-  modele_rituel_id: z.string().uuid().nullable(),
+  modele_rituel_id: z.string().uuid().nullable().optional(),
   ordre: z.number().int().nonnegative(),
 });
 export type TypeCampagne = z.infer<typeof typeCampagneSchema>;

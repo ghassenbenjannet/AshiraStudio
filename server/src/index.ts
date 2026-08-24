@@ -7,6 +7,11 @@ import { logger } from "./lib/logger.js";
 
 const app = creerApp();
 
+app.use(
+  "/uploads/*",
+  serveStatic({ root: env.uploadsDir, rewriteRequestPath: (path) => path.replace(/^\/uploads/, "") }),
+);
+
 /** Un seul processus déployé : le serveur sert aussi le front statique (§8.1). */
 const frontDist = "../front/dist";
 if (existsSync(frontDist)) {

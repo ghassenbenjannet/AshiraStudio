@@ -75,7 +75,7 @@ export const personnes = sqliteTable("personnes", {
   ville: text("ville"),
   tarif_jour_dt: real("tarif_jour_dt"),
   tarifs_prestations: json<{ prestation: string; tarif_dt: number }[]>("tarifs_prestations").notNull().default([]),
-  tailles: json<Record<string, string | undefined>>("tailles").notNull().default({}),
+  tailles: json<Record<string, string | null | undefined>>("tailles").notNull().default({}),
   portfolio_url: text("portfolio_url"),
   book_asset_ids: json<string[]>("book_asset_ids").notNull().default([]),
   materiel: text("materiel"),
@@ -100,6 +100,15 @@ export const ambassadeurs = sqliteTable("ambassadeurs", {
   ventes_attribuees_dt: real("ventes_attribuees_dt").notNull().default(0),
   notes: text("notes"),
 }, (t) => ({ codePromoIdx: uniqueIndex("ambassadeurs_code_promo_idx").on(t.code_promo) }));
+
+/** E32 — Fiche contact partagée : lien signé expirant, lecture seule, sans login. */
+export const partagesPersonne = sqliteTable("partages_personne", {
+  id: uuid(),
+  personne_id: text("personne_id").notNull().references(() => personnes.id),
+  token: text("token").notNull(),
+  expire_at: text("expire_at").notNull(),
+  created_at: text("created_at").notNull().$defaultFn(isoNow),
+}, (t) => ({ tokenIdx: uniqueIndex("partages_personne_token_idx").on(t.token) }));
 
 // ───────────────────────── 4.2 Catalogue ─────────────────────────
 

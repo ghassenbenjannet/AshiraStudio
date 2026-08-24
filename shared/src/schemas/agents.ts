@@ -3,7 +3,7 @@ import { baseEntitySchema } from "./common.js";
 
 /** §4.10 — Agent de campagne (ou standard global si campagne_id null). */
 export const agentCampagneSchema = baseEntitySchema.extend({
-  campagne_id: z.string().uuid().nullable(),
+  campagne_id: z.string().uuid().nullable().optional(),
   nom: z.string().min(1).max(60),
   avatar_couleur: z.string().min(1),
   instructions: z.string().max(4000),

@@ -34,17 +34,17 @@ export const contenuSchema = baseEntitySchema.extend({
   plateformes: z.array(z.string().uuid()).default([]),
   titre: z.string().min(1).max(150),
   caption: z.string().max(4000),
-  registre_id: z.string().uuid().nullable(),
-  date_publication: z.string().datetime({ offset: true }).nullable(),
+  registre_id: z.string().uuid().nullable().optional(),
+  date_publication: z.string().datetime({ offset: true }).nullable().optional(),
   statut: z.enum(STATUT_CONTENU).default("brouillon"),
   asset_ids: z.array(z.string().uuid()).default([]),
   article_coloris_ids: z.array(z.string().uuid()).default([]),
   auteur_id: z.string().uuid(),
-  approbateur_id: z.string().uuid().nullable(),
-  publie_le: z.string().datetime({ offset: true }).nullable(),
-  resultats: resultatsContenuSchema.nullable(),
-  score_marque: z.number().min(0).max(10).nullable(),
-  score_detail: z.array(scoreDetailDimensionSchema).nullable(),
+  approbateur_id: z.string().uuid().nullable().optional(),
+  publie_le: z.string().datetime({ offset: true }).nullable().optional(),
+  resultats: resultatsContenuSchema.nullable().optional(),
+  score_marque: z.number().min(0).max(10).nullable().optional(),
+  score_detail: z.array(scoreDetailDimensionSchema).nullable().optional(),
   cree_par_agent: z.boolean().default(false), // RG-AGW6, marqueur 48h côté UI calculé depuis created_at
 });
 export type Contenu = z.infer<typeof contenuSchema>;
@@ -72,15 +72,15 @@ export type ContenuVersion = z.infer<typeof contenuVersionSchema>;
 export const assetSchema = baseEntitySchema.extend({
   type: z.enum(TYPE_ASSET),
   fichier_url: z.string().min(1),
-  vignette_url: z.string().min(1).nullable(),
+  vignette_url: z.string().min(1).nullable().optional(),
   nom: z.string().min(1).max(200),
   tags: z.array(z.string()).default([]),
   campagne_ids: z.array(z.string().uuid()).default([]),
   article_coloris_ids: z.array(z.string().uuid()).default([]),
-  shooting_id: z.string().uuid().nullable(),
+  shooting_id: z.string().uuid().nullable().optional(),
   createur_personne_ids: z.array(z.string().uuid()).default([]),
   source: z.enum(SOURCE_ASSET),
-  droits: z.string().max(300).nullable(), // RG-AS1 : requis pour UGC avant approbation d'un contenu qui l'utilise
+  droits: z.string().max(300).nullable().optional(), // RG-AS1 : requis pour UGC avant approbation d'un contenu qui l'utilise
 });
 export type Asset = z.infer<typeof assetSchema>;
 export const assetInsertSchema = assetSchema.omit({ id: true, created_at: true, updated_at: true });
@@ -98,7 +98,7 @@ export type BoardItem = z.infer<typeof boardItemSchema>;
 /** §4.5 — Board (canvas libre). */
 export const boardSchema = baseEntitySchema.extend({
   nom: z.string().min(1).max(150),
-  campagne_id: z.string().uuid().nullable(),
+  campagne_id: z.string().uuid().nullable().optional(),
   items: z.array(boardItemSchema).default([]),
 });
 export type Board = z.infer<typeof boardSchema>;
@@ -109,11 +109,11 @@ export const boardUpdateSchema = boardInsertSchema.partial();
 export const ideeSchema = baseEntitySchema.extend({
   contenu: z.string().min(1), // markdown léger
   source: z.enum(SOURCE_IDEE),
-  article_coloris_id: z.string().uuid().nullable(),
-  tache_id: z.string().uuid().nullable(),
+  article_coloris_id: z.string().uuid().nullable().optional(),
+  tache_id: z.string().uuid().nullable().optional(),
   statut: z.enum(STATUT_IDEE).default("nouvelle"),
-  score: z.number().min(0).max(100).nullable(),
-  score_justification: z.string().nullable(),
+  score: z.number().min(0).max(100).nullable().optional(),
+  score_justification: z.string().nullable().optional(),
 });
 export type Idee = z.infer<typeof ideeSchema>;
 export const ideeInsertSchema = ideeSchema.omit({ id: true, created_at: true, updated_at: true, statut: true });
@@ -136,8 +136,8 @@ export const ideeGenereeSchema = z.object({
   plans_a_filmer: z.array(z.string()),
   duree: z.string(),
   caption: z.string(),
-  son: z.string().nullable(),
-  lieu: z.string().nullable(),
+  son: z.string().nullable().optional(),
+  lieu: z.string().nullable().optional(),
   pieces: z.array(z.string()),
   score: z.number().min(0).max(100),
   score_justification: z.string(),

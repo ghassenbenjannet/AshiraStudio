@@ -7,12 +7,12 @@ import { MOTS_DE_PASSE_LONGUEUR_MIN } from "../constants/patterns.js";
 export const utilisateurSchema = baseEntitySchema.extend({
   email: z.string().email(),
   nom: z.string().min(1).max(120),
-  personne_id: z.string().uuid().nullable(),
+  personne_id: z.string().uuid().nullable().optional(),
   role_systeme: z.enum(ROLES_SYSTEME),
   langue: z.enum(LANGUES).default("fr"),
   ical_token: z.string().length(32),
   vue_board_preferee: z.enum(VUE_BOARD).default("liste"),
-  derniere_connexion: z.string().datetime({ offset: true }).nullable(),
+  derniere_connexion: z.string().datetime({ offset: true }).nullable().optional(),
 });
 export type Utilisateur = z.infer<typeof utilisateurSchema>;
 /** Représentation publique — jamais de password_hash renvoyé au client. */
@@ -44,7 +44,7 @@ export const loginSchema = z.object({
 export const categorieContactSchema = z.object({
   id: z.string().uuid(),
   nom: z.string().min(1).max(30),
-  icone: z.string().max(60).nullable(),
+  icone: z.string().max(60).nullable().optional(),
   systeme: z.boolean().default(false), // seed non supprimable, renommable
   ordre: z.number().int().nonnegative(),
 });
@@ -68,24 +68,24 @@ export const personneSchema = baseEntitySchema.extend({
   nom: z.string().min(1).max(120),
   categorie_ids: z.array(z.string().uuid()).min(1),
   type: z.enum(TYPE_PERSONNE),
-  telephone: z.string().max(30).nullable(),
-  email: z.string().email().nullable(),
-  instagram: z.string().max(60).nullable(), // sans @
-  ville: z.string().max(80).nullable(),
-  tarif_jour_dt: z.number().nonnegative().nullable(),
+  telephone: z.string().max(30).nullable().optional(),
+  email: z.string().email().nullable().optional(),
+  instagram: z.string().max(60).nullable().optional(), // sans @
+  ville: z.string().max(80).nullable().optional(),
+  tarif_jour_dt: z.number().nonnegative().nullable().optional(),
   tarifs_prestations: z.array(tarifPrestationSchema).default([]),
   tailles: tailleCorpsSchema.default({}),
-  portfolio_url: z.string().url().nullable(),
+  portfolio_url: z.string().url().nullable().optional(),
   book_asset_ids: z.array(z.string().uuid()).default([]),
-  materiel: z.string().max(500).nullable(),
+  materiel: z.string().max(500).nullable().optional(),
   styles: z.array(z.string()).default([]),
   specialites: z.array(z.string()).default([]),
-  delai_moyen_jours: z.number().int().nonnegative().nullable(),
-  moq_habituel: z.number().int().nonnegative().nullable(),
-  conditions_paiement: z.string().max(300).nullable(),
-  disponibilites: z.string().max(300).nullable(),
-  note_5: z.number().min(0).max(5).nullable(),
-  notes: z.string().max(2000).nullable(),
+  delai_moyen_jours: z.number().int().nonnegative().nullable().optional(),
+  moq_habituel: z.number().int().nonnegative().nullable().optional(),
+  conditions_paiement: z.string().max(300).nullable().optional(),
+  disponibilites: z.string().max(300).nullable().optional(),
+  note_5: z.number().min(0).max(5).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
   actif: z.boolean().default(true),
 });
 export type Personne = z.infer<typeof personneSchema>;
@@ -107,7 +107,7 @@ export const ambassadeurSchema = z.object({
   pieces: z.array(pieceAmbassadeurSchema).default([]),
   posts: z.array(postAmbassadeurSchema).default([]), // saisie manuelle
   ventes_attribuees_dt: z.number().nonnegative().default(0),
-  notes: z.string().max(2000).nullable(),
+  notes: z.string().max(2000).nullable().optional(),
 });
 export type Ambassadeur = z.infer<typeof ambassadeurSchema>;
 export const ambassadeurInsertSchema = ambassadeurSchema;

@@ -8,7 +8,7 @@ export const metriqueSnapshotSchema = z.object({
   date: z.string(),
   kpis: z.record(z.string(), z.number()),
   source: z.enum(["manuel", "api"]).default("manuel"),
-  campagne_id: z.string().uuid().nullable(),
+  campagne_id: z.string().uuid().nullable().optional(),
 });
 export type MetriqueSnapshot = z.infer<typeof metriqueSnapshotSchema>;
 export const metriqueSnapshotInsertSchema = metriqueSnapshotSchema.omit({ id: true });
@@ -18,9 +18,9 @@ export const integrationSchema = z.object({
   id: z.string().uuid(),
   plateforme: z.enum(PLATEFORME_INTEGRATION),
   statut: z.enum(STATUT_INTEGRATION).default("deconnectee"),
-  dernier_sync: z.string().datetime({ offset: true }).nullable(),
+  dernier_sync: z.string().datetime({ offset: true }).nullable().optional(),
   frequence: z.literal("quotidienne").default("quotidienne"),
-  derniere_erreur: z.string().nullable(),
+  derniere_erreur: z.string().nullable().optional(),
 });
 export type Integration = z.infer<typeof integrationSchema>;
 /** Les credentials chiffrés ne transitent jamais côté client — jamais dans ce schéma public. */

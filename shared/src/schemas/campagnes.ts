@@ -20,19 +20,19 @@ const rapportCampagneSchema = z.object({
 export const campagneSchema = baseEntitySchema.extend({
   nom: z.string().min(1).max(150),
   type_campagne_id: z.string().uuid(),
-  occasion_id: z.string().uuid().nullable(),
+  occasion_id: z.string().uuid().nullable().optional(),
   date_debut: z.string(),
   date_fin: z.string(),
   statut: z.enum(STATUT_CAMPAGNE).default("preparation"),
   objectif: z.enum(OBJECTIF_CAMPAGNE),
-  objectif_texte: z.string().max(500).nullable(),
-  description: z.string().max(4000).nullable(),
+  objectif_texte: z.string().max(500).nullable().optional(),
+  description: z.string().max(4000).nullable().optional(),
   budget_total_dt: z.number().nonnegative().default(0),
   canaux: z.array(z.string().uuid()).default([]),
   kpi_cibles: kpiCiblesSchema.default({}),
   kpi_cibles_verrouillees: z.boolean().default(false),
   resultats: z.record(z.string(), z.unknown()).default({}),
-  rapport: rapportCampagneSchema.nullable(),
+  rapport: rapportCampagneSchema.nullable().optional(),
 });
 export type Campagne = z.infer<typeof campagneSchema>;
 export const campagneInsertSchema = campagneSchema.omit({
@@ -52,12 +52,12 @@ export const campagneFermetureSchema = z.object({ rapport: rapportCampagneSchema
 export const campagneArticleSchema = baseEntitySchema.extend({
   campagne_id: z.string().uuid(),
   source: z.enum(SOURCE_CAMPAGNE_ARTICLE),
-  article_coloris_id: z.string().uuid().nullable(),
-  url: z.string().url().nullable(),
-  titre_extrait: z.string().max(200).nullable(),
-  image_extraite_url: z.string().url().nullable(),
-  photo_asset_id: z.string().uuid().nullable(),
-  texte: z.string().max(500).nullable(),
+  article_coloris_id: z.string().uuid().nullable().optional(),
+  url: z.string().url().nullable().optional(),
+  titre_extrait: z.string().max(200).nullable().optional(),
+  image_extraite_url: z.string().url().nullable().optional(),
+  photo_asset_id: z.string().uuid().nullable().optional(),
+  texte: z.string().max(500).nullable().optional(),
   ordre: z.number().int().nonnegative(),
 });
 export type CampagneArticle = z.infer<typeof campagneArticleSchema>;
@@ -84,8 +84,8 @@ export const budgetLigneSchema = baseEntitySchema.extend({
   prevu_dt: z.number().nonnegative().default(0),
   engage_dt: z.number().nonnegative().default(0),
   reel_dt: z.number().nonnegative().default(0),
-  personne_id: z.string().uuid().nullable(),
-  justificatif_asset_id: z.string().uuid().nullable(),
+  personne_id: z.string().uuid().nullable().optional(),
+  justificatif_asset_id: z.string().uuid().nullable().optional(),
 });
 export type BudgetLigne = z.infer<typeof budgetLigneSchema>;
 export const budgetLigneInsertSchema = budgetLigneSchema.omit({ id: true, created_at: true, updated_at: true });

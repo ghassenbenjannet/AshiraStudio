@@ -18,10 +18,10 @@ export const tacheSchema = baseEntitySchema.extend({
   type: z.enum(TYPE_TACHE),
   date_echeance: z.string(),
   assigne_ids: z.array(z.string().uuid()).default([]),
-  lieu: z.string().max(200).nullable(),
+  lieu: z.string().max(200).nullable().optional(),
   statut: z.enum(STATUT_TACHE).default("todo"),
-  done_at: z.string().datetime({ offset: true }).nullable(),
-  description: z.string().max(2000).nullable(),
+  done_at: z.string().datetime({ offset: true }).nullable().optional(),
+  description: z.string().max(2000).nullable().optional(),
 });
 export type Tache = z.infer<typeof tacheSchema>;
 export const tacheInsertSchema = tacheSchema.omit({
@@ -47,26 +47,26 @@ const retourPieceSchema = z.object({
 /** §4.4 — Shooting, extension 1-1 de tache (type=shooting), cascade delete avec la tâche. */
 export const shootingSchema = z.object({
   tache_id: z.string().uuid(),
-  photographe_id: z.string().uuid().nullable(),
+  photographe_id: z.string().uuid().nullable().optional(),
   modele_ids: z.array(z.string().uuid()).default([]),
-  decor: z.string().max(300).nullable(),
-  heure_lumiere: z.enum(HEURE_LUMIERE).nullable(),
+  decor: z.string().max(300).nullable().optional(),
+  heure_lumiere: z.enum(HEURE_LUMIERE).nullable().optional(),
   duree_min: z.number().int().positive().default(180),
-  moodboard_board_id: z.string().uuid().nullable(),
+  moodboard_board_id: z.string().uuid().nullable().optional(),
   refs_visuelles: z.array(z.string().uuid()).max(6).default([]), // 3-6 images
   autorisation_lieu: z.enum(AUTORISATION_LIEU).default("non_requise"),
-  autorisation_lieu_note: z.string().max(300).nullable(),
-  plan_b_lieu: z.string().max(300).nullable(),
-  grooming: z.string().max(300).nullable(),
+  autorisation_lieu_note: z.string().max(300).nullable().optional(),
+  plan_b_lieu: z.string().max(300).nullable().optional(),
+  grooming: z.string().max(300).nullable().optional(),
   pieces: z.array(piecesApporterSchema).default([]), // agrégée auto depuis les looks (RG-LK1), ajout manuel possible
   materiel: z.array(checklistItemSchema).default([]), // pré-remplie depuis modèle de checklist
   preparation_pieces: z.array(checklistItemSchema).default([]), // auto-générée par pièce
   retour_pieces: z.array(retourPieceSchema).default([]),
-  livrable_photos: z.string().max(500).nullable(),
-  livrable_videos: z.string().max(500).nullable(),
+  livrable_photos: z.string().max(500).nullable().optional(),
+  livrable_videos: z.string().max(500).nullable().optional(),
   statut_post_prod: z.enum(STATUT_POST_PROD).default("a_trier"),
-  nb_photos_recues: z.number().int().nonnegative().nullable(),
-  notes: z.string().max(2000).nullable(),
+  nb_photos_recues: z.number().int().nonnegative().nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
 });
 export type Shooting = z.infer<typeof shootingSchema>;
 export const shootingUpdateSchema = shootingSchema.omit({ tache_id: true }).partial();
@@ -98,7 +98,7 @@ export const lookSchema = z.object({
   shooting_id: z.string().uuid(),
   nom: z.string().min(1).max(60),
   ordre: z.number().int().nonnegative(),
-  note: z.string().max(300).nullable(),
+  note: z.string().max(300).nullable().optional(),
 });
 export type Look = z.infer<typeof lookSchema>;
 export const lookInsertSchema = lookSchema.omit({ id: true });
@@ -110,10 +110,10 @@ export const lookItemSchema = z.object({
   look_id: z.string().uuid(),
   slot: z.enum(SLOT_LOOK),
   source: z.enum(SOURCE_LOOK_ITEM),
-  article_coloris_id: z.string().uuid().nullable(),
-  photo_asset_id: z.string().uuid().nullable(),
-  texte: z.string().max(300).nullable(),
-  note: z.string().max(200).nullable(),
+  article_coloris_id: z.string().uuid().nullable().optional(),
+  photo_asset_id: z.string().uuid().nullable().optional(),
+  texte: z.string().max(300).nullable().optional(),
+  note: z.string().max(200).nullable().optional(),
   ordre: z.number().int().nonnegative(),
 });
 export type LookItem = z.infer<typeof lookItemSchema>;
@@ -126,9 +126,9 @@ export const poseSchema = z.object({
   shooting_id: z.string().uuid(),
   ordre: z.number().int().nonnegative(),
   description: z.string().min(1).max(200),
-  article_coloris_id: z.string().uuid().nullable(),
-  look_id: z.string().uuid().nullable(),
-  duree_min: z.number().int().positive().nullable(),
+  article_coloris_id: z.string().uuid().nullable().optional(),
+  look_id: z.string().uuid().nullable().optional(),
+  duree_min: z.number().int().positive().nullable().optional(),
 });
 export type Pose = z.infer<typeof poseSchema>;
 export const poseInsertSchema = poseSchema.omit({ id: true });

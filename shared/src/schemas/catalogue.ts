@@ -15,19 +15,19 @@ export const articleSchema = baseEntitySchema.extend({
   nom: z.string().min(1).max(120),
   gamme_id: z.string().uuid(),
   categorie_id: z.string().uuid(),
-  chapitre_id: z.string().uuid().nullable(), // campagne
-  fit: z.enum(FIT_ARTICLE).nullable(),
-  description_commerciale: z.string().max(400).nullable(),
+  chapitre_id: z.string().uuid().nullable().optional(), // campagne
+  fit: z.enum(FIT_ARTICLE).nullable().optional(),
+  description_commerciale: z.string().max(400).nullable().optional(),
   composition: compositionSchema.default([]),
-  grammage_gsm: z.number().int().min(80).max(800).nullable(),
+  grammage_gsm: z.number().int().min(80).max(800).nullable().optional(),
   entretien_codes: z.array(z.string().uuid()).default([]),
   numerote: z.boolean().default(false),
-  numerotation_total: z.number().int().positive().nullable(),
-  fournisseur_id: z.string().uuid().nullable(),
-  delai_production_jours: z.number().int().nonnegative().nullable(),
-  moq: z.number().int().nonnegative().nullable(),
+  numerotation_total: z.number().int().positive().nullable().optional(),
+  fournisseur_id: z.string().uuid().nullable().optional(),
+  delai_production_jours: z.number().int().nonnegative().nullable().optional(),
+  moq: z.number().int().nonnegative().nullable().optional(),
   statut_cycle: z.enum(STATUT_CYCLE_ARTICLE).default("idee"),
-  notes_interne: z.string().max(2000).nullable(),
+  notes_interne: z.string().max(2000).nullable().optional(),
 });
 export type Article = z.infer<typeof articleSchema>;
 export const articleInsertSchema = articleSchema.omit({ id: true, created_at: true, updated_at: true, statut_cycle: true });
@@ -40,7 +40,7 @@ export const articleColorisSchema = baseEntitySchema.extend({
   article_id: z.string().uuid(),
   coloris_id: z.string().uuid(),
   photos: z.array(z.string().uuid()).default([]), // asset_ids ordonnées : face, dos, détail, porté
-  prix_dt: z.number().nonnegative().nullable(), // hérite du modèle si null
+  prix_dt: z.number().nonnegative().nullable().optional(), // hérite du modèle si null
   statut: z.enum(STATUT_ARTICLE_COLORIS).default("actif"),
   ordre: z.number().int().nonnegative(),
 });
@@ -100,7 +100,7 @@ export function pastilleMarge(margePct: number | null, margeCiblePct: number, se
 export const historiqueStatutSchema = z.object({
   id: z.string().uuid(),
   article_id: z.string().uuid(),
-  de: z.enum(STATUT_CYCLE_ARTICLE).nullable(),
+  de: z.enum(STATUT_CYCLE_ARTICLE).nullable().optional(),
   vers: z.enum(STATUT_CYCLE_ARTICLE),
   at: z.string().datetime({ offset: true }),
   par: z.string().uuid(),

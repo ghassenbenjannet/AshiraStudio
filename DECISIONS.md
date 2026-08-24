@@ -35,3 +35,29 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   plan détaillé de l'Annexe D (noyau de marque, gammes, registres, interdits/voulus, règles
   visuelles et d'écriture, structure Reel, modes de sortie, contrôle final). À remplacer par le
   fichier source si/quand il est fourni.
+- **Schémas Zod nullable vs optionnel** : tous les champs `.nullable()` des schémas partagés portent
+  aussi `.optional()`, pour que les schémas d'insertion (dérivés par `.omit()`) acceptent qu'un champ
+  facultatif soit simplement absent du JSON envoyé, pas seulement `null` explicite.
+
+## Phase ② — Référentiels, contacts, catalogue
+
+- **`/api/referentiels/*`** : préfixe ajouté (non listé en §8.2) pour le CRUD des 11 listes de la
+  Partie V — RG-PARAM1 exige que ces listes soient administrables, le CDC ne détaille juste pas leurs
+  routes. `DELETE` archive (jamais de suppression physique, RG-G1 §5) ; `PATCH { archived_at: null }`
+  réactive.
+- **`/api/personnes/:id/partage`** et **`GET /api/partage/personne/:token`** : ajoutés pour porter
+  E32 (fiche contact partagée). Lien 30 jours, champs monétaires et notes toujours exclus de la
+  réponse publique.
+- **Import CSV — colonnes `prix` et `tailles`** : le modèle de données n'a pas de champ prix au
+  niveau `article` (seul `article_coloris` en porte un). Sur une ligne `nouveau`, l'import crée donc
+  l'article puis un unique coloris par défaut (premier coloris du référentiel) avec ce prix, et génère
+  les SKU pour les tailles listées (restreintes à la grille de la catégorie si résolvable). Une ligne
+  `mise_a_jour` ne touche que les champs réellement portés par `article` (nom, gamme, catégorie,
+  numérotation, notes) — jamais le prix d'un coloris existant, pour ne jamais écraser silencieusement
+  un prix en vigueur.
+- **Gates du cycle de vie** : le contrôle « pas de saut d'étape sauf admin » et les gates métier
+  (fournisseur, mesures, COGS/prix, quantités) sont deux vérifications indépendantes — un admin qui
+  saute une étape reste soumis aux gates de l'étape cible (vérifié en recette manuelle).
+- **Coûts (COGS)** : lecture et écriture réservées à la capacité `parametres.gerer` (admin), cohérent
+  avec la ligne « coûts articles » de la matrice RBAC §2.1, même si §8.2 ne précise pas explicitement
+  le niveau de lecture.

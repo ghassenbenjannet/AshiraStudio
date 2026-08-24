@@ -48,11 +48,11 @@ export const auditSchema = z.object({
   utilisateur_id: z.string().uuid(),
   action: z.string().min(1),
   entite_type: z.string().min(1),
-  entite_id: z.string().uuid().nullable(),
-  avant: z.record(z.string(), z.unknown()).nullable(),
-  apres: z.record(z.string(), z.unknown()).nullable(),
+  entite_id: z.string().uuid().nullable().optional(),
+  avant: z.record(z.string(), z.unknown()).nullable().optional(),
+  apres: z.record(z.string(), z.unknown()).nullable().optional(),
   via_agent: z.boolean().default(false),
-  conversation_id: z.string().uuid().nullable(),
+  conversation_id: z.string().uuid().nullable().optional(),
   at: z.string().datetime({ offset: true }),
 });
 export type Audit = z.infer<typeof auditSchema>;
@@ -60,7 +60,7 @@ export type Audit = z.infer<typeof auditSchema>;
 export const conversationSchema = z.object({
   id: z.string().uuid(),
   titre: z.string().max(60),
-  agent_id: z.string().uuid().nullable(),
+  agent_id: z.string().uuid().nullable().optional(),
   utilisateur_id: z.string().uuid(),
   created_at: z.string().datetime({ offset: true }),
   updated_at: z.string().datetime({ offset: true }),

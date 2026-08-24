@@ -13,7 +13,7 @@ export const baseEntitySchema = z.object({
 });
 
 export const archivableEntitySchema = baseEntitySchema.extend({
-  archived_at: isoDateTimeSchema.nullable(),
+  archived_at: isoDateTimeSchema.nullable().optional(),
 });
 
 /** JSON-in-column générique — validé plus finement au niveau de chaque schéma quand la forme est connue. */

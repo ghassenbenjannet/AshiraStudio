@@ -16,7 +16,7 @@ import { campagnes, campagneArticles, budgetLignes } from "../db/schema.js";
 import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
-import { activerCampagne, fermerCampagne, detteDeMesure, genererRituel, extraireMetadonneesUrl } from "../services/campagnes.js";
+import { activerCampagne, fermerCampagne, detteDeMesure, genererRituel, extraireMetadonneesUrl, consolidationCampagne } from "../services/campagnes.js";
 import { ErreurMetier } from "../services/catalogue.js";
 import type { AppEnv } from "../types.js";
 
@@ -117,23 +117,8 @@ campagnesRoutes.post("/:id/rituel", exigerCapacite("entites.editer"), async (c) 
 });
 
 campagnesRoutes.get("/:id/consolidation", async (c) => {
-  const id = c.req.param("id");
-  const lignes = await db.select().from(budgetLignes).where(eq(budgetLignes.campagne_id, id));
-  const budgetReel = lignes.reduce((s, l) => s + l.reel_dt, 0);
-  const budgetEngage = lignes.reduce((s, l) => s + l.engage_dt, 0);
-  const budgetPrevu = lignes.reduce((s, l) => s + l.prevu_dt, 0);
-  return c.json({
-    donnees: {
-      budget: { prevu: budgetPrevu, engage: budgetEngage, reel: budgetReel, methode: "budget_lignes" },
-      reach_cumule: null,
-      contenus_publies: null,
-      sessions_attribuees: null,
-      commandes_attribuees: null,
-      ca_attribue: null,
-      roas: null,
-      note: "Consolidation complète (reach, sessions, CA, ROAS) disponible en Phase ⑥ — intégrations MEASURE.",
-    },
-  });
+  const donnees = await consolidationCampagne(c.req.param("id"));
+  return c.json({ donnees });
 });
 
 // ───────────────────────── Champ d'ajout intelligent (campagne_article) ─────────────────────────

@@ -234,3 +234,56 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   19 outils, création, test bac à sable), cockpit (brief + barre Demander). Un flakiness Playwright
   isolé (navigation cockpit) confirmé environnemental par re-test immédiat réussi et par un appel
   curl direct aux mêmes endpoints (réponse instantanée) — pas un bug applicatif.
+
+## Phase ⑥ — Mesure & croissance
+
+- **Intégrations (Meta/TikTok/GA4/Shopify) : appels HTTP réels, jamais simulés.** Aucun compte
+  développeur disponible dans cet environnement (même situation que la clé Anthropic en Phase ⑤) —
+  plutôt que de mocker une réponse « connectée » factice, `POST /mesure/integrations` déclenche un
+  vrai appel à l'API de la plateforme (`shop.json` Shopify, `me` Graph API Meta, `advertiser/info`
+  TikTok, `runReport` GA4). Sans identifiants réels, l'appel échoue honnêtement (`statut: erreur`,
+  `derniere_erreur` = message brut de la plateforme) — vérifié avec une boutique Shopify fictive :
+  vraie requête sortante, vrai 403 renvoyé par Shopify, enregistré tel quel. RG-I1 (lecture seule)
+  respecté : aucun appel d'écriture vers ces API. RG-I2 : `deconnecterIntegration` efface les
+  identifiants et remet `statut: deconnectee`, ne touche jamais `metrique_snapshots`.
+- **Chiffrement des identifiants** : AES-256-GCM (`server/src/lib/crypto.ts`), clé dérivée par
+  SHA-256 de `ENCRYPTION_KEY` (accepte une clé d'env de longueur arbitraire sans erreur d'exécution
+  liée à la taille de clé). Les credentials déchiffrés ne quittent jamais le serveur — chaque route
+  `integrations` retire explicitement `credentials_chiffres` de la réponse.
+- **`metrique_snapshot.plateforme`** : chaîne libre (pas un enum) — accepte aussi bien une clé de
+  plateforme de contenu (`instagram`, `tiktok`) pour le niveau Social qu'un canal publicitaire
+  (`meta_ads`) pour Paid ou `shopify` pour Site/Ventes ; le regroupement par niveau (Social/Paid/
+  Site) se fait côté front par une table de correspondance statique, pas par un champ dédié en base
+  — évite d'ajouter une colonne pour une classification purement d'affichage.
+- **Consolidation par campagne** entièrement recalculée en direct depuis `budget_lignes` +
+  `metrique_snapshots` (filtrés par `campagne_id`) + `contenus` — RG-M1 : chaque chiffre porte sa
+  méthode (« saisie manuelle », « API », ou la combinaison si les deux coexistent) ; RG-M2 : la
+  méthode des chiffres attribués mentionne explicitement « UTM dernier clic » — jamais un autre
+  modèle d'attribution, jamais interchangeable. Une métrique sans snapshot affiche `valeur: null,
+  methode: "aucune donnée"` plutôt qu'un zéro trompeur (RG-PROV).
+- **GROW — recommandations 100 % règles internes, sans IA** (RG-G2) : 5 règles déterministes sur
+  les données déjà en base (tâches en retard, ambassadeurs actifs sans post depuis 30 j, coloris
+  actifs sans aucun asset, dette de mesure — réutilise `detteDeMesure` de la Phase ③ —, contenus
+  publiés sur une seule plateforme). Aucune dépendance à la couche IA : fonctionne à l'identique,
+  clé Anthropic présente ou non. RG-G1 : le plafond de 5 actives est appliqué en dédupliquant par
+  clé `type|titre` avant insertion (une règle qui refire ne spamme jamais de doublon) et en ne
+  comblant que les places restantes sous le plafond, triées par impact décroissant.
+- **Recherche de tendances (RG-TR1) sans outil de navigation web** : le SDK Anthropic disponible
+  dans cet environnement n'expose pas d'outil de recherche web serveur vérifiable sans compte réel.
+  Le prompt instruit explicitement le modèle à ne jamais inventer un lien et à poser
+  `source_verifiee=false` dès qu'il n'a pas de source réelle et vérifiée — solution honnête plutôt
+  que de simuler une recherche web qui n'a pas lieu.
+- **RG-LC1 (proposer des leçons à la fermeture)** : aucune écriture serveur automatique — le rapport
+  de fermeture (3 champs) est déjà retourné par `POST /campagnes/:id/fermer` ; le front lit ces 3
+  champs et propose 1 tap chacun vers `POST /lecons` (source de vérité unique, pas de duplication
+  serveur).
+- **RG-LC4 (suggestion d'archivage)** : `fermerCampagne` incrémente
+  `fermetures_sans_reconfirmation` sur **toutes** les leçons `perdant` actives à chaque fermeture de
+  campagne (pas seulement celles liées à la campagne fermée — une leçon générale doit rester
+  pertinente à travers tous les chapitres) ; `POST /lecons/:id/reconfirmer` remet le compteur à
+  zéro. Le seuil de 2 déclenche une suggestion d'archivage **côté front uniquement** — jamais
+  d'archivage automatique, la mémoire d'équipe reste une décision humaine.
+- **Vérifié de bout en bout via curl sur DB fraîche** : génération de recommandations avec chiffres
+  réels et non-duplication au second appel, consolidation avant/après snapshot+budget (ROAS exact),
+  connexion Shopify avec identifiants fictifs → vraie erreur HTTP 403 honnête, validation lexique
+  (a_valider→validee), RG-LC4 (fermeture → compteur +1 → reconfirmer → compteur à 0).

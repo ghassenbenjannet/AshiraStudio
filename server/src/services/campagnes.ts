@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "../db/client.js";
-import { campagnes, typesCampagne, modelesRituel, taches } from "../db/schema.js";
+import { campagnes, typesCampagne, modelesRituel, taches, budgetLignes, contenus, metriqueSnapshots, lecons } from "../db/schema.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { ErreurMetier } from "./catalogue.js";
 
@@ -57,6 +57,14 @@ export async function fermerCampagne(
     .returning()) as (typeof campagnes.$inferSelect)[];
 
   await enregistrerAudit({ utilisateurId, action: "campagne.fermer", entiteType: "campagne", entiteId: campagneId, apres: { rapport } });
+
+  // RG-LC4 : chaque fermeture fait progresser le compteur des leçons "perdant" actives non
+  // reconfirmées — au-delà de 2, le front propose leur archivage (jamais automatique).
+  const leconsPerdantes = await db.select().from(lecons).where(eq(lecons.type, "perdant"));
+  for (const lecon of leconsPerdantes.filter((l) => l.statut === "active")) {
+    await db.update(lecons).set({ fermetures_sans_reconfirmation: lecon.fermetures_sans_reconfirmation + 1 }).where(eq(lecons.id, lecon.id));
+  }
+
   return modifiee!;
 }
 
@@ -125,4 +133,50 @@ export async function extraireMetadonneesUrl(url: string): Promise<{ titre_extra
     // Échec → référence URL nue à compléter à la main (§4.3).
     return { titre_extrait: null, image_extraite_url: null };
   }
+}
+
+interface ChiffreConsolide {
+  valeur: number | null;
+  methode: string;
+}
+
+function agregerKpi(snapshots: (typeof metriqueSnapshots.$inferSelect)[], cle: string): ChiffreConsolide {
+  const pertinents = snapshots.filter((s) => typeof s.kpis[cle] === "number");
+  if (pertinents.length === 0) return { valeur: null, methode: "aucune donnée" };
+  const valeur = pertinents.reduce((somme, s) => somme + (s.kpis[cle] as number), 0);
+  const methodes = new Set(pertinents.map((s) => (s.source === "manuel" ? "saisie manuelle" : "API")));
+  return { valeur, methode: [...methodes].join(" + ") };
+}
+
+/**
+ * Consolidation par campagne (§4.8) : budget réel (Σ budget_ligne), reach cumulé, contenus publiés,
+ * sessions/commandes/CA attribués (Σ kpis des snapshots liés à cette campagne), ROAS quand
+ * calculable. RG-M1 : chaque chiffre affiche sa méthode. RG-M2 : attribution dernier clic UTM,
+ * définitivement — les chiffres de sessions/commandes/CA saisis viennent d'un rapport UTM (manuel
+ * ou API), jamais d'un autre modèle d'attribution.
+ */
+export async function consolidationCampagne(campagneId: string) {
+  const lignesBudget = await db.select().from(budgetLignes).where(eq(budgetLignes.campagne_id, campagneId));
+  const budgetReel = lignesBudget.reduce((s, l) => s + l.reel_dt, 0);
+  const budgetEngage = lignesBudget.reduce((s, l) => s + l.engage_dt, 0);
+  const budgetPrevu = lignesBudget.reduce((s, l) => s + l.prevu_dt, 0);
+
+  const contenusPublies = (await db.select().from(contenus).where(eq(contenus.campagne_id, campagneId))).filter((c) => c.statut === "publie").length;
+
+  const snapshots = await db.select().from(metriqueSnapshots).where(eq(metriqueSnapshots.campagne_id, campagneId));
+  const reach = agregerKpi(snapshots, "reach");
+  const sessions = agregerKpi(snapshots, "sessions");
+  const commandes = agregerKpi(snapshots, "commandes");
+  const ca = agregerKpi(snapshots, "ca_dt");
+  const roas = ca.valeur !== null && budgetReel > 0 ? ca.valeur / budgetReel : null;
+
+  return {
+    budget: { prevu: budgetPrevu, engage: budgetEngage, reel: budgetReel, methode: "budget_lignes" },
+    reach_cumule: reach,
+    contenus_publies: { valeur: contenusPublies, methode: "compté (statut publié)" },
+    sessions_attribuees: { ...sessions, methode: sessions.valeur !== null ? `${sessions.methode} (UTM dernier clic, RG-M2)` : sessions.methode },
+    commandes_attribuees: { ...commandes, methode: commandes.valeur !== null ? `${commandes.methode} (UTM dernier clic, RG-M2)` : commandes.methode },
+    ca_attribue: { ...ca, methode: ca.valeur !== null ? `${ca.methode} (UTM dernier clic, RG-M2)` : ca.methode },
+    roas: { valeur: roas, methode: roas !== null ? "CA attribué / budget réel" : "aucune donnée" },
+  };
 }

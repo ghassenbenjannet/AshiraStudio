@@ -17,6 +17,8 @@ import { ideesRoutes } from "./routes/idees.js";
 import { conversationsRoutes } from "./routes/conversations.js";
 import { agentsRoutes } from "./routes/agents.js";
 import { brainRoutes } from "./routes/brain.js";
+import { mesureRoutes } from "./routes/mesure.js";
+import { growRoutes } from "./routes/grow.js";
 import { resoudreSession, exigerAuth } from "./middleware/auth.js";
 import { journaliserRequetes } from "./middleware/logging.js";
 import { limiteurDebit } from "./middleware/rate-limit.js";
@@ -77,6 +79,14 @@ export function creerApp() {
   app.route("/api/agents", agentsRoutes);
   app.use("/api/brain/*", exigerAuth);
   app.route("/api/brain", brainRoutes);
+  app.use("/api/mesure/*", exigerAuth);
+  app.route("/api/mesure", mesureRoutes);
+  app.use("/api/recommandations/*", exigerAuth);
+  app.use("/api/tendances/*", exigerAuth);
+  app.use("/api/concurrents/*", exigerAuth);
+  app.use("/api/expressions/*", exigerAuth);
+  app.use("/api/lecons/*", exigerAuth);
+  app.route("/api", growRoutes);
 
   app.notFound((c) => erreurApi(c, 404, "introuvable", "Ressource introuvable"));
   app.onError((err, c) => {

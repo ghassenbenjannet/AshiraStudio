@@ -124,7 +124,7 @@ export const leconInsertSchema = z.object({
   preuve: z.string().nullable().optional(),
   campagne_id: z.string().uuid().nullable().optional(),
   injectee_agents: z.boolean().optional(),
-  auteur_id: z.string().uuid(),
+  // auteur_id fixé par le serveur (utilisateur courant)
 });
 export const leconUpdateSchema = z.object({
   texte: z.string().min(1).max(280).optional(),

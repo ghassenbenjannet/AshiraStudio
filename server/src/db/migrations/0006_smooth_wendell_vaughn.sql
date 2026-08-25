@@ -1,0 +1,1 @@
+ALTER TABLE `taches` ADD `article_id` text REFERENCES articles(id);

@@ -928,7 +928,8 @@
       "rappel_publication": "Rappel de publication",
       "rappel_veille": "Rappel de veille concurrentielle",
       "rappel_retour_pieces": "Rappel de retour de pièces",
-      "rappel_kit_ambassadeur": "Rappel d'envoi de kit ambassadeur",
+      "rappel_kit_a_envoyer": "Rappel d'envoi de kit ambassadeur",
+      "rappel_post_ambassadeur": "Rappel de publication ambassadeur",
       "sync_erreur": "Échec de synchronisation",
       "alerte_production": "Alerte production"
     }

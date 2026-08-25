@@ -1,8 +1,22 @@
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, isNotNull, inArray } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { taches, utilisateurs, contenus, concurrents, relevesConcurrent, shootings, ambassadeurs, notifications } from "../db/schema.js";
+import {
+  taches,
+  utilisateurs,
+  contenus,
+  concurrents,
+  relevesConcurrent,
+  shootings,
+  ambassadeurs,
+  notifications,
+  articles,
+  campagnes,
+  articleSkus,
+  articleColoris,
+} from "../db/schema.js";
 import { creerNotification, detenteursApprobation } from "./notifications.js";
 import { logger } from "./logger.js";
+import { alerteLancementProductionRequise, type StatutCycleArticle } from "@achirah/shared";
 
 const UNE_HEURE_MS = 60 * 60 * 1000;
 const UN_JOUR_MS = 24 * 60 * 60 * 1000;
@@ -94,16 +108,95 @@ async function rappelRetourPieces() {
 }
 
 /**
- * Ambassadeur confirmé dont le kit de pièces n'a pas encore été envoyé — CDC v4, Étape 0 : piloté
- * par le statut réel `kit_envoye` (déjà dans `STATUT_AMBASSADEUR` et éditable dans Cercle.tsx),
- * plutôt que par `pieces.length === 0`, un champ que rien n'écrit jamais après la création et qui
- * ne pouvait donc plus jamais s'éteindre.
+ * Ambassadeur confirmé dont le kit de pièces n'a pas encore été envoyé — piloté par le statut réel
+ * `confirme` (avant `kit_envoye`), déjà dans `STATUT_AMBASSADEUR` et éditable dans Cercle.tsx.
+ * CDC v4, Lot 1.2 : rappel utile distinct de M27b (`rappelPostAmbassadeur` ci-dessous) — deux types
+ * de notification séparés, les deux coexistent.
  */
-async function rappelKitAmbassadeur() {
+async function rappelKitAEnvoyer() {
   const tousLesAmbassadeurs = await db.select().from(ambassadeurs).where(eq(ambassadeurs.statut, "confirme"));
   const detenteurs = await detenteursApprobation();
   for (const ambassadeur of tousLesAmbassadeurs) {
-    for (const utilisateurId of detenteurs) await notifierUneFois(utilisateurId, "rappel_kit_ambassadeur", "personne", ambassadeur.personne_id);
+    for (const utilisateurId of detenteurs) await notifierUneFois(utilisateurId, "rappel_kit_a_envoyer", "personne", ambassadeur.personne_id);
+  }
+}
+
+/**
+ * M27b (CDC v4, Lot 1.2) : kit envoyé (`statut = kit_envoye`), aucun post enregistré, et on est à
+ * J+7 ou plus après la date de drop de la campagne d'où viennent les pièces du kit. L'ambassadeur
+ * ne porte pas de campagne_id direct : le drop se résout depuis ses pièces (SKU → coloris → article
+ * → chapitre_id), la même chaîne déjà utilisée ailleurs (ex. `compterUtilisationsArticle`) — jamais
+ * un champ inventé. Si le kit touche plusieurs chapitres, un seul suffit à J+7 pour déclencher (le
+ * rappel lui-même est idempotent par ambassadeur, pas par chapitre).
+ */
+async function rappelPostAmbassadeur() {
+  const aujourdhui = debutAujourdhui();
+  const tousLesAmbassadeurs = await db.select().from(ambassadeurs).where(eq(ambassadeurs.statut, "kit_envoye"));
+  const detenteurs = await detenteursApprobation();
+  for (const ambassadeur of tousLesAmbassadeurs) {
+    if (ambassadeur.posts.length > 0 || ambassadeur.pieces.length === 0) continue;
+
+    const skuIds = ambassadeur.pieces.map((p) => p.article_sku_id);
+    const skus = await db.select().from(articleSkus).where(inArray(articleSkus.id, skuIds));
+    const colorisIds = Array.from(new Set(skus.map((s) => s.article_coloris_id)));
+    if (colorisIds.length === 0) continue;
+    const colorisList = await db.select().from(articleColoris).where(inArray(articleColoris.id, colorisIds));
+    const articleIds = Array.from(new Set(colorisList.map((c) => c.article_id)));
+    if (articleIds.length === 0) continue;
+    const articlesDuKit = await db.select().from(articles).where(inArray(articles.id, articleIds));
+    const chapitreIds = Array.from(new Set(articlesDuKit.map((a) => a.chapitre_id).filter((id): id is string => !!id)));
+    if (chapitreIds.length === 0) continue;
+    const campagnesDuKit = await db.select().from(campagnes).where(inArray(campagnes.id, chapitreIds));
+
+    const dropAtteintJ7 = campagnesDuKit.some((c) => {
+      const j7 = new Date(c.date_fin);
+      j7.setDate(j7.getDate() + 7);
+      return aujourdhui >= j7.toISOString().slice(0, 10);
+    });
+    if (!dropAtteintJ7) continue;
+
+    for (const utilisateurId of detenteurs) await notifierUneFois(utilisateurId, "rappel_post_ambassadeur", "personne", ambassadeur.personne_id);
+  }
+}
+
+/**
+ * RG-A10 (CDC v4, Lot 1.1) : tâche d'alerte (pas une notification) quand le lancement en production
+ * d'un article risque de compromettre le drop de son chapitre. `date_drop` = `date_fin` de la
+ * campagne (jalon « Drop » du rituel à l'offset 0 de `date_fin`, §5.7). Sans `delai_production_jours`,
+ * aucune alerte n'est inventée (RG-PROV). Idempotence par (article_id, campagne_id, type=livraison) :
+ * jamais recréée, même après redémarrage — la même discipline que `dejaNotifie`, appliquée aux tâches.
+ */
+async function alerteLancementProduction() {
+  const aujourdhui = debutAujourdhui();
+  const articlesDeChapitre = await db.select().from(articles).where(isNotNull(articles.chapitre_id));
+  const admins = await db.select({ personne_id: utilisateurs.personne_id }).from(utilisateurs).where(eq(utilisateurs.role_systeme, "admin"));
+  const adminsPersonneIds = admins.map((a) => a.personne_id).filter((id): id is string => !!id);
+
+  for (const article of articlesDeChapitre) {
+    if (article.delai_production_jours === null || article.delai_production_jours === undefined) continue;
+    const [campagne] = await db.select().from(campagnes).where(eq(campagnes.id, article.chapitre_id!)).limit(1);
+    if (!campagne) continue;
+    if (!alerteLancementProductionRequise(aujourdhui, campagne.date_fin, article.delai_production_jours, article.statut_cycle as StatutCycleArticle)) {
+      continue;
+    }
+
+    const [existante] = await db
+      .select({ id: taches.id })
+      .from(taches)
+      .where(and(eq(taches.article_id, article.id), eq(taches.campagne_id, campagne.id), eq(taches.type, "livraison")))
+      .limit(1);
+    if (existante) continue;
+
+    await db.insert(taches).values({
+      campagne_id: campagne.id,
+      article_id: article.id,
+      titre: `Alerte lancement production — ${article.reference}`,
+      type: "livraison",
+      date_echeance: aujourdhui,
+      assigne_ids: adminsPersonneIds,
+      statut: "todo",
+      description: `Le lancement en production de ${article.reference} doit démarrer sans délai pour tenir le drop du ${campagne.date_fin} (délai de production : ${article.delai_production_jours} j). Statut actuel : ${article.statut_cycle}.`,
+    });
   }
 }
 
@@ -114,7 +207,9 @@ async function executerUnTour() {
     ["rappel_publication", rappelPublication],
     ["rappel_veille", rappelVeille],
     ["rappel_retour_pieces", rappelRetourPieces],
-    ["rappel_kit_ambassadeur", rappelKitAmbassadeur],
+    ["rappel_kit_a_envoyer", rappelKitAEnvoyer],
+    ["rappel_post_ambassadeur", rappelPostAmbassadeur],
+    ["alerte_lancement_production", alerteLancementProduction],
   ];
   for (const [nom, fn] of etapes) {
     try {

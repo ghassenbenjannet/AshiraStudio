@@ -741,3 +741,73 @@ Journal des choix pris pour lever les ambiguïtés résiduelles du CDC Master v3
   - Non exécutées : #68 (clé IA réelle) et #69 (intégration réelle Meta/TikTok/GA4) exigent des
     identifiants que ce dépôt n'a pas — restent en tâche suivie, pas de simulation.
 - **`npm run typecheck` propre sur les trois workspaces** après les trois correctifs.
+
+## Lots 0-1 (prompt du 24 août 2026) — les specs entrent dans le repo, RG-A10 et rappel kit corrigés
+
+### Lot 0 — documents de référence
+
+- Créé `/docs` (avec `docs/README.md` listant les 4 documents attendus et la règle « RG-* se lit ici,
+  jamais par déduction — introuvable, s'arrêter et demander »), ajouté la section correspondante au
+  `README.md` racine, créé `CLAUDE.md` fixant l'ordre de lecture (`DECISIONS.md` d'abord, puis `/docs`,
+  puis le code). **`/docs` reste vide** : c'est au propriétaire de déposer les 4 fichiers
+  (`CDC-MASTER-v3.2.md`, `CR-01-ia-agnostique.md`, `CR-02-navigation.md`,
+  `CDC-v4-architecture-saas.md`) — rien ne peut être fabriqué à leur place sans recréer exactement le
+  problème que ce lot corrige.
+- Le Lot 1 a néanmoins pu être exécuté sans attendre ce dépôt : ses deux règles (RG-A10, M27b) ont été
+  données texte pour texte dans le prompt lui-même, une source plus directe qu'un fichier à lire.
+  L'interprétation de RG-A10 faite en Étape 0 (ci-dessus) était donc bien fausse — corrigée ci-dessous,
+  exactement le scénario que le Lot 0 est censé rendre impossible à l'avenir.
+
+### Lot 1.1 — RG-A10, la vraie règle : tâche d'alerte, pas une notification de marge
+
+- L'alerte de marge à la transition `production` (Étape 0) reste en place **sous son propre nom**
+  (`alerte_production`, un signal réel et utile) — RG-A10 est une règle différente, sur le calendrier
+  de lancement en production face au drop.
+- `date_drop` d'un chapitre = **`campagne.date_fin`**, pas `date_debut` : déduit du modèle de rituel
+  seedé (`server/src/db/seed.ts`), où le jalon « Drop » est à l'offset **0 de `date_fin`** — c'est la
+  seule donnée en base qui tranche sans ambiguïté entre les deux dates candidates.
+- Fonctions pures partagées (`shared/src/schemas/catalogue.ts`, même discipline que
+  `tacheEnRetard`/`campagneResultatsManquants`) : `limiteLancementProduction(dateDrop,
+  delaiProductionJours)` = `dateDrop − delaiProductionJours − 7j`, et
+  `alerteLancementProductionRequise(...)` = vrai à partir de **J-7 de cette limite**, tant que
+  `statut_cycle` n'a pas atteint `production`.
+- Orchestration dans `server/src/lib/scheduler.ts` (`alerteLancementProduction`, nouveau tour horaire) :
+  génère une vraie `tache` (`type: "livraison"`, jamais une notification), rattachée à
+  `campagne_id` + un nouveau champ **`taches.article_id`** (migration `0006`, nullable — sert
+  uniquement de clé d'idempotence pour ce mécanisme, aucune autre tâche n'en porte). Idempotence par
+  `(article_id, campagne_id, type=livraison)` avant insertion, jamais recréée.
+- **`delai_production_jours` vide → aucune alerte** (RG-PROV) — vérifié sur l'article `SG-05` du seed,
+  dont ce champ est `null` : aucune tâche générée, aucune ligne d'erreur, sur deux redémarrages.
+- **Assignation** : « au responsable de l'article, ou à défaut aux admins ». Il n'existe aucun champ
+  « responsable » sur `articles` — l'inventer aurait violé RG-PROV — donc systématiquement « à défaut
+  aux admins », résolus vers leurs `personne_id` (nécessaires pour peupler `assigne_ids`, qui référence
+  des personnes, pas des comptes). Dans cet environnement de vérification, le seul compte admin n'a
+  pas de `personne_id` lié (créé par l'écran d'initialisation) : `assigne_ids` ressort donc vide — pas
+  un bug, la même dégradation honnête que le reste du code applique déjà quand une personne assignée
+  n'a pas de compte système.
+- Vérifié : arithmétique exacte de la règle rejouée sur l'exemple du prompt (SG-05, délai 21 j, drop
+  15/10 → limite calculée 2026-09-17, alerte due à partir du 2026-09-10, pas avant) ; bout en bout avec
+  un chapitre/article de test au drop proche (alerte due immédiatement) → tâche créée une fois,
+  toujours une seule après un second redémarrage complet du serveur.
+
+### Lot 1.2 — Rappel kit ambassadeur : deux rappels distincts, M27b implémenté
+
+- Renommé le rappel Étape 0 (`statut = confirme`, « le kit n'est pas parti ») en type
+  `rappel_kit_a_envoyer` — gardé tel quel, toujours utile, simplement pas la même règle que M27b.
+- Ajouté `rappel_post_ambassadeur` (M27b) : `statut = kit_envoye` **et** `posts` vide **et** J+7 ou
+  plus après la date de drop de la campagne d'où viennent les pièces du kit. L'ambassadeur ne porte
+  aucun `campagne_id` direct dans le schéma — le drop se résout depuis `pieces` (SKU → coloris →
+  article → `chapitre_id` → campagne), la même chaîne de jointures déjà utilisée ailleurs dans le code
+  (ex. `compterUtilisationsArticle`), pas un champ inventé.
+- Les deux rappels sont mutuellement exclusifs par construction (l'un filtre `statut=confirme`, l'autre
+  `statut=kit_envoye`) — vérifié en base avec un ambassadeur de chaque statut : le premier ne reçoit
+  que `rappel_kit_a_envoyer`, le second que `rappel_post_ambassadeur`.
+
+### Gates du Lot 1 — tous verts
+
+Vérifiés directement en base (SQLite locale, données de test créées et gardées localement, jamais
+commitées) plutôt que par l'API, pour isoler la logique métier des surfaces de validation HTTP :
+article au délai vide → aucune alerte/aucune erreur (SG-05 réel) ; article/chapitre de test au drop
+proche → tâche d'alerte créée une fois, stable sur deux redémarrages ; ambassadeur `kit_envoye`
+sans post à J+7 → `rappel_post_ambassadeur` seul ; ambassadeur `confirme` → `rappel_kit_a_envoyer`
+seul. `npm run typecheck` propre sur les trois workspaces après le lot complet.

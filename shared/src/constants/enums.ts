@@ -149,7 +149,10 @@ export const TYPE_NOTIFICATION = [
   "rappel_publication",
   "rappel_veille",
   "rappel_retour_pieces",
-  "rappel_kit_ambassadeur",
+  // CDC v4, Lot 1.2 : deux rappels ambassadeur distincts et coexistants — le kit qui n'est pas
+  // encore parti (confirme) vs le kit parti mais jamais suivi d'un post (M27b, kit_envoye).
+  "rappel_kit_a_envoyer",
+  "rappel_post_ambassadeur",
   "sync_erreur",
   "alerte_production",
 ] as const;

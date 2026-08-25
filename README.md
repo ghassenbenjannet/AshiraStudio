@@ -61,6 +61,12 @@ docker compose down
 
 `docker compose down -v` supprime aussi les volumes et donc les données persistantes.
 
+## Documents de référence
+
+Toute règle `RG-*` se lit dans [`/docs`](./docs) — jamais par déduction depuis le code existant.
+Si une règle citée est introuvable dans ces documents, s'arrêter et demander, ne jamais
+l'interpréter. Voir [`docs/README.md`](./docs/README.md) pour la liste des documents attendus.
+
 ## État d'avancement
 
 Construction en cours dans l'ordre de dépendance de la Partie X du CDC :

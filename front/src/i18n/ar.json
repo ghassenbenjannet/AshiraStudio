@@ -928,7 +928,8 @@
       "rappel_publication": "تذكير بالنشر",
       "rappel_veille": "تذكير بمراقبة المنافسين",
       "rappel_retour_pieces": "تذكير بإرجاع القطع",
-      "rappel_kit_ambassadeur": "تذكير بإرسال حقيبة السفير",
+      "rappel_kit_a_envoyer": "تذكير بإرسال حقيبة السفير",
+      "rappel_post_ambassadeur": "تذكير بنشر السفير",
       "sync_erreur": "فشل المزامنة",
       "alerte_production": "تنبيه إنتاج"
     }

@@ -228,6 +228,9 @@ export const budgetLignes = sqliteTable("budget_lignes", {
 export const taches = sqliteTable("taches", {
   id: uuid(),
   campagne_id: text("campagne_id").notNull().references(() => campagnes.id),
+  // CDC v4, Lot 1.1 (RG-A10) : nullable — seules les tâches d'alerte lancement-production générées
+  // automatiquement portent une référence directe à l'article concerné (clé d'idempotence).
+  article_id: text("article_id").references(() => articles.id),
   titre: text("titre").notNull(),
   type: text("type").notNull(),
   date_echeance: text("date_echeance").notNull(),

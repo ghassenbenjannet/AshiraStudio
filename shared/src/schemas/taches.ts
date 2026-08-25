@@ -14,6 +14,9 @@ import {
 /** §4.4 — Tâche. "En retard" jamais stocké (RG-T1), calculé à l'affichage. */
 export const tacheSchema = baseEntitySchema.extend({
   campagne_id: z.string().uuid(),
+  // CDC v4, Lot 1.1 (RG-A10) : porté uniquement par les tâches d'alerte lancement-production générées
+  // automatiquement — clé d'idempotence (une seule tâche par article et par chapitre).
+  article_id: z.string().uuid().nullable().optional(),
   titre: z.string().min(1).max(120),
   type: z.enum(TYPE_TACHE),
   date_echeance: z.string(),

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { baseEntitySchema } from "./common.js";
 import { REFERENCE_ARTICLE_REGEX } from "../constants/patterns.js";
-import { FIT_ARTICLE, STATUT_CYCLE_ARTICLE, STATUT_ARTICLE_COLORIS } from "../constants/enums.js";
+import { FIT_ARTICLE, STATUT_CYCLE_ARTICLE, STATUT_ARTICLE_COLORIS, type StatutCycleArticle } from "../constants/enums.js";
 
 const compositionSchema = z
   .array(z.object({ matiere_id: z.string().uuid(), pct: z.number().min(0).max(100) }))
@@ -104,6 +104,35 @@ export function pastilleMarge(margePct: number | null, margeCiblePct: number, se
   if (margePct >= margeCiblePct) return "vert";
   if (margePct >= seuilOrange) return "orange";
   return "rouge";
+}
+
+/**
+ * RG-A10 (Lot 1.1) : date au-delà de laquelle le lancement en production d'un article met en danger
+ * le drop de son chapitre — `date_drop` = `date_fin` de la campagne (le jalon « Drop » du rituel est
+ * à l'offset 0 de `date_fin`, §5.7 seed). Le tampon de 7 j est déjà intégré dans cette limite.
+ */
+export function limiteLancementProduction(dateDrop: string, delaiProductionJours: number): Date {
+  const d = new Date(dateDrop);
+  d.setDate(d.getDate() - delaiProductionJours - 7);
+  return d;
+}
+
+/**
+ * RG-A10 : vrai à partir de J-7 de `limiteLancementProduction`, tant que `statut_cycle` n'a pas
+ * encore atteint `production` — c'est la condition qui déclenche la génération d'une tâche d'alerte
+ * (jamais une simple notification). Idempotence : à la charge de l'appelant (une seule tâche par
+ * article et par chapitre, jamais recréée si elle existe déjà).
+ */
+export function alerteLancementProductionRequise(
+  aujourdhui: string,
+  dateDrop: string,
+  delaiProductionJours: number,
+  statutCycle: StatutCycleArticle,
+): boolean {
+  if (STATUT_CYCLE_ARTICLE.indexOf(statutCycle) >= STATUT_CYCLE_ARTICLE.indexOf("production")) return false;
+  const dateAlerte = limiteLancementProduction(dateDrop, delaiProductionJours);
+  dateAlerte.setDate(dateAlerte.getDate() - 7);
+  return aujourdhui >= dateAlerte.toISOString().slice(0, 10);
 }
 
 export const historiqueStatutSchema = z.object({

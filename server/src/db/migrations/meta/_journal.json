@@ -43,6 +43,13 @@
       "when": 1787611720118,
       "tag": "0005_misty_medusa",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1787616972574,
+      "tag": "0006_smooth_wendell_vaughn",
+      "breakpoints": true
     }
   ]
 }

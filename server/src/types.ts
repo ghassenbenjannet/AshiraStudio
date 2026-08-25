@@ -1,8 +1,8 @@
-import type { Utilisateur } from "@achirah/shared";
+import type { SessionUtilisateur } from "./lib/auth.js";
 
 export interface AppEnv {
   Variables: {
-    utilisateur: Utilisateur | null;
+    utilisateur: SessionUtilisateur | null;
     sessionToken: string | null;
   };
 }

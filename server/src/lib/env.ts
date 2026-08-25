@@ -5,7 +5,8 @@ const isProd = process.env.NODE_ENV === "production";
 export const env = {
   isProd,
   port: Number(process.env.PORT ?? 3000),
-  databasePath: process.env.DATABASE_PATH ?? "./data/achirah.sqlite",
+  /** CDC v4, Lot 3.1 — PostgreSQL local. L'autre des deux seules exceptions restées hors du centre de configuration (§2.2) : il faut la base pour lire la base. */
+  databaseUrl: process.env.DATABASE_URL ?? "postgres://achirah_app:achirah_dev_local_only@127.0.0.1:5432/achirah",
   uploadsDir: process.env.UPLOADS_DIR ?? "./uploads",
   backupsDir: process.env.BACKUPS_DIR ?? "./backups",
   /**

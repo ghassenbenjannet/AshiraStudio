@@ -1,8 +1,18 @@
 import { readdirSync, statSync, mkdirSync, rmSync, cpSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { sqlite } from "../db/client.js";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { env } from "./env.js";
 import { logger } from "./logger.js";
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * CDC v4, Lot 3.1 — connexion admin dédiée pour `pg_dump` (jamais `achirah_app`, dont la RLS
+ * limiterait le contenu réellement sauvegardé à une seule organisation à la fois, voir `db/client.ts`).
+ * Même variable que les migrations (`migrate.ts`) — un outil d'exploitation, pas le runtime applicatif.
+ */
+const connexionAdmin = process.env.DATABASE_URL_ADMIN ?? "postgres://postgres:postgres_dev_local_only@127.0.0.1:5432/achirah";
 
 const RETENTION_MAX = 14;
 const UN_JOUR_MS = 24 * 60 * 60 * 1000;
@@ -18,17 +28,19 @@ export interface Sauvegarde {
 }
 
 /**
- * §8.1 — Sauvegarde réelle : `Database.backup()` de better-sqlite3 produit un instantané cohérent
- * de la base même sous WAL (pas un simple `cp` du fichier, qui pourrait capturer un état incomplet
- * en écriture concurrente), puis copie récursive du dossier `uploads` — pas de dépendance externe
- * d'archivage, chaque sauvegarde est un dossier horodaté sous `BACKUPS_DIR`.
+ * §8.1 — Sauvegarde réelle : `pg_dump` au format personnalisé (`-Fc`, compressé, restaurable
+ * sélectivement par `pg_restore`) produit un instantané cohérent de la base (une seule transaction
+ * snapshot, pas un `cp` de fichiers qui pourrait capturer un état incomplet), puis copie récursive
+ * du dossier `uploads` — pas de dépendance externe d'archivage, chaque sauvegarde est un dossier
+ * horodaté sous `BACKUPS_DIR`. Connexion admin (bypass RLS) : capture TOUTES les organisations,
+ * jamais une seule (voir la constante `connexionAdmin` ci-dessus).
  */
 export async function creerSauvegarde(): Promise<Sauvegarde> {
   const nom = `sauvegarde-${horodatage()}`;
   const dossier = join(env.backupsDir, nom);
   mkdirSync(dossier, { recursive: true });
 
-  await sqlite.backup(join(dossier, "achirah.sqlite"));
+  await execFileAsync("pg_dump", ["-Fc", "-f", join(dossier, "achirah.dump"), connexionAdmin]);
   if (existsSync(env.uploadsDir)) cpSync(env.uploadsDir, join(dossier, "uploads"), { recursive: true, force: true });
 
   await purgerAnciennesSauvegardes();

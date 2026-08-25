@@ -26,7 +26,7 @@ import { exportsRoutes } from "./routes/exports.js";
 import { sauvegardesRoutes } from "./routes/sauvegardes.js";
 import { observabiliteRoutes } from "./routes/observabilite.js";
 import { configurationRoutes } from "./routes/configuration.js";
-import { resoudreSession, exigerAuth } from "./middleware/auth.js";
+import { resoudreSession, exigerAuth, avecOrganisation } from "./middleware/auth.js";
 import { journaliserRequetes } from "./middleware/logging.js";
 import { limiteurDebit } from "./middleware/rate-limit.js";
 import { erreurApi } from "./lib/http.js";
@@ -39,6 +39,9 @@ export function creerApp() {
   app.use("*", csrf());
   app.use("/api/*", limiteurDebit());
   app.use("/api/*", resoudreSession);
+  // Lot 3.3 : pose SET LOCAL app.organisation_id (RLS) pour le reste de la requête — no-op si non
+  // authentifié (les routes /api/init, /api/auth/* ne touchent que des tables sans RLS).
+  app.use("/api/*", avecOrganisation);
 
   app.get("/health", (c) => c.json({ ok: true, at: new Date().toISOString() }));
 

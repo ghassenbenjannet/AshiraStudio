@@ -1,7 +1,7 @@
 import { eq, inArray } from "drizzle-orm";
 import { DIMENSIONS_GATE, type ScoreDetailDimension } from "@achirah/shared";
 import { db } from "../../db/client.js";
-import { contenus, articles, articleColoris, gammes, taches, shootings, looks, lookItems, poses, articleSkus, coloris, assets } from "../../db/schema.js";
+import { contenus, articles, articleColoris, gammes, taches, shootings, looks, lookItems, poses, articleSkus, coloris, assets, briefQuotidienCache } from "../../db/schema.js";
 import { genererObjet, verifierBudgetJournalier, ErreurIaIndisponible, type ImageEntree } from "../../lib/ia/fournisseur.js";
 import { construireSystemPrompt, lireConfig } from "./contexte.js";
 import { enregistrerAudit } from "../../lib/audit.js";
@@ -228,16 +228,28 @@ export interface BriefQuotidien {
   actions: { titre: string; description: string }[];
 }
 
-let cacheBrief: BriefQuotidien | null = null;
-
-export async function briefQuotidien(force = false): Promise<BriefQuotidien> {
+/**
+ * CDC v4, Lot 3.4 — externalisé de la mémoire du processus vers `brief_quotidien_cache` (une ligne
+ * par organisation, Lot 3.2) : une variable de module partagerait le même brief entre toutes les
+ * organisations d'un même processus, et redeviendrait vide à chaque redémarrage — deux défauts que
+ * le prompt demande explicitement de corriger.
+ */
+export async function briefQuotidien(organisationId: string, force = false): Promise<BriefQuotidien> {
   const aujourdhui = new Date().toISOString().slice(0, 10);
-  if (!force && cacheBrief?.date === aujourdhui) return cacheBrief;
+  if (!force) {
+    const [ligne] = await db.select().from(briefQuotidienCache).where(eq(briefQuotidienCache.organisation_id, organisationId)).limit(1);
+    if (ligne && ligne.date === aujourdhui) return { date: ligne.date, ...ligne.donnees };
+  }
 
   await verifierBudgetJournalier();
   const system = await construireSystemPrompt({});
   const message = "Génère le brief du jour : 3 à 5 constats factuels (chacun citant sa provenance et sa fraîcheur, ⚠︎ si >48h) et exactement 3 actions recommandées, à partir du contexte fourni (tâches, campagne active, catalogue). Ne cite que des faits présents dans le contexte — une donnée absente se dit manquante (RG-BR1/BR2), jamais inventée.";
   const { donnees } = await genererObjet<{ constats: string[]; actions: { titre: string; description: string }[] }>({ system, message, schema: SCHEMA_BRIEF_QUOTIDIEN, maxOutputTokens: 900 });
-  cacheBrief = { date: aujourdhui, constats: donnees.constats, actions: donnees.actions };
-  return cacheBrief;
+
+  await db
+    .insert(briefQuotidienCache)
+    .values({ organisation_id: organisationId, date: aujourdhui, donnees })
+    .onConflictDoUpdate({ target: briefQuotidienCache.organisation_id, set: { date: aujourdhui, donnees } });
+
+  return { date: aujourdhui, ...donnees };
 }

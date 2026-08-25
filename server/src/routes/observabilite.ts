@@ -1,11 +1,9 @@
 import { Hono } from "hono";
-import { statSync } from "node:fs";
-import { gte } from "drizzle-orm";
+import { gte, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { integrations, audits } from "../db/schema.js";
 import { exigerCapacite } from "../middleware/rbac.js";
 import { lireConfigurationIa, tokensConsommesAujourdhui, verifierDisponibiliteIa } from "../lib/ia/fournisseur.js";
-import { env } from "../lib/env.js";
 import { derniereSauvegarde } from "../lib/sauvegardes.js";
 import type { AppEnv } from "../types.js";
 
@@ -15,9 +13,11 @@ export const observabiliteRoutes = new Hono<AppEnv>();
 observabiliteRoutes.get("/statut", exigerCapacite("parametres.gerer"), async (c) => {
   const debutAujourdhui = new Date().toISOString().slice(0, 10);
 
+  // CDC v4, Lot 3.1 — plus un seul fichier (Postgres) : taille réelle de la base entière côté serveur.
   let tailleDbOctets: number | null = null;
   try {
-    tailleDbOctets = statSync(env.databasePath).size;
+    const [ligne] = await db.execute<{ octets: number }>(sql`SELECT pg_database_size(current_database())::bigint AS octets`);
+    tailleDbOctets = ligne ? Number(ligne.octets) : null;
   } catch {
     tailleDbOctets = null;
   }

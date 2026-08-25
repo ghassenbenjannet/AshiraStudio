@@ -23,8 +23,8 @@ export async function listerCommentaires(entiteType: EntiteCommentable, entiteId
     .orderBy(desc(commentaires.created_at));
 }
 
-export async function creerCommentaire(input: { entiteType: EntiteCommentable; entiteId: string; contenu: string; auteurId: string }) {
-  const mentions = await extraireMentions(input.contenu);
+export async function creerCommentaire(input: { entiteType: EntiteCommentable; entiteId: string; contenu: string; auteurId: string; organisationId: string }) {
+  const mentions = await extraireMentions(input.contenu, input.organisationId);
   const [cree] = (await db
     .insert(commentaires)
     .values({ entite_type: input.entiteType, entite_id: input.entiteId, contenu: input.contenu, auteur_id: input.auteurId, mentions })

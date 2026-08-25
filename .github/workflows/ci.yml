@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # CDC v4, Lot 3.3 — service Postgres jetable pour la CI : le rôle applicatif dédié et les
+    # politiques RLS sont (re)provisionnés à chaque run, exactement comme au premier démarrage réel
+    # (voir Dockerfile), pour que le test d'isolation ci-dessous s'exécute sous les mêmes conditions
+    # qu'en production (rôle non superutilisateur, RLS posée) plutôt que de la simuler.
+    services:
+      postgres:
+        image: postgres:16-bookworm
+        env:
+          POSTGRES_DB: achirah
+          POSTGRES_PASSWORD: postgres_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d achirah"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL_ADMIN: postgres://postgres:postgres_ci_only@localhost:5432/achirah
+      DATABASE_URL: postgres://achirah_app:achirah_ci_only@localhost:5432/achirah
+      POSTGRES_APP_PASSWORD: achirah_ci_only
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - run: npm run build:shared
+
+      - run: npm run typecheck
+
+      - name: Provisionner le rôle applicatif RLS (achirah_app)
+        run: npm run db:provision-role --workspace=server
+
+      - name: Appliquer les migrations
+        run: npm run db:migrate --workspace=server
+
+      - name: Appliquer les politiques RLS (Lot 3.3)
+        run: npm run db:rls --workspace=server
+
+      # Gate C1.3 (bloquant) — inclut le test d'isolation croisée multi-organisation
+      # (server/src/db/isolation.test.ts) : la RLS doit être réellement appliquée par PostgreSQL
+      # (rôle achirah_app, non superutilisateur) et pas seulement supposée par le code applicatif.
+      - name: Tests serveur (Gate C1.3 — isolation croisée bloquante)
+        run: npm run test --workspace=server

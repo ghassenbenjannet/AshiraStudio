@@ -1,12 +1,20 @@
 import { eq, and } from "drizzle-orm";
 import { aCapacite, type TypeNotification } from "@achirah/shared";
 import { db } from "../db/client.js";
-import { notifications, reglagesNotification, utilisateurs } from "../db/schema.js";
+import { notifications, reglagesNotification, utilisateurs, membres } from "../db/schema.js";
 import { logger } from "./logger.js";
 
-/** Tous les comptes dotés de `approbation.gerer` (admin/éditeur) — utilisé pour les notifications d'équipe sans destinataire unique naturel. */
-export async function detenteursApprobation(): Promise<string[]> {
-  const tous = await db.select({ id: utilisateurs.id, role_systeme: utilisateurs.role_systeme }).from(utilisateurs);
+/**
+ * Tous les comptes dotés de `approbation.gerer` (admin/éditeur) DANS l'organisation donnée — utilisé
+ * pour les notifications d'équipe sans destinataire unique naturel. `utilisateurs`/`membres` ne
+ * portent pas de RLS (Lot 3.3) : la portée organisation doit être explicite ici, comme partout où
+ * ces deux tables sont lues directement.
+ */
+export async function detenteursApprobation(organisationId: string): Promise<string[]> {
+  const tous = await db
+    .select({ id: utilisateurs.id, role_systeme: membres.role_systeme })
+    .from(utilisateurs)
+    .innerJoin(membres, and(eq(membres.utilisateur_id, utilisateurs.id), eq(membres.organisation_id, organisationId)));
   return tous.filter((u) => aCapacite(u.role_systeme as any, "approbation.gerer")).map((u) => u.id);
 }
 
@@ -45,9 +53,12 @@ export async function creerNotification(input: CreerNotificationInput): Promise<
   }
 }
 
-/** Extrait les @mentions d'un texte en les comparant au nom de chaque utilisateur actif. */
-export async function extraireMentions(contenu: string): Promise<string[]> {
-  const tousLesUtilisateurs = await db.select({ id: utilisateurs.id, nom: utilisateurs.nom }).from(utilisateurs);
+/** Extrait les @mentions d'un texte en les comparant au nom de chaque membre de l'organisation. */
+export async function extraireMentions(contenu: string, organisationId: string): Promise<string[]> {
+  const tousLesUtilisateurs = await db
+    .select({ id: utilisateurs.id, nom: utilisateurs.nom })
+    .from(utilisateurs)
+    .innerJoin(membres, and(eq(membres.utilisateur_id, utilisateurs.id), eq(membres.organisation_id, organisationId)));
   const texteMinuscule = contenu.toLowerCase();
   return tousLesUtilisateurs.filter((u) => texteMinuscule.includes(`@${u.nom.toLowerCase()}`)).map((u) => u.id);
 }

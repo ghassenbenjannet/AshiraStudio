@@ -53,7 +53,7 @@ mesureRoutes.post("/integrations", exigerCapacite("parametres.gerer"), zValidato
   const utilisateur = c.get("utilisateur")!;
   const { plateforme, credentials } = c.req.valid("json");
   try {
-    const { credentials_chiffres, ...ligne } = await connecterIntegration(plateforme, credentials, utilisateur.id);
+    const { credentials_chiffres, ...ligne } = await connecterIntegration(plateforme, credentials, utilisateur.id, utilisateur.organisation_id);
     return c.json({ donnees: ligne }, 201);
   } catch (err) {
     return gererErreurMetier(c, err);
@@ -63,7 +63,7 @@ mesureRoutes.post("/integrations", exigerCapacite("parametres.gerer"), zValidato
 mesureRoutes.post("/integrations/:id/sync", exigerCapacite("parametres.gerer"), async (c) => {
   const utilisateur = c.get("utilisateur")!;
   try {
-    const { credentials_chiffres, ...ligne } = await syncIntegration(c.req.param("id"), utilisateur.id);
+    const { credentials_chiffres, ...ligne } = await syncIntegration(c.req.param("id"), utilisateur.id, utilisateur.organisation_id);
     return c.json({ donnees: ligne });
   } catch (err) {
     return gererErreurMetier(c, err);

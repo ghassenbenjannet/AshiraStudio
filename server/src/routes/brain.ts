@@ -11,9 +11,10 @@ import type { AppEnv } from "../types.js";
 export const brainRoutes = new Hono<AppEnv>();
 
 brainRoutes.post("/brief", async (c) => {
+  const utilisateur = c.get("utilisateur")!;
   const force = c.req.query("force") === "1";
   try {
-    const brief = await briefQuotidien(force);
+    const brief = await briefQuotidien(utilisateur.organisation_id, force);
     return c.json({ donnees: brief });
   } catch (err) {
     if (err instanceof ErreurIaIndisponible) return erreurApi(c, 503, "ia_indisponible", err.message);

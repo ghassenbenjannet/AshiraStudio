@@ -955,3 +955,182 @@ Configuration, sans fichier à éditer ni serveur à redémarrer — le principe
   compte admin réel de la session, et non supprimables sans casser des contraintes de clé étrangère
   (journal d'audit, `parametre_systeme.modifie_par`) qu'il n'y avait aucune raison de sacrifier pour
   un nettoyage cosmétique d'une base locale, jamais commitée.
+
+## Lot 3 — Fondations multi-tenant : PostgreSQL, organisation/membre, Row Level Security
+
+« Fait tout » — les cinq sous-lots (3.1 à 3.5) exécutés dans l'ordre du prompt sans repasser par une
+confirmation intermédiaire, chaque décision résiduelle tranchée par l'option la plus simple et
+consignée ici plutôt que redemandée. C'est le lot le plus à risque de la session (bascule de moteur
+de base de données + isolation de sécurité) : chaque étape a donc été prouvée avant de construire la
+suivante dessus, jamais supposée correcte.
+
+### Lot 3.1 — SQLite → PostgreSQL (local, pas d'attente d'hébergement)
+
+- `server/src/db/schema.ts` réécrit en `drizzle-orm/pg-core` : identifiants en `uuid` natif
+  (`gen_random_uuid()`, disponible nativement depuis PG13, confirmé sur PG16), booléens en `boolean`
+  natif, colonnes JSON en `jsonb` — trois types que SQLite émulait par convention et que Postgres
+  gère nativement. `created_at`/`updated_at`/les dates métier **restent** des chaînes ISO en `text` :
+  décision délibérée — tout le code applicatif les compare déjà comme des chaînes (tri lexicographique
+  ISO 8601 correct), retyper en `timestamp` natif aurait cassé des dizaines de sites d'appel pour
+  aucun gain fonctionnel dans ce lot.
+- `server/src/db/client.ts` : `postgres` (pilote pur JS, plus de module natif à compiler — le
+  Dockerfile perd sa chaîne d'outils `python3`/`make`/`g++`) + `drizzle-orm/postgres-js`, remplace
+  `better-sqlite3`. Migration SQLite existante écrite à la main (`0000_great_plazm.sql`, générée
+  proprement par `drizzle-kit generate` sans prompt interactif — schéma neuf, aucune ambiguïté de
+  renommage à trancher).
+- Aucune donnée n'a été migrée de l'ancienne base SQLite : elle ne contenait que des comptes/données
+  de développement et de vérification des lots précédents (dont les deux comptes de test du Lot 2
+  ci-dessus), jamais de donnée réelle de production — repartir d'une base Postgres vide, peuplée par
+  le même écran d'initialisation que n'importe quel premier déploiement réel, est strictement plus
+  honnête qu'un script de conversion best-effort dont la CDC ne demande rien.
+- `DATABASE_PATH` devient `DATABASE_URL` (même principe : une des deux seules clés qui restent hors
+  du centre de configuration, cf. Lot 2 — il faut la base pour lire la base). Valeur par défaut déjà
+  pointée vers un PostgreSQL local standard, donc **aucune** variable d'environnement n'est requise
+  pour démarrer en développement, seulement `createdb achirah` au préalable (README mis à jour).
+
+### Lot 3.2 — Organisation/membre : l'utilisateur redevient une identité globale
+
+- Trois tables (`server/src/db/schema.ts`) : `organisations` (le tenant, `slug` unique), `membres`
+  (jonction `utilisateur_id`↔`organisation_id`, porte désormais `role_systeme` — unique sur la paire),
+  `utilisateurs` (identité globale, `role_systeme` **retiré** de cette table). Aucune de ces trois
+  tables ni `sessions` ne porte `organisation_id`/RLS elle-même : la résolution de session doit
+  pouvoir lire les appartenances d'un utilisateur (`membres`) et créer/retrouver une organisation
+  *avant* qu'un contexte d'organisation soit établi — une politique RLS dessus créerait une
+  dépendance circulaire à la lecture de session.
+  `SessionUtilisateur` (`server/src/lib/auth.ts`) compose ces deux informations (rôle + organisation)
+  à la résolution de chaque requête, sans toucher au type Zod `Utilisateur` partagé
+  (`@achirah/shared`) — le front n'a rien à changer, il continue de recevoir le même objet.
+- `organisation_id` ajouté à chaque table métier via un helper `orgId()` : `.notNull().references(()
+  => organisations.id).default(sql\`current_setting('app.organisation_id')::uuid\`)`. La valeur par
+  défaut lit la variable de session Postgres posée par le middleware (Lot 3.3) : c'est ce qui évite
+  d'éditer les ~150 sites d'appel `db.insert(...)` existants pour leur faire porter explicitement
+  `organisation_id` — mis en place une fois dans le schéma, jamais au site d'appel.
+  `parametre_systeme` et `reglages_notification` n'en portent délibérément **pas** — voir Lot 3.5.
+- Connexion (`routes/auth.ts`) : un compte peut appartenir à plusieurs organisations (`membres`) ;
+  faute d'écran de sélection à cette couche (bascule multi-organisation = C2.2, hors périmètre du
+  prompt Lot 0-3), **la plus ancienne appartenance est retenue** — décision la plus simple parmi les
+  options possibles (dernière utilisée aurait demandé un champ supplémentaire non demandé ; un choix
+  aléatoire aurait été moins prévisible pour l'utilisateur) — documentée dans le README (§
+  Multi-organisation) pour que ça ne soit pas découvert en production.
+- Premier compte (`routes/init.ts`) : crée la première organisation (nommée « Achirah », slug
+  `achirah` — reprend le nom de marque déjà partout dans le seed plutôt que d'inventer un champ non
+  demandé au prompt d'initialisation) avant le compte admin. Le parcours self-service où l'organisation
+  se nomme elle-même est C2.1, hors périmètre.
+
+### Lot 3.3 — Row Level Security + middleware `SET LOCAL` + rôle dédié
+
+- Politique par table (`server/src/db/rls.sql`, généré une fois puis versionné comme un artefact de
+  sécurité indépendant du schéma Drizzle — délibérément **pas** modélisé dans `schema.ts`, pour rester
+  auditable d'un coup d'œil sans reconstituer 49 blocs Drizzle) : `ENABLE`+`FORCE ROW LEVEL SECURITY`
+  puis `USING (organisation_id = current_setting('app.organisation_id')::uuid) WITH CHECK (…)` sur
+  chacune des 49 tables métier — jamais sur `organisations`, `membres`, `utilisateurs`, `sessions`,
+  `parametre_systeme`, `reglages_notification` (Lot 3.2/3.5). `apply-rls.ts` idempotent (`DROP POLICY
+  IF EXISTS` avant chaque `CREATE`), rejouable sans effet de bord sur une base déjà à jour.
+- Rôle applicatif dédié `achirah_app` (`server/src/db/provision-role.ts`) : **ni superutilisateur ni
+  propriétaire des tables** — condition nécessaire pour que la RLS s'applique réellement à ses propres
+  requêtes (un superutilisateur ou le propriétaire d'une table la contournent silencieusement, RLS ou
+  pas). Le serveur applicatif se connecte exclusivement sous ce rôle ; les migrations/politiques
+  RLS/sauvegardes s'exécutent sous une connexion admin séparée (`DATABASE_URL_ADMIN`, rôle `postgres`)
+  — jamais par le serveur en fonctionnement. Script hors-ligne, exécuté une fois par déploiement, pas
+  un service : hardcode le nom de base (`achirah`) et le rôle propriétaire (`postgres`) plutôt qu'une
+  introspection dynamique de la connexion admin — plus simple, vérifiable, et correspond à la réalité
+  de déploiement de ce projet (une base nommée, un propriétaire fixe).
+- `server/src/db/client.ts` — `db` est un `Proxy` autour de l'instance Drizzle de base, résolu via
+  `AsyncLocalStorage` vers la transaction RLS-scopée de la requête en cours quand on est dans
+  `executerAvecOrganisation`, ou vers la connexion de base sinon. **Zéro changement** nécessaire sur
+  les ~150 fichiers qui font `import { db } from "../db/client.js"` — l'isolation est portée par la
+  base de données elle-même (politiques RLS), pas réappliquée site d'appel par site d'appel, ce qui
+  aurait été une surface d'erreur énorme pour un oubli invisible en revue.
+  `executerAvecOrganisation(organisationId, fn)` ouvre une transaction, pose `SELECT
+  set_config('app.organisation_id', $1, true)` (portée locale à la transaction, équivalent de `SET
+  LOCAL` mais compatible avec les paramètres liés du protocole étendu — `SET LOCAL … = $1` ne l'est
+  pas), puis exécute `fn` dans ce contexte.
+  `middleware/auth.ts` (`avecOrganisation`) l'applique sur `/api/*` juste après la résolution de
+  session — la seule fois où le code applicatif doit savoir laquelle organisation est active.
+- Échec fermé, pas seulement fermé par défaut : sans `app.organisation_id` posé, `current_setting(…)`
+  (sans le second argument « missing_ok ») lève une erreur Postgres plutôt que de renvoyer NULL ou
+  toutes les lignes — une requête sur une table RLS hors contexte d'organisation **échoue**, elle ne
+  fuit jamais silencieusement. Vérifié par le test d'isolation (voir Gate C1.3 ci-dessous).
+- **Gate C1.3 (bloquant)** — `server/src/db/isolation.test.ts` (vitest, premier fichier de test du
+  dépôt) : crée deux organisations réelles, écrit une ligne dans chacune via `executerAvecOrganisation`,
+  puis prouve — sous le rôle `achirah_app` non superutilisateur, RLS réellement posée, pas simulée —
+  qu'une organisation (a) ne voit que ses propres lignes en liste, (b) ne peut pas lire une ligne
+  d'une autre organisation par son id direct, (c) ne peut ni modifier ni supprimer une ligne d'une
+  autre organisation (`UPDATE`/`DELETE … RETURNING` renvoie `[]`, la ligne visée reste intacte côté
+  propriétaire), (d) toute requête sur une table métier hors contexte d'organisation échoue.
+  `.github/workflows/ci.yml` (nouveau, aucun workflow n'existait avant ce lot) exécute cette suite à
+  chaque push/pull request contre un service Postgres jetable, en rejouant exactement le cycle de
+  provisionnement à froid (`db:provision-role` → `db:migrate` → `db:rls` → `test`) plutôt qu'une base
+  déjà préparée — un run rouge bloque réellement l'intégration, ce n'est pas une case cochée sans
+  conséquence.
+
+### Lot 3.4 — Sortir l'état du processus (cache, planificateur)
+
+- Cache du brief quotidien : l'ancien `let cacheBrief` module-level (mémoire process, Étape ⑤) devient
+  la table `brief_quotidien_cache` (`organisation_id` en clé primaire, une ligne par organisation,
+  `donnees` en `jsonb`) — un second processus serveur (ou un redémarrage) lit maintenant le même cache
+  que le premier au lieu d'en recalculer un différent en mémoire locale.
+- Planificateur de rappels (`server/src/lib/scheduler.ts`) : `pg_try_advisory_lock`/`pg_advisory_unlock`
+  sur une connexion réservée (`pgClient.reserve()`) garantit qu'un seul processus exécute un tour à la
+  fois si le serveur est un jour répliqué à plusieurs instances — sans ce verrou, chaque instance
+  enverrait ses propres rappels/notifications en double. Le tour lui-même boucle sur `organisations`
+  et exécute les huit étapes existantes sous `executerAvecOrganisation` pour chacune — les fonctions
+  de rappel elles-mêmes ont gagné un paramètre `organisationId` explicite partout où elles interrogent
+  `utilisateurs`/`membres` (non RLS, cf. Lot 3.2), le reste de leurs requêtes (tables métier) n'a rien
+  eu à changer.
+- Uploads et sauvegardes n'ont pas eu besoin de changement pour ce lot : déjà sur disque via
+  `UPLOADS_DIR`/`BACKUPS_DIR` configurables (Étape ⑦), donc déjà « externes » au process Node au sens
+  où le prompt l'entend — un vrai stockage objet partagé (S3) reste C1.4/hébergement, hors périmètre
+  ici. `lib/sauvegardes.ts` bascule seulement son mécanisme de `sqlite.backup()` vers `pg_dump -Fc`
+  (`postgresql-client` ajouté à l'image Docker) — vérifié en direct : un vrai fichier `PostgreSQL
+  custom database dump` produit dans `BACKUPS_DIR`, listé par `GET /api/sauvegardes`.
+
+### Lot 3.5 — Portée de `parametre_systeme` : globale, pas par organisation
+
+- Reste **global** (pas de `organisation_id`), décision consignée plutôt que déduite du code : une clé
+  API IA/SMTP/push/stockage par organisation supposerait un modèle de facturation/quota par
+  organisation qui n'existe pas avant Couche 3 (`⚠️ BLOQUANT — Décision de prix et de limites de
+  plans`, tâche déjà en attente de discovery client). Router ces clés dès maintenant aurait anticipé
+  une décision produit non prise, contraire à RG-PROV. `reglages_notification` reste également hors
+  RLS pour la même raison implicite (préférence par utilisateur, pas donnée d'organisation) —
+  décision rendue explicite ici plutôt que laissée à déduire de l'absence de colonne.
+- Conséquence assumée : dans un déploiement multi-organisations réel, toutes les organisations d'une
+  même instance partageraient aujourd'hui la même clé IA/SMTP/etc. — acceptable tant qu'une seule
+  organisation existe par déploiement (l'état actuel du produit), à revisiter explicitement quand la
+  Couche 3 (BYOK par organisation, RG-SAAS2) sera tranchée, pas avant.
+
+### Gates du Lot 3 — tous vérifiés sur le serveur réel (curl + Playwright + vitest, cycle à froid rejoué)
+
+- Isolation RLS prouvée à deux niveaux, dans cet ordre délibéré (la base d'abord, l'application
+  ensuite — jamais l'inverse) : d'abord en SQL brut (deux organisations synthétiques, lecture,
+  tentative d'écriture croisée, absence totale de contexte), puis via l'API HTTP réelle avec deux
+  organisations et deux comptes admin créés en direct — listes (`GET /api/referentiels/gammes`, `GET
+  /api/campagnes`, `GET /api/utilisateurs`) strictement scopées à chacune, et un accès direct par id
+  à une campagne de l'autre organisation renvoie `404 introuvable` (pas `403` — l'existence de la
+  ligne n'est pas révélée à qui n'y a pas droit).
+- Cycle de provisionnement à froid rejoué intégralement (base supprimée et recréée, `db:provision-role`
+  → `db:migrate` → `db:rls` → démarrage serveur) : le premier compte créé via l'écran d'initialisation
+  réel repasse par tout le chemin RLS dès sa première requête, pas seulement une base déjà préparée en
+  amont — c'est aussi exactement le cycle que `.github/workflows/ci.yml` rejoue à chaque run.
+- `npm run test --workspace=server` (Gate C1.3) : 4/4, contre cette même base fraîche.
+  `npm run typecheck` propre sur les trois workspaces.
+- Écran vérifié dans un vrai navigateur (Playwright, Chromium) contre le nouveau backend : connexion,
+  tableau de bord Aujourd'hui, contexte de campagne, tâches et shootings scopés à l'organisation
+  s'affichent correctement ; le bloc Brief IA affiche honnêtement « IA indisponible » (503, aucune clé
+  configurée dans cet environnement — comportement identique et attendu depuis le Lot 2).
+- `POST /api/observabilite/statut` (taille de base via `pg_database_size`) et `POST /api/sauvegardes`
+  (`pg_dump`) vérifiés en direct, pas seulement typés — les deux étaient encore incertains en sortie
+  d'implémentation, désormais confirmés par un vrai aller-retour.
+
+### Limites assumées de ce lot (consignées, pas cachées)
+
+- Aucun test end-to-end n'existe encore côté front pour ce lot (vérification Playwright manuelle
+  uniquement, pas un test automatisé rejouable en CI) — hors périmètre du prompt Lot 0-3, qui ne
+  demandait le gate bloquant que sur l'isolation RLS (C1.3).
+- Le sélecteur d'organisation pour un compte membre de plusieurs organisations n'existe pas encore
+  (bascule à la connexion = la plus ancienne appartenance, cf. Lot 3.2) — explicitement C2.2, une
+  couche ultérieure, pas un oubli de ce lot.
+- La base de développement locale repart de zéro pour ce lot (Postgres neuf, aucune donnée migrée de
+  l'ancienne base SQLite — cf. Lot 3.1) : le seul compte qui y reste après vérification est
+  `admin@achirah.test`, créé par l'écran d'initialisation réel pendant les gates ci-dessus — pas un
+  compte de test ad hoc à justifier, c'est le même chemin que suivrait un premier déploiement réel.

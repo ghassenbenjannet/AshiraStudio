@@ -140,7 +140,7 @@ articlesRoutes.post("/:id/transition", exigerCapacite("entites.editer"), zValida
   const utilisateur = c.get("utilisateur")!;
   const corps = c.req.valid("json");
   try {
-    const { article, avertissements } = await transitionnerArticle(c.req.param("id"), corps.vers, utilisateur.id, utilisateur.role_systeme, {
+    const { article, avertissements } = await transitionnerArticle(c.req.param("id"), corps.vers, utilisateur.id, utilisateur.role_systeme, utilisateur.organisation_id, {
       essayeSur5Morphologies: corps.essaye_sur_5_morphologies,
       confirmerArchivageUtilise: corps.confirmer_archivage_utilise,
     });

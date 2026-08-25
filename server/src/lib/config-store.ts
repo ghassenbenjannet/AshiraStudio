@@ -9,7 +9,7 @@ import { enregistrerAudit } from "./audit.js";
  * pour savoir quelles clés existent, si elles sont chiffrées, à quelle catégorie (bloc d'écran)
  * elles appartiennent, et quelle variable d'environnement sert de valeur initiale acceptée pour un
  * déploiement automatisé (précédence base > variable d'environnement > défaut, §2.3).
- * `DATABASE_URL`/`DATABASE_PATH` et `ENCRYPTION_KEY` n'y figurent jamais (§2.2) — la base ne peut pas
+ * `DATABASE_URL` et `ENCRYPTION_KEY` n'y figurent jamais (§2.2) — la base ne peut pas
  * se configurer elle-même, et la clé qui chiffre tout le reste ne peut pas être chiffrée par elle-même.
  */
 export interface DefinitionParametre {

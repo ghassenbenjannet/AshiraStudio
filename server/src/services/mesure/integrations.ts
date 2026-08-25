@@ -68,7 +68,7 @@ async function appelerPlateforme(plateforme: string, credentials: Record<string,
   return { kpis, brut: corps };
 }
 
-export async function connecterIntegration(plateforme: string, credentials: Record<string, string>, utilisateurId: string) {
+export async function connecterIntegration(plateforme: string, credentials: Record<string, string>, utilisateurId: string, organisationId: string) {
   const chiffre = chiffrer(JSON.stringify(credentials));
   const existante = (await db.select().from(integrations).where(eq(integrations.plateforme, plateforme)))[0];
   let ligne;
@@ -78,10 +78,10 @@ export async function connecterIntegration(plateforme: string, credentials: Reco
     [ligne] = (await db.insert(integrations).values({ plateforme, credentials_chiffres: chiffre, statut: "deconnectee" }).returning()) as any[];
   }
   await enregistrerAudit({ utilisateurId, action: "integration.connecter", entiteType: "integration", entiteId: ligne.id });
-  return syncIntegration(ligne.id, utilisateurId);
+  return syncIntegration(ligne.id, utilisateurId, organisationId);
 }
 
-export async function syncIntegration(id: string, utilisateurId: string) {
+export async function syncIntegration(id: string, utilisateurId: string, organisationId: string) {
   const [integration] = await db.select().from(integrations).where(eq(integrations.id, id)).limit(1);
   if (!integration) throw new ErreurMetier(404, "introuvable", "Intégration introuvable");
   if (!integration.credentials_chiffres) throw new ErreurMetier(422, "non_connectee", "Aucun identifiant enregistré pour cette intégration");
@@ -100,7 +100,7 @@ export async function syncIntegration(id: string, utilisateurId: string) {
     const message = err instanceof Error ? err.message : "Erreur de synchronisation inconnue";
     const [modifie] = (await db.update(integrations).set({ statut: "erreur", derniere_erreur: message, dernier_sync: maintenant }).where(eq(integrations.id, id)).returning()) as any[];
     await enregistrerAudit({ utilisateurId, action: "integration.sync_echec", entiteType: "integration", entiteId: id, apres: { statut: "erreur", erreur: message } });
-    for (const destinataireId of await detenteursApprobation()) {
+    for (const destinataireId of await detenteursApprobation(organisationId)) {
       await creerNotification({ utilisateurId: destinataireId, type: "sync_erreur", entiteType: "integration", entiteId: id });
     }
     return modifie;

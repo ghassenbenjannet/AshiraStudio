@@ -27,6 +27,7 @@ export async function transitionnerArticle(
   vers: StatutCycleArticle,
   utilisateurId: string,
   roleSysteme: string,
+  organisationId: string,
   options: { essayeSur5Morphologies?: boolean; confirmerArchivageUtilise?: boolean } = {},
 ): Promise<{ article: typeof articles.$inferSelect; avertissements: string[] }> {
   const [article] = await db.select().from(articles).where(eq(articles.id, articleId)).limit(1);
@@ -75,7 +76,7 @@ export async function transitionnerArticle(
       // RG-PROV). On le persiste aussi comme notification réelle, comblant le point relevé dans
       // DECISIONS.md (« alerte_production non automatisée, faute de signal fiable ») : ce signal-ci
       // l'est.
-      for (const destinataireId of await detenteursApprobation()) {
+      for (const destinataireId of await detenteursApprobation(organisationId)) {
         await creerNotification({ utilisateurId: destinataireId, type: "alerte_production", entiteType: "article", entiteId: articleId });
       }
     }

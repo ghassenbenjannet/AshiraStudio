@@ -43,7 +43,7 @@ export async function snapshotVersionSiNecessaire(contenuId: string, utilisateur
   await db.insert(contenuVersions).values({ contenu_id: contenuId, caption: contenu.caption, par: utilisateurId });
 }
 
-export async function soumettreContenu(id: string, utilisateurId: string) {
+export async function soumettreContenu(id: string, utilisateurId: string, organisationId: string) {
   const contenu = await obtenirOuEchouer(id);
   if (contenu.statut !== "brouillon") throw new ErreurMetier(422, "transition_invalide", "Seul un contenu brouillon peut être soumis");
   if (!contenu.caption.trim() && contenu.asset_ids.length === 0) {
@@ -52,7 +52,7 @@ export async function soumettreContenu(id: string, utilisateurId: string) {
   const [modifie] = (await db.update(contenus).set({ statut: "en_revue" }).where(eq(contenus.id, id)).returning()) as any[];
   await enregistrerAudit({ utilisateurId, action: "contenu.soumettre", entiteType: "contenu", entiteId: id, avant: { statut: contenu.statut }, apres: { statut: "en_revue" } });
 
-  for (const destinataireId of await detenteursApprobation()) {
+  for (const destinataireId of await detenteursApprobation(organisationId)) {
     if (destinataireId === utilisateurId) continue;
     await creerNotification({ utilisateurId: destinataireId, type: "approbation_demandee", entiteType: "contenu", entiteId: id });
   }

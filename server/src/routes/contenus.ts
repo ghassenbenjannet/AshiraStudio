@@ -72,7 +72,7 @@ contenusRoutes.patch("/:id", exigerCapacite("entites.editer"), zValidator("json"
 contenusRoutes.post("/:id/soumettre", exigerCapacite("entites.editer"), async (c) => {
   try {
     const utilisateur = c.get("utilisateur")!;
-    return c.json({ donnees: await soumettreContenu(c.req.param("id"), utilisateur.id) });
+    return c.json({ donnees: await soumettreContenu(c.req.param("id"), utilisateur.id, utilisateur.organisation_id) });
   } catch (err) {
     return gererErreurMetier(c, err);
   }

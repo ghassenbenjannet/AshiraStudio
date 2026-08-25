@@ -1,8 +1,10 @@
 import { eq, and, ne, isNotNull, inArray } from "drizzle-orm";
-import { db } from "../db/client.js";
+import { db, executerAvecOrganisation, pgClient } from "../db/client.js";
 import {
   taches,
   utilisateurs,
+  membres,
+  organisations,
   contenus,
   concurrents,
   relevesConcurrent,
@@ -20,6 +22,9 @@ import { alerteLancementProductionRequise, type StatutCycleArticle } from "@achi
 
 const UNE_HEURE_MS = 60 * 60 * 1000;
 const UN_JOUR_MS = 24 * 60 * 60 * 1000;
+
+/** Clé arbitraire mais fixe pour `pg_advisory_lock` — un seul tour de planificateur à la fois, tous processus confondus (Lot 3.4). */
+const CLE_VERROU_PLANIFICATEUR = 727_274;
 
 function debutAujourdhui(): string {
   return new Date().toISOString().slice(0, 10);
@@ -40,30 +45,35 @@ async function notifierUneFois(utilisateurId: string, type: any, entiteType: str
   await creerNotification({ utilisateurId, type, entiteType, entiteId });
 }
 
-async function utilisateurDePersonne(personneId: string): Promise<string | null> {
-  const [u] = await db.select({ id: utilisateurs.id }).from(utilisateurs).where(eq(utilisateurs.personne_id, personneId)).limit(1);
+async function utilisateurDePersonne(personneId: string, organisationId: string): Promise<string | null> {
+  const [u] = await db
+    .select({ id: utilisateurs.id })
+    .from(utilisateurs)
+    .innerJoin(membres, and(eq(membres.utilisateur_id, utilisateurs.id), eq(membres.organisation_id, organisationId)))
+    .where(eq(utilisateurs.personne_id, personneId))
+    .limit(1);
   return u?.id ?? null;
 }
 
 /** RG-transverse : tâches en retard — statut ≠ fait, échéance déjà passée. */
-async function rappelTachesEnRetard() {
+async function rappelTachesEnRetard(organisationId: string) {
   const aujourdhui = debutAujourdhui();
   const lignes = await db.select().from(taches).where(ne(taches.statut, "fait"));
   for (const tache of lignes.filter((t) => t.date_echeance < aujourdhui)) {
     for (const personneId of tache.assigne_ids) {
-      const utilisateurId = await utilisateurDePersonne(personneId);
+      const utilisateurId = await utilisateurDePersonne(personneId, organisationId);
       if (utilisateurId) await notifierUneFois(utilisateurId, "retard", "tache", tache.id);
     }
   }
 }
 
 /** Tâches à échéance demain — rappel J-1. */
-async function rappelEcheanceJ1() {
+async function rappelEcheanceJ1(organisationId: string) {
   const demain = new Date(Date.now() + UN_JOUR_MS).toISOString().slice(0, 10);
   const lignes = await db.select().from(taches).where(and(eq(taches.date_echeance, demain), ne(taches.statut, "fait")));
   for (const tache of lignes) {
     for (const personneId of tache.assigne_ids) {
-      const utilisateurId = await utilisateurDePersonne(personneId);
+      const utilisateurId = await utilisateurDePersonne(personneId, organisationId);
       if (utilisateurId) await notifierUneFois(utilisateurId, "echeance_j1", "tache", tache.id);
     }
   }
@@ -79,10 +89,10 @@ async function rappelPublication() {
 }
 
 /** Concurrent sans relevé depuis plus de 7 jours — rappel de veille aux éditeurs+. */
-async function rappelVeille() {
+async function rappelVeille(organisationId: string) {
   const seuil = new Date(Date.now() - 7 * UN_JOUR_MS).toISOString().slice(0, 10);
   const tousLesConcurrents = await db.select().from(concurrents);
-  const detenteurs = await detenteursApprobation();
+  const detenteurs = await detenteursApprobation(organisationId);
   for (const concurrent of tousLesConcurrents) {
     const releves = await db.select().from(relevesConcurrent).where(eq(relevesConcurrent.concurrent_id, concurrent.id));
     const dernierReleve = releves.map((r) => r.date).sort().at(-1);
@@ -92,7 +102,7 @@ async function rappelVeille() {
 }
 
 /** Shootings dont le tournage est fait mais dont des pièces empruntées ne sont pas encore rentrées. */
-async function rappelRetourPieces() {
+async function rappelRetourPieces(organisationId: string) {
   const tousLesShootings = await db.select().from(shootings);
   for (const shooting of tousLesShootings) {
     if (shooting.pieces.length === 0) continue;
@@ -101,7 +111,7 @@ async function rappelRetourPieces() {
     const rendues = new Set(shooting.retour_pieces.map((r) => r.article_sku_id));
     if (shooting.pieces.every((p) => rendues.has(p.article_sku_id))) continue;
     for (const personneId of tache.assigne_ids) {
-      const utilisateurId = await utilisateurDePersonne(personneId);
+      const utilisateurId = await utilisateurDePersonne(personneId, organisationId);
       if (utilisateurId) await notifierUneFois(utilisateurId, "rappel_retour_pieces", "shooting", shooting.tache_id);
     }
   }
@@ -113,9 +123,9 @@ async function rappelRetourPieces() {
  * CDC v4, Lot 1.2 : rappel utile distinct de M27b (`rappelPostAmbassadeur` ci-dessous) — deux types
  * de notification séparés, les deux coexistent.
  */
-async function rappelKitAEnvoyer() {
+async function rappelKitAEnvoyer(organisationId: string) {
   const tousLesAmbassadeurs = await db.select().from(ambassadeurs).where(eq(ambassadeurs.statut, "confirme"));
-  const detenteurs = await detenteursApprobation();
+  const detenteurs = await detenteursApprobation(organisationId);
   for (const ambassadeur of tousLesAmbassadeurs) {
     for (const utilisateurId of detenteurs) await notifierUneFois(utilisateurId, "rappel_kit_a_envoyer", "personne", ambassadeur.personne_id);
   }
@@ -129,10 +139,10 @@ async function rappelKitAEnvoyer() {
  * un champ inventé. Si le kit touche plusieurs chapitres, un seul suffit à J+7 pour déclencher (le
  * rappel lui-même est idempotent par ambassadeur, pas par chapitre).
  */
-async function rappelPostAmbassadeur() {
+async function rappelPostAmbassadeur(organisationId: string) {
   const aujourdhui = debutAujourdhui();
   const tousLesAmbassadeurs = await db.select().from(ambassadeurs).where(eq(ambassadeurs.statut, "kit_envoye"));
-  const detenteurs = await detenteursApprobation();
+  const detenteurs = await detenteursApprobation(organisationId);
   for (const ambassadeur of tousLesAmbassadeurs) {
     if (ambassadeur.posts.length > 0 || ambassadeur.pieces.length === 0) continue;
 
@@ -166,10 +176,14 @@ async function rappelPostAmbassadeur() {
  * aucune alerte n'est inventée (RG-PROV). Idempotence par (article_id, campagne_id, type=livraison) :
  * jamais recréée, même après redémarrage — la même discipline que `dejaNotifie`, appliquée aux tâches.
  */
-async function alerteLancementProduction() {
+async function alerteLancementProduction(organisationId: string) {
   const aujourdhui = debutAujourdhui();
   const articlesDeChapitre = await db.select().from(articles).where(isNotNull(articles.chapitre_id));
-  const admins = await db.select({ personne_id: utilisateurs.personne_id }).from(utilisateurs).where(eq(utilisateurs.role_systeme, "admin"));
+  const admins = await db
+    .select({ personne_id: utilisateurs.personne_id })
+    .from(utilisateurs)
+    .innerJoin(membres, and(eq(membres.utilisateur_id, utilisateurs.id), eq(membres.organisation_id, organisationId)))
+    .where(eq(membres.role_systeme, "admin"));
   const adminsPersonneIds = admins.map((a) => a.personne_id).filter((id): id is string => !!id);
 
   for (const article of articlesDeChapitre) {
@@ -200,23 +214,51 @@ async function alerteLancementProduction() {
   }
 }
 
-async function executerUnTour() {
+async function executerToursPourOrganisation(organisationId: string) {
   const etapes: [string, () => Promise<void>][] = [
-    ["retard", rappelTachesEnRetard],
-    ["echeance_j1", rappelEcheanceJ1],
+    ["retard", () => rappelTachesEnRetard(organisationId)],
+    ["echeance_j1", () => rappelEcheanceJ1(organisationId)],
     ["rappel_publication", rappelPublication],
-    ["rappel_veille", rappelVeille],
-    ["rappel_retour_pieces", rappelRetourPieces],
-    ["rappel_kit_a_envoyer", rappelKitAEnvoyer],
-    ["rappel_post_ambassadeur", rappelPostAmbassadeur],
-    ["alerte_lancement_production", alerteLancementProduction],
+    ["rappel_veille", () => rappelVeille(organisationId)],
+    ["rappel_retour_pieces", () => rappelRetourPieces(organisationId)],
+    ["rappel_kit_a_envoyer", () => rappelKitAEnvoyer(organisationId)],
+    ["rappel_post_ambassadeur", () => rappelPostAmbassadeur(organisationId)],
+    ["alerte_lancement_production", () => alerteLancementProduction(organisationId)],
   ];
   for (const [nom, fn] of etapes) {
     try {
       await fn();
     } catch (err) {
-      logger.error({ err, tache: nom }, "Échec d'un tour de planificateur de rappels");
+      logger.error({ err, tache: nom, organisation_id: organisationId }, "Échec d'un tour de planificateur de rappels");
     }
+  }
+}
+
+/**
+ * CDC v4, Lot 3.4 — un tour par organisation (chacune sous son propre contexte RLS, Lot 3.3), et
+ * `pg_advisory_lock` pour qu'un seul processus exécute un tour à la fois : l'état « suis-je en train
+ * de tourner » sort de la mémoire du processus (un `setInterval` local ne le sait que pour
+ * lui-même) vers la base, seule source partagée entre instances éventuelles.
+ */
+async function executerUnTour() {
+  const reserved = await pgClient.reserve();
+  try {
+    const lignes = await reserved`SELECT pg_try_advisory_lock(${CLE_VERROU_PLANIFICATEUR}) AS locked`;
+    const locked = (lignes[0] as { locked: boolean } | undefined)?.locked ?? false;
+    if (!locked) {
+      logger.info({}, "Tour de planificateur ignoré — déjà en cours (verrou pg_advisory_lock détenu ailleurs)");
+      return;
+    }
+    try {
+      const orgs = await db.select({ id: organisations.id }).from(organisations);
+      for (const org of orgs) {
+        await executerAvecOrganisation(org.id, () => executerToursPourOrganisation(org.id));
+      }
+    } finally {
+      await reserved`SELECT pg_advisory_unlock(${CLE_VERROU_PLANIFICATEUR})`;
+    }
+  } finally {
+    reserved.release();
   }
 }
 

@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { setCookie, deleteCookie } from "hono/cookie";
 import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
-import { loginSchema } from "@achirah/shared";
+import { loginSchema, type RoleSysteme } from "@achirah/shared";
 import { db } from "../db/client.js";
 import { utilisateurs } from "../db/schema.js";
 import {
@@ -12,6 +12,7 @@ import {
   detruireSession,
   enregistrerEchecLogin,
   estVerrouille,
+  membresDe,
   reinitialiserEchecsLogin,
   verifierMotDePasse,
   versUtilisateurPublic,
@@ -40,8 +41,17 @@ authRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
     return erreurApi(c, 401, "identifiants_invalides", "Email ou mot de passe incorrect");
   }
 
+  // CDC v4, Lot 3.2 — un compte peut appartenir à plusieurs organisations (`membres`) ; sans
+  // sélecteur d'organisation (C2.2, hors périmètre du Lot 3), la connexion retient la plus ancienne
+  // appartenance — l'option la plus simple, cohérente avec un seul tenant réel aujourd'hui.
+  const appartenances = await membresDe(utilisateur.id);
+  const membre = appartenances[0];
+  if (!membre) {
+    return erreurApi(c, 401, "aucune_organisation", "Ce compte n'appartient à aucune organisation");
+  }
+
   await reinitialiserEchecsLogin(utilisateur.id);
-  const token = await creerSession(utilisateur.id);
+  const token = await creerSession(utilisateur.id, membre.organisation_id);
   setCookie(c, SESSION_COOKIE, token, {
     httpOnly: true,
     secure: env.cookieSecure,
@@ -49,7 +59,7 @@ authRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
     path: "/",
     maxAge: SESSION_MAX_AGE_SEC,
   });
-  return c.json({ utilisateur: versUtilisateurPublic(utilisateur) });
+  return c.json({ utilisateur: versUtilisateurPublic(utilisateur, membre.role_systeme as RoleSysteme, membre.organisation_id) });
 });
 
 authRoutes.post("/logout", async (c) => {

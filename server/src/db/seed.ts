@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { db, sqlite } from "./client.js";
+import { eq } from "drizzle-orm";
+import { db, pgClient, executerAvecOrganisation } from "./client.js";
 import {
+  organisations,
   gammes,
   grillesTaille,
   categoriesProduit,
@@ -466,13 +468,26 @@ export async function seed(): Promise<void> {
   console.log("Seed complet appliqué : référentiels, campagnes, articles, tâches, lexique.");
 }
 
+/**
+ * `npm run db:seed` en ligne de commande, hors du flux HTTP d'initialisation (`routes/init.ts`, qui
+ * crée déjà sa propre organisation) : le seed peuple des tables sous RLS (Lot 3.3), donc a besoin
+ * d'une organisation — réutilise « Achirah » si elle existe déjà, la crée sinon.
+ */
+async function organisationParDefaut() {
+  const [existante] = await db.select().from(organisations).where(eq(organisations.slug, "achirah")).limit(1);
+  if (existante) return existante;
+  const [creee] = await db.insert(organisations).values({ nom: "Achirah", slug: "achirah" }).returning();
+  return creee!;
+}
+
 const estAppelDirect = process.argv[1]?.endsWith("seed.ts") || process.argv[1]?.endsWith("seed.js");
 if (estAppelDirect) {
-  seed()
-    .then(() => sqlite.close())
-    .catch((err) => {
+  const organisation = await organisationParDefaut();
+  executerAvecOrganisation(organisation.id, () => seed())
+    .then(() => pgClient.end())
+    .catch(async (err) => {
       console.error(err);
-      sqlite.close();
+      await pgClient.end();
       process.exit(1);
     });
 }

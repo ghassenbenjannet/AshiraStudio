@@ -17,7 +17,6 @@ FROM node:20-bookworm-slim AS production
 
 ENV NODE_ENV=production \
     PORT=3000 \
-    DATABASE_PATH=/app/data/achirah.sqlite \
     UPLOADS_DIR=/app/uploads \
     BACKUPS_DIR=/app/backups
 
@@ -28,16 +27,17 @@ COPY shared/package.json ./shared/
 COPY server/package.json ./server/
 COPY front/package.json ./front/
 
-# better-sqlite3 est un module natif. Les outils ne restent pas dans l'image finale.
+# CDC v4, Lot 3.1 — plus de module natif depuis la bascule PostgreSQL (`postgres`, pur JS) :
+# `pg_dump`/`pg_restore` restent nécessaires pour les sauvegardes réelles (lib/sauvegardes.ts).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 make g++ \
+    && apt-get install -y --no-install-recommends postgresql-client \
     && npm ci --omit=dev \
-    && apt-get purge -y --auto-remove python3 make g++ \
     && rm -rf /var/lib/apt/lists/* /root/.npm
 
 COPY --from=build /app/shared/dist ./shared/dist
 COPY --from=build /app/server/dist ./server/dist
 COPY --from=build /app/server/src/db/migrations ./server/src/db/migrations
+COPY --from=build /app/server/src/db/rls.sql ./server/dist/db/rls.sql
 COPY --from=build /app/server/src/config ./server/src/config
 COPY --from=build /app/front/dist ./front/dist
 
@@ -52,4 +52,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 
-CMD ["sh", "-c", "node dist/db/migrate.js && exec node dist/index.js"]
+# CDC v4, Lot 3.3 — provisionne le rôle applicatif RLS (idempotent) avant les migrations (DDL), puis
+# les politiques RLS (idempotent aussi) avant de démarrer le serveur, qui lui se connecte déjà sous
+# le rôle restreint `achirah_app`.
+CMD ["sh", "-c", "node dist/db/provision-role.js && node dist/db/migrate.js && node dist/db/apply-rls.js && exec node dist/index.js"]

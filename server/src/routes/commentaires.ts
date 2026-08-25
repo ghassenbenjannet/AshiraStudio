@@ -25,7 +25,7 @@ commentairesRoutes.get("/", async (c) => {
 commentairesRoutes.post("/", exigerCapacite("commentaire.creer"), zValidator("json", commentaireInsertSchema), async (c) => {
   const utilisateur = c.get("utilisateur")!;
   const donnees = c.req.valid("json");
-  const cree = await creerCommentaire({ entiteType: donnees.entite_type, entiteId: donnees.entite_id, contenu: donnees.contenu, auteurId: utilisateur.id });
+  const cree = await creerCommentaire({ entiteType: donnees.entite_type, entiteId: donnees.entite_id, contenu: donnees.contenu, auteurId: utilisateur.id, organisationId: utilisateur.organisation_id });
   await enregistrerAudit({ utilisateurId: utilisateur.id, action: "commentaire.creer", entiteType: donnees.entite_type, entiteId: donnees.entite_id, apres: { commentaire_id: cree.id } });
   return c.json({ donnees: cree }, 201);
 });

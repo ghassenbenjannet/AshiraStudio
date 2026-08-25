@@ -811,3 +811,147 @@ article au délai vide → aucune alerte/aucune erreur (SG-05 réel) ; article/c
 proche → tâche d'alerte créée une fois, stable sur deux redémarrages ; ambassadeur `kit_envoye`
 sans post à J+7 → `rappel_post_ambassadeur` seul ; ambassadeur `confirme` → `rappel_kit_a_envoyer`
 seul. `npm run typecheck` propre sur les trois workspaces après le lot complet.
+
+## Lot 2 — Centre de configuration in-app + CR-01 (Vercel AI SDK)
+
+Le cœur de cette session (mots du prompt lui-même) : plus aucun réglage, hormis `DATABASE_PATH` et
+`ENCRYPTION_KEY`, ne vit dans une variable d'environnement. Tout se pilote depuis Paramètres →
+Configuration, sans fichier à éditer ni serveur à redémarrer — le principe directeur du prompt
+(« le propriétaire et son équipe ne sont pas techniques ») appliqué à son endroit le plus sensible.
+
+### Lot 2.1 — `parametre_systeme` : modèle, précédence, cache à chaud
+
+- Table `parametre_systeme` (`server/src/db/schema.ts`), une ligne par clé (`ia.cle_api`,
+  `email.smtp_hote`, …), remplace `configurations_systeme` (un blob JSON par bloc, Étape ⑤) — table
+  supprimée, pas conservée en parallèle : aucun code ne la lisait plus après la bascule.
+- `server/src/lib/config-store.ts` : `REGISTRE_PARAMETRES`, registre déclaratif unique — source de
+  vérité sur les clés qui existent, si elles sont chiffrées (`chiffre: true` → passe par
+  `lib/crypto.ts`, la même clé maîtresse AES-256-GCM que les intégrations Étape ⑥), leur catégorie
+  (le bloc d'écran) et, pour certaines, la variable d'environnement historique acceptée comme valeur
+  de secours. Précédence appliquée dans `lireParametre` : **base > variable d'environnement >
+  défaut**, exactement l'ordre du prompt.
+- Cache mémoire (`Map`, un seul processus — cohérent avec le reste de l'app, mono-processus jusqu'au
+  Lot 3.4) invalidé à **chaque** écriture (`invaliderCacheParametres`) : aucun redémarrage requis,
+  vérifié en Lot 2 gates ci-dessous en changeant `ia.fournisseur` à chaud entre deux appels.
+- Migration `0007_parametre_systeme.sql` écrite à la main (comme la reconstruction de snapshot en
+  Étape 0) : `drizzle-kit generate` propose un choix interactif (recréer vs renommer) qui bloque en
+  environnement non interactif ; la table change de forme (blob → ligne par clé), donc « recréer »
+  était de toute façon le bon choix, pas un renommage. Vérifié après coup : un second
+  `drizzle-kit generate` répond « No schema changes, nothing to migrate » — la migration écrite à la
+  main correspond exactement au schéma.
+
+### Lot 2.2 — `ENCRYPTION_KEY` générée automatiquement
+
+- `server/src/lib/encryption-key.ts` : si `ENCRYPTION_KEY` est absente de l'environnement, 32 octets
+  aléatoires générés une seule fois, écrits dans `server/data/encryption.key` (permissions `600`,
+  hors dépôt), et l'avertissement exact du prompt affiché **une seule fois**, à la génération —
+  jamais aux démarrages suivants où le fichier existe déjà (vérifié : redémarrage à chaud sans le
+  message une deuxième fois, le fichier étant déjà là).
+- `DATABASE_URL`/`DATABASE_PATH` et `ENCRYPTION_KEY` sont les deux seules clés qui ne peuvent
+  structurellement pas passer par `parametre_systeme` (il faut la base pour la lire ; la clé qui
+  chiffre tout le reste ne peut pas se chiffrer elle-même) — documenté dans le registre et le README.
+
+### Lot 2.3 — Écran Paramètres → Configuration
+
+- `server/src/routes/configuration.ts` réécrit : remplace l'ancienne route `/configuration/ia`
+  (seule IA, blob JSON) par des routes génériques pilotées par `REGISTRE_PARAMETRES` — `GET
+  /configuration` (six blocs, RG-CFG1 : `masque` + `defini` pour les clés chiffrées, jamais de
+  valeur), `PUT /configuration/:cle` (écrit une clé, invalide le cache, audite sans jamais la
+  valeur — RG-CFG3), `POST /configuration/:categorie/tester` (RG-CFG4).
+- Le septième bloc du prompt (« Intégrations » — Shopify/Meta/TikTok/GA4) n'a pas de nouvelles clés
+  dans le registre : ces identifiants sont déjà chiffrés par ligne dans la table `integrations`
+  (Étape ⑥), un mécanisme distinct et déjà conforme — le nouvel écran l'intègre en réutilisant tel
+  quel le composant `Integrations` existant (E28) sous une section dédiée, plutôt que de dupliquer un
+  second système de configuration pour la même donnée.
+- « Tester » (RG-CFG4) — un appel réel, proportionné à ce qui est honnêtement vérifiable sans service
+  externe déployé dans cet environnement : IA → vrai appel `genererTourConversation` (prouvé en
+  Lot 2 gates ci-dessous, avec une vraie erreur de fournisseur) ; email → `nodemailer` `.verify()` en
+  mode SMTP (mode « service transactionnel » : aucun fournisseur unique n'est imposé par le CDC, donc
+  aucun test générique honnête n'était possible sans en inventer un — le test répond alors
+  explicitement qu'il n'est pas disponible pour ce mode, RG-PROV, plutôt que de simuler un succès) ;
+  push → validité du format de la paire de clés VAPID (`web-push`) ; stockage → `HeadBucketCommand`
+  S3 réel en mode S3, aucun test réseau en mode local (rien à tester) ; supervision → validation
+  syntaxique du DSN Sentry (aucun événement de test envoyé — Sentry n'a pas de point de contrôle
+  « ping » standard, envoyer un faux événement aurait pollué un compte réel) ; sauvegardes →
+  écriture réelle dans le dossier configuré. Le dernier résultat de test vit en mémoire process
+  uniquement (jamais en base — RG-CFG4 : « Tester n'enregistre rien »), donc remis à zéro à chaque
+  redémarrage : décision la plus simple pour respecter la règle à la lettre.
+- RG-CFG2 vérifié aux deux niveaux : côté serveur (`exigerCapacite("parametres.gerer")` sur les trois
+  routes, confirmé par un 403 réel) et côté écran (l'onglet Configuration n'apparaît même pas dans la
+  liste des onglets pour un rôle `contributeur` — pas seulement masqué par CSS).
+- Écran (`front/src/screens/parametres/Configuration.tsx`) : sept sections repliables
+  (`SectionRepliable`, réutilisé tel quel depuis CR-02), pastille ✓/○/⚠ (`PastilleEtat` existant,
+  mêmes symboles que le CDC demande), un bouton Enregistrer par bloc désactivé tant qu'aucun champ
+  n'a été modifié dans ce bloc (pour ne jamais réécrire une clé inchangée), champs secrets en
+  `type="password"` avec un placeholder « Définie — laisser vide pour conserver (••••4f2a) », jamais
+  pré-remplis avec une valeur réelle. FR/AR complet — y compris les libellés des `<select>`
+  (fournisseur IA, mode SMTP/service, TLS oui/non, stockage local/S3), pris en défaut dans une
+  première passe (repérage visuel en RTL : la corriger a servi ce contrôle) puis corrigés en clés
+  i18n à part entière.
+
+### Lot 2.4 — CR-01 : migration vers le Vercel AI SDK
+
+- `server/src/lib/ia/fournisseur.ts`, seul fichier du serveur qui importe un SDK de fournisseur IA
+  (`@ai-sdk/anthropic`, `@ai-sdk/openai`, `@ai-sdk/google`, `@ai-sdk/mistral`) — `@anthropic-ai/sdk`
+  retiré des dépendances (`npm install` après coup, `grep -r "@anthropic-ai" server/src` ne trouve
+  plus rien). `openrouter`, `ollama` et `openai_compatible` réutilisent `createOpenAI` avec un
+  `baseURL` différent plutôt que d'ajouter un paquet par fournisseur compatible OpenAI.
+- Deux fonctions génériques remplacent tous les appels directs au SDK dans `services/ia/*` :
+  `genererObjet<T>` (remplace l'ancien `appelOutilForce`, utilisé par `generation.ts` et
+  `tendances.ts`) et `genererTourConversation` + `messageResultatsOutils` (remplace la boucle
+  `client.messages.create()` de `boucle.ts` — outils convertis à la volée en `tool()`/`jsonSchema()`
+  du SDK, **sans** fonction `execute`, pour garder l'orchestration manuelle des écritures RG-AGW4
+  exactement comme avant : rien n'exécute un outil sensible avant confirmation humaine).
+  `lib/anthropic.ts` supprimé, pas vidé — plus aucun appelant après la bascule.
+- RG-AGW4 (garde-fous d'écriture), RG-GT2 et le contrat 503 (`ErreurIaIndisponible`) préservés à
+  l'identique : mêmes limites, mêmes messages, seule la façon d'appeler le modèle a changé.
+- L'API exacte du SDK installé (`ai@7.0.78`) a été vérifiée par lecture directe des `.d.ts` avant
+  d'écrire le code (schéma de `generateText`/`generateObject`, forme de `responseMessages`,
+  `ToolResultOutput`, signature de `tool()`) plutôt que reconstituée de mémoire — cette version
+  diffère assez des précédentes pour que deviner ait un vrai coût sur un fichier dont dépendent
+  six services.
+
+### Gates du Lot 2 — tous vérifiés, sur le serveur réel (curl + Playwright, captures conservées)
+
+- Base fraîche (aucune variable d'environnement hormis `DATABASE_PATH`, déjà par défaut) → le
+  serveur démarre, génère `data/encryption.key`, affiche l'avertissement une seule fois ; un second
+  démarrage avec le fichier déjà présent ne le réaffiche pas.
+- Clé IA saisie dans l'écran (compte de test, capacité `parametres.gerer`) → `POST
+  /configuration/ia/tester` déclenche un vrai appel réseau (`API key is invalid.`, une clé factice
+  mais un aller-retour réel avec Anthropic) **sans redémarrage du processus**.
+- Bascule `ia.fournisseur` de `anthropic` à `openai` **depuis l'interface uniquement**, sans
+  redémarrage → le test suivant renvoie une erreur différente (`Forbidden`, spécifique à l'API
+  OpenAI) : preuve que le changement de fournisseur est réellement pris en compte à chaud, pas
+  seulement affiché.
+- `GET /api/configuration` : `curl` + inspection de la réponse JSON confirment qu'aucune valeur en
+  clair n'apparaît pour une clé `chiffre: true` (`valeur: null` systématique, seul `masque` porte un
+  indice tronqué) — vérifié avant et après écriture d'une clé réelle.
+- Compte `contributeur` : 403 sur les trois routes API, et l'onglet Configuration n'existe même pas
+  dans la liste renvoyée par l'écran Paramètres (vérifié par lecture directe du DOM, pas seulement
+  visuel).
+- Journal d'audit (`GET /api/audit`) : les entrées `parametre.modifier` portent `entite_id` (la clé,
+  ex. `ia.cle_api`) et `avant`/`apres` **toujours `null`** — jamais la valeur, ni avant ni après.
+- `grep -r "@anthropic-ai" server/src` → aucune occurrence (le SDK a été entièrement retiré, pas
+  seulement délaissé) ; `npm run typecheck` propre sur les trois workspaces.
+- Studio (`POST /api/brain/question`) sans clé configurée → `503 ia_indisponible`, message exact du
+  prompt ; le reste de l'application (liste des tâches, etc.) continue de répondre `200` dans le même
+  instant — RG-PAR1d intacte avec la nouvelle abstraction.
+- Écran vérifié dans un vrai navigateur (Playwright, Chromium), FR et AR (RTL), en admin et en
+  contributeur — captures dans `/tmp` de la session, non commitées (contiennent une fausse clé de
+  test sans conséquence, mais pas la place d'un artefact binaire dans le dépôt).
+
+### Limites assumées de ce lot (consignées, pas cachées)
+
+- Aucune clé IA réelle n'a été testée en conditions de succès dans cet environnement (pas d'accès
+  sortant vers un fournisseur IA avec des identifiants valides) — seul le chemin d'échec honnête a
+  pu être vérifié en direct. Le mécanisme d'appel est le même sur les deux chemins (succès/échec) ;
+  seule la réponse du fournisseur diffère, ce que Lot 2 ne peut pas simuler sans mentir sur ce qui a
+  été vérifié.
+- Le test « email » ne couvre que le mode SMTP (voir Lot 2.3) ; le test « supervision » ne fait que
+  valider la forme du DSN, pas un aller-retour Sentry réel — les deux décisions sont documentées à
+  leur endroit plutôt que présentées comme des tests complets.
+- Deux comptes de test (`test-admin-lot2@achirah.test`, `test-contrib-lot2@achirah.test`) restent
+  dans la base de développement locale : nécessaires pour vérifier RG-CFG2 sans le mot de passe du
+  compte admin réel de la session, et non supprimables sans casser des contraintes de clé étrangère
+  (journal d'audit, `parametre_systeme.modifie_par`) qu'il n'y avait aucune raison de sacrifier pour
+  un nettoyage cosmétique d'une base locale, jamais commitée.

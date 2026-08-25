@@ -971,5 +971,90 @@
     "ia_configuree": "IA configurée",
     "audits_aujourdhui": "Entrées d'audit aujourd'hui",
     "integrations": "Intégrations"
+  },
+  "configuration": {
+    "titre": "Configuration",
+    "description": "Tous les réglages du Studio — clé IA, emails, notifications push, intégrations, stockage, supervision, sauvegardes. Rien à éditer dans un fichier, rien à redémarrer.",
+    "tester": "Tester",
+    "enregistrer": "Enregistrer",
+    "enregistre": "Configuration enregistrée",
+    "erreur_generique": "Une erreur est survenue",
+    "champ_secret_defini": "Définie — laisser vide pour conserver",
+    "champ_secret_vide": "Non renseignée",
+    "blocs": {
+      "ia": {
+        "titre": "Intelligence artificielle",
+        "aide": "Le mécanisme est agnostique du fournisseur (Anthropic, OpenAI, Google, Mistral, OpenRouter, Ollama en local, ou tout point de terminaison compatible OpenAI) — la qualité des réponses, elle, ne l'est pas."
+      },
+      "email": {
+        "titre": "Emails",
+        "aide": "SMTP ou service transactionnel. Sans configuration, les emails sont journalisés mais non envoyés — le reste de l'application continue de fonctionner normalement."
+      },
+      "push": {
+        "titre": "Notifications push",
+        "aide": "Paire de clés VAPID pour les notifications navigateur."
+      },
+      "stockage": {
+        "titre": "Stockage fichiers",
+        "aide": "Local par défaut (disque du serveur), ou un stockage S3/compatible pour la production."
+      },
+      "supervision": {
+        "titre": "Supervision",
+        "aide": "DSN Sentry optionnel pour la remontée d'erreurs."
+      },
+      "sauvegardes": {
+        "titre": "Sauvegardes",
+        "aide": "Dossier, heure et rétention des sauvegardes automatiques."
+      },
+      "plateformes": {
+        "titre": "Plateformes connectées",
+        "aide": "Ventes, publicité et mesure (Shopify, Meta, TikTok, GA4) — identifiants chiffrés côté serveur."
+      }
+    },
+    "champs": {
+      "ia_fournisseur": "Fournisseur",
+      "ia_modele_principal": "Modèle principal",
+      "ia_modele_leger": "Modèle léger (optionnel)",
+      "ia_cle_api": "Clé API",
+      "ia_base_url": "URL de base (optionnel — fournisseurs compatibles OpenAI)",
+      "ia_plafond_tokens_jour": "Plafond de tokens par jour",
+      "email_mode": "Mode",
+      "email_smtp_hote": "Hôte SMTP",
+      "email_smtp_port": "Port SMTP",
+      "email_smtp_utilisateur": "Utilisateur SMTP",
+      "email_smtp_mot_de_passe": "Mot de passe SMTP",
+      "email_smtp_tls": "TLS",
+      "email_expediteur": "Adresse d'expédition",
+      "email_service_nom": "Nom du service transactionnel",
+      "email_service_cle_api": "Clé API du service",
+      "push_vapid_cle_publique": "Clé publique VAPID",
+      "push_vapid_cle_privee": "Clé privée VAPID",
+      "push_contact_email": "Email de contact VAPID",
+      "stockage_mode": "Mode",
+      "stockage_endpoint": "Point de terminaison (S3 compatible)",
+      "stockage_bucket": "Bucket",
+      "stockage_region": "Région",
+      "stockage_cle_acces": "Clé d'accès",
+      "stockage_cle_secrete": "Clé secrète",
+      "supervision_sentry_dsn": "DSN Sentry",
+      "supervision_niveau_logs": "Niveau de logs",
+      "sauvegardes_dossier": "Dossier",
+      "sauvegardes_heure": "Heure (HH:MM)",
+      "sauvegardes_retention_jours": "Rétention (jours)"
+    },
+    "options": {
+      "ia_fournisseur": {
+        "anthropic": "Anthropic",
+        "openai": "OpenAI",
+        "google": "Google",
+        "mistral": "Mistral",
+        "openrouter": "OpenRouter",
+        "ollama": "Ollama (local)",
+        "openai_compatible": "Compatible OpenAI (URL personnalisée)"
+      },
+      "email_mode": { "smtp": "SMTP", "service": "Service transactionnel" },
+      "email_smtp_tls": { "true": "Oui", "false": "Non" },
+      "stockage_mode": { "local": "Local (disque du serveur)", "s3": "S3 / compatible S3" }
+    }
   }
 }

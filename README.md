@@ -19,7 +19,7 @@ d'ambiguïté résiduelle du CDC.
 npm install
 
 # Base de données
-cp server/.env.example server/.env   # renseigner ENCRYPTION_KEY au minimum
+cp server/.env.example server/.env   # rien à renseigner pour démarrer — voir plus bas
 npm run db:migrate
 
 # Deux processus séparés en dev (le serveur sert le build en prod uniquement)
@@ -31,6 +31,13 @@ Au premier lancement, ouvrir le front : l'écran d'initialisation crée le premi
 applique le seed complet (référentiels, campagne Chapitre I — AL AWWAL, 14 articles, tâches,
 lexique initial — Annexes A-F du CDC).
 
+**Aucune variable d'environnement n'est requise pour démarrer** (`DATABASE_PATH` mise à part, déjà
+par défaut) : au tout premier démarrage, si `ENCRYPTION_KEY` est absente, elle est générée
+automatiquement (`server/data/encryption.key`) et affichée une seule fois dans les logs —
+**sauvegardez-la**, elle chiffre tous les identifiants enregistrés depuis l'interface. Tout le
+reste (clé IA, SMTP, notifications push, intégrations Shopify/Meta/TikTok/GA4, stockage fichiers,
+supervision, sauvegardes) se configure ensuite dans **Paramètres → Configuration**, sans redémarrage.
+
 ## Démarrer avec Docker
 
 Docker Compose construit le front et le serveur dans une image unique. La base SQLite, les fichiers
@@ -39,7 +46,6 @@ automatiquement avant chaque démarrage du serveur.
 
 ```bash
 cp .env.docker.example .env
-# Renseigner ENCRYPTION_KEY dans .env (32 octets / 64 caractères hexadécimaux)
 docker compose up --build -d
 ```
 
@@ -49,9 +55,11 @@ L'application est ensuite disponible sur <http://localhost:3000>. Pour suivre so
 docker compose logs -f app
 ```
 
-Après la création du premier compte, les connexions Shopify/Meta/TikTok/GA4 et la clé Anthropic se
-configurent dans **Paramètres → Intégrations & IA** avec un compte administrateur. Ces secrets sont
-chiffrés en base ; seule la clé maîtresse `ENCRYPTION_KEY` reste dans le fichier `.env` du serveur.
+Au premier démarrage, une clé de chiffrement est générée automatiquement et affichée une seule fois
+dans ces logs — sauvegardez-la (voir plus haut). Après la création du premier compte, tout le reste
+(clé IA, emails, notifications push, connexions Shopify/Meta/TikTok/GA4, stockage fichiers,
+supervision, sauvegardes) se configure dans **Paramètres → Configuration** avec un compte
+administrateur — ces secrets sont chiffrés en base, jamais dans `.env`.
 
 Pour arrêter l'application sans effacer ses données :
 

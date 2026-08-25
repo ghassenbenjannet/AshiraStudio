@@ -8,7 +8,7 @@ import { agentsCampagne } from "../db/schema.js";
 import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
-import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { ErreurIaIndisponible } from "../lib/ia/fournisseur.js";
 import { testerAgent } from "../services/ia/boucle.js";
 import type { AppEnv } from "../types.js";
 

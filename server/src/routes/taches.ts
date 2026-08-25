@@ -25,7 +25,7 @@ import { genererVevent, genererIcsUnitaire } from "../lib/ics.js";
 import { genererCallSheetPdf } from "../lib/callsheet-pdf.js";
 import { ErreurMetier } from "../services/catalogue.js";
 import { genererBriefShooting } from "../services/ia/generation.js";
-import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { ErreurIaIndisponible } from "../lib/ia/fournisseur.js";
 import { creerNotification } from "../lib/notifications.js";
 import type { AppEnv } from "../types.js";
 

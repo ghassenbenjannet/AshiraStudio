@@ -971,5 +971,90 @@
     "ia_configuree": "الذكاء الاصطناعي مُهيّأ",
     "audits_aujourdhui": "إدخالات التدقيق اليوم",
     "integrations": "التكاملات"
+  },
+  "configuration": {
+    "titre": "الإعدادات",
+    "description": "كل إعدادات الاستوديو — مفتاح الذكاء الاصطناعي، البريد الإلكتروني، الإشعارات، التكاملات، التخزين، المراقبة، النسخ الاحتياطي. لا حاجة لتحرير ملف أو إعادة التشغيل.",
+    "tester": "اختبار",
+    "enregistrer": "حفظ",
+    "enregistre": "تم حفظ الإعدادات",
+    "erreur_generique": "حدث خطأ",
+    "champ_secret_defini": "محددة — اتركها فارغة للاحتفاظ بها",
+    "champ_secret_vide": "غير محددة",
+    "blocs": {
+      "ia": {
+        "titre": "الذكاء الاصطناعي",
+        "aide": "الآلية محايدة تجاه المزوّد (Anthropic وOpenAI وGoogle وMistral وOpenRouter وOllama محليًا، أو أي نقطة نهاية متوافقة مع OpenAI) — أما جودة الردود فليست محايدة."
+      },
+      "email": {
+        "titre": "البريد الإلكتروني",
+        "aide": "SMTP أو خدمة إرسال معاملات. بدون إعداد، تُسجَّل الرسائل دون إرسالها — تستمر بقية التطبيق في العمل بشكل طبيعي."
+      },
+      "push": {
+        "titre": "إشعارات الدفع",
+        "aide": "زوج مفاتيح VAPID لإشعارات المتصفح."
+      },
+      "stockage": {
+        "titre": "تخزين الملفات",
+        "aide": "محلي افتراضيًا (قرص الخادم)، أو تخزين S3 أو متوافق معه للإنتاج."
+      },
+      "supervision": {
+        "titre": "المراقبة",
+        "aide": "DSN اختياري لـ Sentry لتتبع الأخطاء."
+      },
+      "sauvegardes": {
+        "titre": "النسخ الاحتياطي",
+        "aide": "المجلد والوقت ومدة الاحتفاظ بالنسخ الاحتياطية التلقائية."
+      },
+      "plateformes": {
+        "titre": "المنصات المتصلة",
+        "aide": "المبيعات والإعلانات والقياس (Shopify وMeta وTikTok وGA4) — بيانات الاعتماد مشفّرة على الخادم."
+      }
+    },
+    "champs": {
+      "ia_fournisseur": "المزوّد",
+      "ia_modele_principal": "النموذج الرئيسي",
+      "ia_modele_leger": "نموذج خفيف (اختياري)",
+      "ia_cle_api": "مفتاح API",
+      "ia_base_url": "رابط أساسي (اختياري — للمزوّدين المتوافقين مع OpenAI)",
+      "ia_plafond_tokens_jour": "الحد الأقصى للرموز يوميًا",
+      "email_mode": "الوضع",
+      "email_smtp_hote": "خادم SMTP",
+      "email_smtp_port": "منفذ SMTP",
+      "email_smtp_utilisateur": "مستخدم SMTP",
+      "email_smtp_mot_de_passe": "كلمة مرور SMTP",
+      "email_smtp_tls": "TLS",
+      "email_expediteur": "عنوان الإرسال",
+      "email_service_nom": "اسم خدمة الإرسال",
+      "email_service_cle_api": "مفتاح API للخدمة",
+      "push_vapid_cle_publique": "مفتاح VAPID العام",
+      "push_vapid_cle_privee": "مفتاح VAPID الخاص",
+      "push_contact_email": "بريد التواصل لـ VAPID",
+      "stockage_mode": "الوضع",
+      "stockage_endpoint": "نقطة النهاية (متوافقة مع S3)",
+      "stockage_bucket": "الحاوية (Bucket)",
+      "stockage_region": "المنطقة",
+      "stockage_cle_acces": "مفتاح الوصول",
+      "stockage_cle_secrete": "المفتاح السري",
+      "supervision_sentry_dsn": "DSN لـ Sentry",
+      "supervision_niveau_logs": "مستوى السجلات",
+      "sauvegardes_dossier": "المجلد",
+      "sauvegardes_heure": "الوقت (HH:MM)",
+      "sauvegardes_retention_jours": "مدة الاحتفاظ (أيام)"
+    },
+    "options": {
+      "ia_fournisseur": {
+        "anthropic": "Anthropic",
+        "openai": "OpenAI",
+        "google": "Google",
+        "mistral": "Mistral",
+        "openrouter": "OpenRouter",
+        "ollama": "Ollama (محليًا)",
+        "openai_compatible": "متوافق مع OpenAI (رابط مخصص)"
+      },
+      "email_mode": { "smtp": "SMTP", "service": "خدمة إرسال معاملات" },
+      "email_smtp_tls": { "true": "نعم", "false": "لا" },
+      "stockage_mode": { "local": "محلي (قرص الخادم)", "s3": "S3 أو متوافق معه" }
+    }
   }
 }

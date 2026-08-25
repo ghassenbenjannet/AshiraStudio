@@ -20,7 +20,7 @@ import {
   ErreurMetier,
 } from "../services/contenus.js";
 import { noterContenu } from "../services/ia/generation.js";
-import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { ErreurIaIndisponible } from "../lib/ia/fournisseur.js";
 import type { AppEnv } from "../types.js";
 
 export const contenusRoutes = new Hono<AppEnv>();

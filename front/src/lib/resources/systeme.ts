@@ -18,12 +18,27 @@ export interface StatutObservabilite {
   ia_configuree: boolean;
 }
 
-export interface ConfigurationIa {
-  configuree: boolean;
-  fournisseur: "anthropic";
-  modele: string;
-  budget_tokens_jour: number;
-  cle_masquee: string | null;
+export interface ParametreConfiguration {
+  cle: string;
+  chiffre: boolean;
+  defini: boolean;
+  masque: string | null;
+  valeur: string | null;
+}
+
+export interface ResultatTestConfiguration {
+  ok: boolean;
+  message: string;
+  teste_le: string;
+}
+
+export type CategorieConfiguration = "ia" | "email" | "push" | "stockage" | "supervision" | "sauvegardes";
+
+export interface BlocConfiguration {
+  categorie: CategorieConfiguration;
+  etat: "configure" | "non_configure" | "test_echoue";
+  dernier_test: ResultatTestConfiguration | null;
+  parametres: ParametreConfiguration[];
 }
 
 export interface FiltresAudit {
@@ -53,11 +68,14 @@ export const clientObservabilite = {
   statut: () => api<{ donnees: StatutObservabilite }>("/observabilite/statut").then((r) => r.donnees),
 };
 
-export const clientConfigurationIa = {
-  lire: () => api<{ donnees: ConfigurationIa }>("/configuration/ia").then((r) => r.donnees),
-  enregistrer: (entree: { api_key?: string; modele: string; budget_tokens_jour: number }) =>
-    api<{ donnees: ConfigurationIa }>("/configuration/ia", { method: "PUT", body: entree }).then((r) => r.donnees),
-  desactiver: () => api<void>("/configuration/ia", { method: "DELETE" }),
+/**
+ * CDC v4, Lot 2.3 (§8.3) — centre de configuration in-app : tous les réglages (hormis
+ * `DATABASE_URL`/`ENCRYPTION_KEY`) se gèrent ici, sans fichier ni redémarrage.
+ */
+export const clientConfiguration = {
+  lire: () => api<{ donnees: { blocs: BlocConfiguration[] } }>("/configuration").then((r) => r.donnees.blocs),
+  ecrire: (cle: string, valeur: string | null) => api<void>(`/configuration/${cle}`, { method: "PUT", body: { valeur } }),
+  tester: (categorie: CategorieConfiguration) => api<{ donnees: ResultatTestConfiguration }>(`/configuration/${categorie}/tester`, { method: "POST" }).then((r) => r.donnees),
 };
 
 export const clientExports = {

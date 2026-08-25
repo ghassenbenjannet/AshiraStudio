@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { erreurApi } from "../lib/http.js";
-import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { ErreurIaIndisponible } from "../lib/ia/fournisseur.js";
 import { briefQuotidien } from "../services/ia/generation.js";
 import { poserQuestion } from "../services/ia/boucle.js";
 import type { AppEnv } from "../types.js";

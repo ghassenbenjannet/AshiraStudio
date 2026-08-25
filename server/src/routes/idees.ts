@@ -8,7 +8,7 @@ import { erreurApi } from "../lib/http.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
 import { genererIdees } from "../services/ia/generation.js";
-import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { ErreurIaIndisponible } from "../lib/ia/fournisseur.js";
 import type { AppEnv } from "../types.js";
 
 export const ideesRoutes = new Hono<AppEnv>();

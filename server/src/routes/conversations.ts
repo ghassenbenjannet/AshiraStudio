@@ -6,7 +6,7 @@ import { messageEnvoiSchema } from "@achirah/shared";
 import { db } from "../db/client.js";
 import { conversations, messages, actionsAgent } from "../db/schema.js";
 import { erreurApi } from "../lib/http.js";
-import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { ErreurIaIndisponible } from "../lib/ia/fournisseur.js";
 import { ErreurOutil } from "../services/ia/outils.js";
 import { envoyerMessage, confirmerAction, annulerAction } from "../services/ia/boucle.js";
 import type { AppEnv } from "../types.js";

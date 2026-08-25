@@ -21,7 +21,7 @@ import { enregistrerAudit } from "../lib/audit.js";
 import { exigerCapacite } from "../middleware/rbac.js";
 import { genererRecommandations } from "../services/grow.js";
 import { rechercherTendances, adapterTendance } from "../services/ia/tendances.js";
-import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { ErreurIaIndisponible } from "../lib/ia/fournisseur.js";
 import type { AppEnv } from "../types.js";
 
 export const growRoutes = new Hono<AppEnv>();

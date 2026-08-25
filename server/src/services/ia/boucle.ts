@@ -2,11 +2,10 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { eq, and, gte, asc } from "drizzle-orm";
-import type Anthropic from "@anthropic-ai/sdk";
 import { db } from "../../db/client.js";
 import { conversations, messages, assets, actionsAgent, audits, agentsCampagne } from "../../db/schema.js";
 import { env } from "../../lib/env.js";
-import { clientAnthropic, MODELE_IA, verifierBudgetJournalier, ErreurIaIndisponible } from "../../lib/anthropic.js";
+import { genererTourConversation, messageUtilisateur, messageResultatsOutils, verifierBudgetJournalier, ErreurIaIndisponible, type ModelMessage, type ImageEntree } from "../../lib/ia/fournisseur.js";
 import { construireSystemPrompt } from "./contexte.js";
 import { trouverOutil, tousLesOutils, type ContexteOutil } from "./outils.js";
 import { enregistrerAudit } from "../../lib/audit.js";
@@ -23,7 +22,7 @@ const MIME_PAR_EXTENSION: Record<string, "image/jpeg" | "image/png" | "image/web
   ".webp": "image/webp",
 };
 
-async function imageEnBase64(assetId: string): Promise<Anthropic.ImageBlockParam | null> {
+async function imageEnBase64(assetId: string): Promise<ImageEntree | null> {
   const [asset] = await db.select().from(assets).where(eq(assets.id, assetId)).limit(1);
   if (!asset || !asset.fichier_url.startsWith("/uploads/")) return null;
   const extension = asset.fichier_url.slice(asset.fichier_url.lastIndexOf("."));
@@ -31,7 +30,7 @@ async function imageEnBase64(assetId: string): Promise<Anthropic.ImageBlockParam
   if (!mediaType) return null;
   try {
     const donnees = await readFile(join(env.uploadsDir, asset.fichier_url.slice("/uploads/".length)));
-    return { type: "image", source: { type: "base64", media_type: mediaType, data: donnees.toString("base64") } };
+    return { base64: donnees.toString("base64"), mediaType };
   } catch {
     return null;
   }
@@ -54,16 +53,20 @@ async function ecrituresAujourdhui(utilisateurId: string): Promise<number> {
   return lignes.length;
 }
 
-async function messagesAnthropic(conversationId: string): Promise<Anthropic.MessageParam[]> {
+async function messagesConversation(conversationId: string): Promise<ModelMessage[]> {
   const lignes = await db.select().from(messages).where(eq(messages.conversation_id, conversationId)).orderBy(asc(messages.created_at));
-  const resultat: Anthropic.MessageParam[] = [];
+  const resultat: ModelMessage[] = [];
   for (const m of lignes) {
-    const blocs: Anthropic.MessageParam["content"] = m.contenu ? [{ type: "text", text: m.contenu }] : [];
-    for (const assetId of m.images) {
-      const bloc = await imageEnBase64(assetId);
-      if (bloc) (blocs as any[]).push(bloc);
+    if (m.role === "user") {
+      const images: ImageEntree[] = [];
+      for (const assetId of m.images) {
+        const image = await imageEnBase64(assetId);
+        if (image) images.push(image);
+      }
+      resultat.push(messageUtilisateur(m.contenu ?? "", images));
+    } else {
+      resultat.push({ role: "assistant", content: m.contenu || "(vide)" });
     }
-    resultat.push({ role: m.role === "user" ? "user" : "assistant", content: blocs.length ? blocs : "(vide)" });
   }
   return resultat;
 }
@@ -117,8 +120,7 @@ export async function envoyerMessage(conversationId: string, texteUtilisateur: s
   const systemPrompt = await construireSystemPrompt({ agentId: agentIdEffectif, campagneId: options.campagneId });
   const outilsDisponibles = tousLesOutils().filter((o) => outilsActives.length === 0 || outilsActives.includes(o.name));
 
-  const client = clientAnthropic();
-  let historique = await messagesAnthropic(conversationId);
+  let historique = await messagesConversation(conversationId);
   let tokensTotal = 0;
   let ecrituresCeTour = 0;
   const actionsDirectes: ResultatTour["actionsDirectes"] = [];
@@ -127,70 +129,61 @@ export async function envoyerMessage(conversationId: string, texteUtilisateur: s
   let texteFinal = "";
 
   for (let tour = 0; tour < TOURS_MAX_BOUCLE; tour++) {
-    const reponse = await client.messages.create({
-      model: MODELE_IA,
-      max_tokens: 2048,
-      system: systemPrompt,
-      tools: outilsDisponibles as Anthropic.Tool[],
-      messages: historique,
-    });
-    tokensTotal += reponse.usage.input_tokens + reponse.usage.output_tokens;
+    const reponse = await genererTourConversation({ system: systemPrompt, messages: historique, outils: outilsDisponibles, maxOutputTokens: 2048 });
+    tokensTotal += reponse.tokens;
+    texteFinal = reponse.texte;
 
-    const blocsTexte = reponse.content.filter((b): b is Anthropic.TextBlock => b.type === "text");
-    texteFinal = blocsTexte.map((b) => b.text).join("\n");
+    if (reponse.appelsOutils.length === 0) break;
 
-    if (reponse.stop_reason !== "tool_use") break;
-
-    historique = [...historique, { role: "assistant", content: reponse.content as any }];
-    const resultatsOutils: Anthropic.ToolResultBlockParam[] = [];
+    historique = [...historique, ...reponse.nouveauxMessages];
+    const resultatsOutils: { id: string; nom: string; contenu: string; erreur?: boolean }[] = [];
     const groupeId = randomUUID();
 
-    for (const bloc of reponse.content) {
-      if (bloc.type !== "tool_use") continue;
-      const outil = trouverOutil(bloc.name);
+    for (const appel of reponse.appelsOutils) {
+      const outil = trouverOutil(appel.nom);
       if (!outil) {
-        resultatsOutils.push({ type: "tool_result", tool_use_id: bloc.id, content: "Outil inconnu.", is_error: true });
+        resultatsOutils.push({ id: appel.id, nom: appel.nom, contenu: "Outil inconnu.", erreur: true });
         continue;
       }
       try {
         if (outil.type === "lecture") {
-          const resultat = await outil.executer(bloc.input, ctx);
-          resultatsOutils.push({ type: "tool_result", tool_use_id: bloc.id, content: JSON.stringify(resultat).slice(0, 8000) });
+          const resultat = await outil.executer(appel.entree, ctx);
+          resultatsOutils.push({ id: appel.id, nom: appel.nom, contenu: JSON.stringify(resultat).slice(0, 8000) });
           continue;
         }
 
         // Outils d'écriture : gardes RG-AGW4 avant toute exécution/proposition.
         ecrituresCeTour++;
         if (ecrituresCeTour > ECRITURES_MAX_PAR_TOUR) {
-          resultatsOutils.push({ type: "tool_result", tool_use_id: bloc.id, content: `Limite de ${ECRITURES_MAX_PAR_TOUR} écritures par tour atteinte — arrête-toi ici et dis-le à l'utilisateur.`, is_error: true });
+          resultatsOutils.push({ id: appel.id, nom: appel.nom, contenu: `Limite de ${ECRITURES_MAX_PAR_TOUR} écritures par tour atteinte — arrête-toi ici et dis-le à l'utilisateur.`, erreur: true });
           continue;
         }
         const dejaAujourdhui = await ecrituresAujourdhui(ctx.utilisateurId);
         if (dejaAujourdhui + ecrituresCeTour > ECRITURES_MAX_PAR_JOUR) {
-          resultatsOutils.push({ type: "tool_result", tool_use_id: bloc.id, content: `Limite de ${ECRITURES_MAX_PAR_JOUR} écritures/jour atteinte pour cet utilisateur — arrête-toi et dis-le.`, is_error: true });
+          resultatsOutils.push({ id: appel.id, nom: appel.nom, contenu: `Limite de ${ECRITURES_MAX_PAR_JOUR} écritures/jour atteinte pour cet utilisateur — arrête-toi et dis-le.`, erreur: true });
           continue;
         }
 
         if (outil.type === "direct") {
-          const { entiteType, entiteId, resultat } = await outil.executer(bloc.input, ctx);
+          const { entiteType, entiteId, resultat } = await outil.executer(appel.entree, ctx);
           await enregistrerAudit({ utilisateurId: ctx.utilisateurId, action: `agent.${outil.nom}`, entiteType, entiteId, apres: resultat as any, viaAgent: true, conversationId });
           actionsDirectes.push({ outil: outil.nom, entiteType, entiteId });
-          resultatsOutils.push({ type: "tool_result", tool_use_id: bloc.id, content: `Créé (⚡ agent) : ${JSON.stringify(resultat).slice(0, 2000)}` });
+          resultatsOutils.push({ id: appel.id, nom: appel.nom, contenu: `Créé (⚡ agent) : ${JSON.stringify(resultat).slice(0, 2000)}` });
         } else {
-          const { avant, apres } = await outil.previsualiser(bloc.input, ctx);
+          const { avant, apres } = await outil.previsualiser(appel.entree, ctx);
           const [action] = (await db
             .insert(actionsAgent)
-            .values({ conversation_id: conversationId, message_id: "", groupe_id: groupeId, outil: outil.nom, entree: bloc.input as Record<string, unknown>, avant: avant as any, apres_previsualise: apres as any, utilisateur_id: ctx.utilisateurId })
+            .values({ conversation_id: conversationId, message_id: "", groupe_id: groupeId, outil: outil.nom, entree: appel.entree, avant: avant as any, apres_previsualise: apres as any, utilisateur_id: ctx.utilisateurId })
             .returning()) as any[];
-          actionsEnAttente.push({ id: action.id, outil: outil.nom, entree: bloc.input as Record<string, unknown>, avant, apres_previsualise: apres });
-          resultatsOutils.push({ type: "tool_result", tool_use_id: bloc.id, content: "Proposition enregistrée, en attente de confirmation de l'utilisateur (carte de confirmation affichée)." });
+          actionsEnAttente.push({ id: action.id, outil: outil.nom, entree: appel.entree, avant, apres_previsualise: apres });
+          resultatsOutils.push({ id: appel.id, nom: appel.nom, contenu: "Proposition enregistrée, en attente de confirmation de l'utilisateur (carte de confirmation affichée)." });
         }
       } catch (err) {
-        resultatsOutils.push({ type: "tool_result", tool_use_id: bloc.id, content: err instanceof Error ? err.message : "Erreur outil", is_error: true });
+        resultatsOutils.push({ id: appel.id, nom: appel.nom, contenu: err instanceof Error ? err.message : "Erreur outil", erreur: true });
       }
     }
 
-    historique = [...historique, { role: "user", content: resultatsOutils }];
+    historique = [...historique, messageResultatsOutils(resultatsOutils)];
   }
 
   const [messageAssistant] = (await db.insert(messages).values({ conversation_id: conversationId, role: "assistant", contenu: texteFinal, tokens: tokensTotal }).returning()) as any[];
@@ -214,31 +207,28 @@ export async function testerAgent(agentId: string, texteUtilisateur: string, ctx
   const systemPrompt = await construireSystemPrompt({ agentId, campagneId: agent.campagne_id });
   const outilsLectureSeule = tousLesOutils().filter((o) => trouverOutil(o.name)?.type === "lecture");
 
-  const client = clientAnthropic();
-  let historique: Anthropic.MessageParam[] = [{ role: "user", content: texteUtilisateur }];
+  let historique: ModelMessage[] = [messageUtilisateur(texteUtilisateur)];
   let texteFinal = "";
   for (let tour = 0; tour < TOURS_MAX_BOUCLE; tour++) {
-    const reponse = await client.messages.create({ model: MODELE_IA, max_tokens: 2048, system: systemPrompt, tools: outilsLectureSeule as Anthropic.Tool[], messages: historique });
-    const blocsTexte = reponse.content.filter((b): b is Anthropic.TextBlock => b.type === "text");
-    texteFinal = blocsTexte.map((b) => b.text).join("\n");
-    if (reponse.stop_reason !== "tool_use") break;
-    historique = [...historique, { role: "assistant", content: reponse.content as any }];
-    const resultats: Anthropic.ToolResultBlockParam[] = [];
-    for (const bloc of reponse.content) {
-      if (bloc.type !== "tool_use") continue;
-      const outil = trouverOutil(bloc.name);
+    const reponse = await genererTourConversation({ system: systemPrompt, messages: historique, outils: outilsLectureSeule, maxOutputTokens: 2048 });
+    texteFinal = reponse.texte;
+    if (reponse.appelsOutils.length === 0) break;
+    historique = [...historique, ...reponse.nouveauxMessages];
+    const resultats: { id: string; nom: string; contenu: string; erreur?: boolean }[] = [];
+    for (const appel of reponse.appelsOutils) {
+      const outil = trouverOutil(appel.nom);
       if (!outil || outil.type !== "lecture") {
-        resultats.push({ type: "tool_result", tool_use_id: bloc.id, content: "Outil d'écriture désactivé en mode test (RG-AGC2).", is_error: true });
+        resultats.push({ id: appel.id, nom: appel.nom, contenu: "Outil d'écriture désactivé en mode test (RG-AGC2).", erreur: true });
         continue;
       }
       try {
-        const resultat = await outil.executer(bloc.input, ctx);
-        resultats.push({ type: "tool_result", tool_use_id: bloc.id, content: JSON.stringify(resultat).slice(0, 8000) });
+        const resultat = await outil.executer(appel.entree, ctx);
+        resultats.push({ id: appel.id, nom: appel.nom, contenu: JSON.stringify(resultat).slice(0, 8000) });
       } catch (err) {
-        resultats.push({ type: "tool_result", tool_use_id: bloc.id, content: err instanceof Error ? err.message : "Erreur outil", is_error: true });
+        resultats.push({ id: appel.id, nom: appel.nom, contenu: err instanceof Error ? err.message : "Erreur outil", erreur: true });
       }
     }
-    historique = [...historique, { role: "user", content: resultats }];
+    historique = [...historique, messageResultatsOutils(resultats)];
   }
   return { contenu: texteFinal };
 }
@@ -273,31 +263,28 @@ export async function poserQuestion(question: string, ctx: ContexteOutil, campag
   const systemPrompt = await construireSystemPrompt({ campagneId });
   const outilsLectureSeule = tousLesOutils().filter((o) => trouverOutil(o.name)?.type === "lecture");
 
-  const client = clientAnthropic();
-  let historique: Anthropic.MessageParam[] = [{ role: "user", content: question }];
+  let historique: ModelMessage[] = [messageUtilisateur(question)];
   let texteFinal = "";
   for (let tour = 0; tour < TOURS_MAX_BOUCLE; tour++) {
-    const reponse = await client.messages.create({ model: MODELE_IA, max_tokens: 1500, system: systemPrompt, tools: outilsLectureSeule as Anthropic.Tool[], messages: historique });
-    const blocsTexte = reponse.content.filter((b): b is Anthropic.TextBlock => b.type === "text");
-    texteFinal = blocsTexte.map((b) => b.text).join("\n");
-    if (reponse.stop_reason !== "tool_use") break;
-    historique = [...historique, { role: "assistant", content: reponse.content as any }];
-    const resultats: Anthropic.ToolResultBlockParam[] = [];
-    for (const bloc of reponse.content) {
-      if (bloc.type !== "tool_use") continue;
-      const outil = trouverOutil(bloc.name);
+    const reponse = await genererTourConversation({ system: systemPrompt, messages: historique, outils: outilsLectureSeule, maxOutputTokens: 1500 });
+    texteFinal = reponse.texte;
+    if (reponse.appelsOutils.length === 0) break;
+    historique = [...historique, ...reponse.nouveauxMessages];
+    const resultats: { id: string; nom: string; contenu: string; erreur?: boolean }[] = [];
+    for (const appel of reponse.appelsOutils) {
+      const outil = trouverOutil(appel.nom);
       if (!outil || outil.type !== "lecture") {
-        resultats.push({ type: "tool_result", tool_use_id: bloc.id, content: "Outil indisponible dans ce contexte.", is_error: true });
+        resultats.push({ id: appel.id, nom: appel.nom, contenu: "Outil indisponible dans ce contexte.", erreur: true });
         continue;
       }
       try {
-        const resultat = await outil.executer(bloc.input, ctx);
-        resultats.push({ type: "tool_result", tool_use_id: bloc.id, content: JSON.stringify(resultat).slice(0, 8000) });
+        const resultat = await outil.executer(appel.entree, ctx);
+        resultats.push({ id: appel.id, nom: appel.nom, contenu: JSON.stringify(resultat).slice(0, 8000) });
       } catch (err) {
-        resultats.push({ type: "tool_result", tool_use_id: bloc.id, content: err instanceof Error ? err.message : "Erreur outil", is_error: true });
+        resultats.push({ id: appel.id, nom: appel.nom, contenu: err instanceof Error ? err.message : "Erreur outil", erreur: true });
       }
     }
-    historique = [...historique, { role: "user", content: resultats }];
+    historique = [...historique, messageResultatsOutils(resultats)];
   }
   return { contenu: texteFinal };
 }

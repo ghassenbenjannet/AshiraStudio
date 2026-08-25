@@ -50,6 +50,13 @@
       "when": 1787616972574,
       "tag": "0006_smooth_wendell_vaughn",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1787618782467,
+      "tag": "0007_parametre_systeme",
+      "breakpoints": true
     }
   ]
 }

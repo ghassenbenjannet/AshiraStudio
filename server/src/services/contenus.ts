@@ -3,7 +3,7 @@ import { db } from "../db/client.js";
 import { contenus, contenuVersions, assets } from "../db/schema.js";
 import { enregistrerAudit } from "../lib/audit.js";
 import { noterContenu } from "./ia/generation.js";
-import { ErreurIaIndisponible } from "../lib/anthropic.js";
+import { ErreurIaIndisponible } from "../lib/ia/fournisseur.js";
 import { creerNotification, detenteursApprobation } from "../lib/notifications.js";
 
 export class ErreurMetier extends Error {

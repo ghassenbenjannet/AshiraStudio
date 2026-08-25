@@ -462,12 +462,21 @@ export const integrations = sqliteTable("integrations", {
   derniere_erreur: text("derniere_erreur"),
 }, (t) => ({ plateformeIdx: uniqueIndex("integrations_plateforme_idx").on(t.plateforme) }));
 
-/** Paramètres sensibles saisis par un administrateur et chiffrés avec la clé maîtresse serveur. */
-export const configurationsSysteme = sqliteTable("configurations_systeme", {
-  cle: text("cle").primaryKey(),
-  valeur_chiffree: text("valeur_chiffree").notNull(),
-  updated_at: text("updated_at").notNull().$defaultFn(isoNow).$onUpdateFn(isoNow),
-});
+/**
+ * CDC v4, Lot 2.1 — centre de configuration in-app : un paramètre par clé (`ia.cle_api`,
+ * `email.smtp_hote`, …), `chiffre` marque ceux passés par `lib/crypto.ts` (clé maîtresse serveur,
+ * jamais renvoyés en clair — RG-CFG1). Remplace `configurations_systeme` (un blob JSON par bloc) —
+ * voir DECISIONS.md pour la bascule.
+ */
+export const parametresSysteme = sqliteTable("parametre_systeme", {
+  id: uuid(),
+  cle: text("cle").notNull(),
+  valeur: text("valeur"),
+  chiffre: bool("chiffre"),
+  categorie: text("categorie").notNull(),
+  modifie_par: text("modifie_par").references(() => utilisateurs.id),
+  modifie_le: text("modifie_le").notNull().$defaultFn(isoNow).$onUpdateFn(isoNow),
+}, (t) => ({ cleIdx: uniqueIndex("parametre_systeme_cle_idx").on(t.cle) }));
 
 // ───────────────────────── 4.9 Collaboration, notifications, audit, conversations ─────────────────────────
 

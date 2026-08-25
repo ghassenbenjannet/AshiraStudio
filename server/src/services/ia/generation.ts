@@ -1,29 +1,13 @@
 import { eq, inArray } from "drizzle-orm";
-import type Anthropic from "@anthropic-ai/sdk";
 import { DIMENSIONS_GATE, type ScoreDetailDimension } from "@achirah/shared";
 import { db } from "../../db/client.js";
 import { contenus, articles, articleColoris, gammes, taches, shootings, looks, lookItems, poses, articleSkus, coloris, assets } from "../../db/schema.js";
-import { clientAnthropic, MODELE_IA, verifierBudgetJournalier, ErreurIaIndisponible } from "../../lib/anthropic.js";
+import { genererObjet, verifierBudgetJournalier, ErreurIaIndisponible, type ImageEntree } from "../../lib/ia/fournisseur.js";
 import { construireSystemPrompt, lireConfig } from "./contexte.js";
 import { enregistrerAudit } from "../../lib/audit.js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { env } from "../../lib/env.js";
-
-async function appelOutilForce<T>(system: string, message: Anthropic.MessageParam["content"], nomOutil: string, schema: Record<string, unknown>, maxTokens = 1024): Promise<{ donnees: T; tokens: number }> {
-  const client = clientAnthropic();
-  const reponse = await client.messages.create({
-    model: MODELE_IA,
-    max_tokens: maxTokens,
-    system,
-    tools: [{ name: nomOutil, description: "Rendu structuré de la réponse.", input_schema: schema as Anthropic.Tool.InputSchema }],
-    tool_choice: { type: "tool", name: nomOutil },
-    messages: [{ role: "user", content: message }],
-  });
-  const bloc = reponse.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use" && b.name === nomOutil);
-  if (!bloc) throw new ErreurIaIndisponible("Réponse IA invalide (outil structuré non retourné).");
-  return { donnees: bloc.input as T, tokens: reponse.usage.input_tokens + reponse.usage.output_tokens };
-}
 
 // ───────────────────────── §6.6 — Gate de marque ─────────────────────────
 
@@ -72,7 +56,7 @@ export async function noterContenu(contenuId: string, utilisateurId: string): Pr
     `Légende à noter :\n${contenu.caption || "(vide)"}`,
   ].join("\n");
 
-  const { donnees, tokens } = await appelOutilForce<{ dimensions: ScoreDetailDimension[] }>(system, messageUtilisateur, "noter", SCHEMA_NOTATION, 700);
+  const { donnees, tokens } = await genererObjet<{ dimensions: ScoreDetailDimension[] }>({ system, message: messageUtilisateur, schema: SCHEMA_NOTATION, maxOutputTokens: 700 });
   const scoreTotal = donnees.dimensions.reduce((s, d) => s + d.score, 0);
 
   const [modifie] = (await db.update(contenus).set({ score_marque: scoreTotal, score_detail: donnees.dimensions }).where(eq(contenus.id, contenuId)).returning()) as any[];
@@ -133,17 +117,17 @@ export async function genererBriefShooting(shootingId: string): Promise<BriefSho
   const piecesLabels: string[] = [];
   for (const p of shooting?.pieces ?? []) piecesLabels.push(await labelSku(p.article_sku_id));
 
-  const imagesBlocs: Anthropic.ImageBlockParam[] = [];
+  const images: ImageEntree[] = [];
   const photosItems = items.filter((i) => i.source === "photo" && i.photo_asset_id);
   for (const it of photosItems.slice(0, 4)) {
     const [asset] = await db.select().from(assets).where(eq(assets.id, it.photo_asset_id!)).limit(1);
     if (!asset || !asset.fichier_url.startsWith("/uploads/")) continue;
     const ext = asset.fichier_url.slice(asset.fichier_url.lastIndexOf("."));
-    const mime = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp" }[ext] as "image/jpeg" | "image/png" | "image/webp" | undefined;
-    if (!mime) continue;
+    const mediaType = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp" }[ext] as ImageEntree["mediaType"] | undefined;
+    if (!mediaType) continue;
     try {
-      const donnees = await readFile(join(env.uploadsDir, asset.fichier_url.slice("/uploads/".length)));
-      imagesBlocs.push({ type: "image", source: { type: "base64", media_type: mime, data: donnees.toString("base64") } });
+      const fichier = await readFile(join(env.uploadsDir, asset.fichier_url.slice("/uploads/".length)));
+      images.push({ base64: fichier.toString("base64"), mediaType });
     } catch {
       // fichier absent — ignoré, pas de blocage
     }
@@ -162,8 +146,7 @@ export async function genererBriefShooting(shootingId: string): Promise<BriefSho
   ].join("\n");
 
   const system = `${lireConfig("brief-shooting.md")}\n\n---\n\n${await construireSystemPrompt({ campagneId: tache.campagne_id })}`;
-  const contenuMessage: Anthropic.MessageParam["content"] = [{ type: "text", text: contexteTexte }, ...imagesBlocs];
-  const { donnees } = await appelOutilForce<BriefShooting>(system, contenuMessage, "brief", SCHEMA_BRIEF_SHOOTING, 1500);
+  const { donnees } = await genererObjet<BriefShooting>({ system, message: { texte: contexteTexte, images }, schema: SCHEMA_BRIEF_SHOOTING, maxOutputTokens: 1500 });
   return donnees;
 }
 
@@ -219,7 +202,7 @@ export async function genererIdees(entree: { objectif: string; plateformes: stri
     "Le score est une estimation qualitative de ton cru, jamais une prédiction (RG-ID1) — dis-le dans la justification si utile.",
     "Au moins la moitié des idées doivent être tournables au téléphone en 20 minutes.",
   ].join("\n");
-  const { donnees } = await appelOutilForce<{ idees: IdeeGeneree[] }>(system, message, "generer_idees", SCHEMA_IDEES, 3000);
+  const { donnees } = await genererObjet<{ idees: IdeeGeneree[] }>({ system, message, schema: SCHEMA_IDEES, maxOutputTokens: 3000 });
   return donnees.idees;
 }
 
@@ -254,7 +237,7 @@ export async function briefQuotidien(force = false): Promise<BriefQuotidien> {
   await verifierBudgetJournalier();
   const system = await construireSystemPrompt({});
   const message = "Génère le brief du jour : 3 à 5 constats factuels (chacun citant sa provenance et sa fraîcheur, ⚠︎ si >48h) et exactement 3 actions recommandées, à partir du contexte fourni (tâches, campagne active, catalogue). Ne cite que des faits présents dans le contexte — une donnée absente se dit manquante (RG-BR1/BR2), jamais inventée.";
-  const { donnees } = await appelOutilForce<{ constats: string[]; actions: { titre: string; description: string }[] }>(system, message, "brief_quotidien", SCHEMA_BRIEF_QUOTIDIEN, 900);
+  const { donnees } = await genererObjet<{ constats: string[]; actions: { titre: string; description: string }[] }>({ system, message, schema: SCHEMA_BRIEF_QUOTIDIEN, maxOutputTokens: 900 });
   cacheBrief = { date: aujourdhui, constats: donnees.constats, actions: donnees.actions };
   return cacheBrief;
 }
